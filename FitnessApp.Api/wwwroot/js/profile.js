@@ -1,0 +1,226 @@
+const Profile = {
+    currentRole: null,
+
+    init() {
+        const saveBtn = document.getElementById('saveProfileFullBtn');
+        if (saveBtn) saveBtn.addEventListener('click', () => this.save());
+
+        const uploadBtn = document.getElementById('pfAvatarUploadBtn');
+        const fileInput = document.getElementById('pfAvatarFile');
+        const removeBtn = document.getElementById('pfAvatarRemoveBtn');
+
+        if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => this.uploadAvatar(fileInput.files[0]));
+        }
+        if (removeBtn) removeBtn.addEventListener('click', () => this.removeAvatar());
+    },
+
+    async load() {
+        try {
+            const p = await API.get('/auth/personal-profile');
+            this.fill(p);
+        } catch (err) {
+            const msg = document.getElementById('profileFullMsg');
+            if (msg) msg.textContent = err.message;
+        }
+    },
+
+    fill(p) {
+        this.currentRole = p.role || localStorage.getItem('userRole') || 'Client';
+        const isTrainer = this.currentRole === 'Trainer';
+
+        document.getElementById('pfFullName').value = p.fullName || '';
+        const emailEl = document.getElementById('pfEmail');
+        if (emailEl) emailEl.value = p.email || '';
+        document.getElementById('pfBirthDate').value = p.birthDate ? p.birthDate.substring(0, 10) : '';
+        document.getElementById('pfGender').value = p.gender || '';
+        document.getElementById('pfHeight').value = p.heightCm ?? '';
+        document.getElementById('pfWeight').value = p.weightKg ?? '';
+        document.getElementById('pfActivityLevel').value = p.activityLevel || '';
+        document.getElementById('pfPhone').value = p.phone || '';
+        document.getElementById('pfGoal').value = p.goal || '';
+        document.getElementById('pfHealthNotes').value = p.healthNotes || '';
+
+        document.getElementById('pfHeightWeightRow').classList.toggle('hidden', isTrainer);
+        document.getElementById('pfActivityCol').classList.toggle('hidden', isTrainer);
+        document.getElementById('pfGoalBlock').classList.toggle('hidden', isTrainer);
+        document.getElementById('pfHealthBlock').classList.toggle('hidden', isTrainer);
+
+        const prefsBlock = document.getElementById('pfClientPrefs');
+        const isClient = this.currentRole === 'Client';
+        if (prefsBlock) prefsBlock.style.display = isClient ? '' : 'none';
+        document.getElementById('pfWeeklyCount').value = p.preferredWeeklyTrainingCount ?? '';
+        document.getElementById('pfTrainingType').value = p.preferredTrainingType || '';
+
+        this.setAvatar(p.profileImageUrl);
+
+        const msg = document.getElementById('profileFullMsg');
+        if (msg) msg.textContent = '';
+        const avMsg = document.getElementById('pfAvatarMsg');
+        if (avMsg) avMsg.textContent = '';
+    },
+
+    setAvatar(url) {
+        const img = document.getElementById('pfAvatarImg');
+        const placeholder = document.getElementById('pfAvatarPlaceholder');
+        const removeBtn = document.getElementById('pfAvatarRemoveBtn');
+        if (url) {
+            img.src = url + '?t=' + Date.now();
+            img.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            if (removeBtn) removeBtn.classList.remove('hidden');
+        } else {
+            img.removeAttribute('src');
+            img.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            if (removeBtn) removeBtn.classList.add('hidden');
+        }
+        App.refreshHeaderAvatar(url);
+    },
+
+    async uploadAvatar(file) {
+        const msg = document.getElementById('pfAvatarMsg');
+        msg.textContent = '';
+        msg.style.color = '';
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            msg.textContent = 'Slika je veća od 5 MB.';
+            return;
+        }
+
+        const form = new FormData();
+        form.append('file', file);
+        const token = API.getToken();
+        try {
+            const res = await fetch('/api/auth/profile-image', {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                body: form
+            });
+            const text = await res.text();
+            const data = text ? JSON.parse(text) : null;
+            if (!res.ok) {
+                throw new Error(data?.message || (data?.errors && Object.values(data.errors).flat().join(', ')) || `HTTP ${res.status}`);
+            }
+            this.setAvatar(data.profileImageUrl);
+            msg.style.color = '#4dc878';
+            msg.textContent = 'Slika spremljena.';
+        } catch (err) {
+            msg.textContent = err.message;
+        } finally {
+            document.getElementById('pfAvatarFile').value = '';
+        }
+    },
+
+    async removeAvatar() {
+        const msg = document.getElementById('pfAvatarMsg');
+        msg.textContent = '';
+        try {
+            await API.delete('/auth/profile-image');
+            this.setAvatar(null);
+            msg.style.color = '#4dc878';
+            msg.textContent = 'Slika uklonjena.';
+        } catch (err) {
+            msg.textContent = err.message;
+        }
+    },
+
+    async save() {
+        const msg = document.getElementById('profileFullMsg');
+        msg.textContent = '';
+        msg.style.color = '';
+
+        const isTrainer = this.currentRole === 'Trainer';
+        const weeklyRaw = document.getElementById('pfWeeklyCount').value;
+        const weekly = weeklyRaw === '' ? null : parseInt(weeklyRaw);
+
+        const body = {
+            fullName: document.getElementById('pfFullName').value.trim() || null,
+            birthDate: document.getElementById('pfBirthDate').value || null,
+            gender: document.getElementById('pfGender').value || null,
+            phone: document.getElementById('pfPhone').value.trim() || null,
+            heightCm: isTrainer ? null : (parseInt(document.getElementById('pfHeight').value) || null),
+            weightKg: isTrainer ? null : (parseFloat(document.getElementById('pfWeight').value) || null),
+            activityLevel: isTrainer ? null : (document.getElementById('pfActivityLevel').value || null),
+            goal: isTrainer ? null : (document.getElementById('pfGoal').value.trim() || null),
+            healthNotes: isTrainer ? null : (document.getElementById('pfHealthNotes').value.trim() || null),
+            preferredWeeklyTrainingCount: isTrainer ? null : (Number.isFinite(weekly) ? weekly : null),
+            preferredTrainingType: isTrainer ? null : (document.getElementById('pfTrainingType').value || null)
+        };
+
+        try {
+            await API.put('/auth/personal-profile', body);
+            msg.style.color = '#4dc878';
+            msg.textContent = 'Profil spremljen.';
+        } catch (err) {
+            msg.textContent = err.message;
+        }
+    },
+
+    renderReadOnly(container, p) {
+        const isTrainer = p.role === 'Trainer';
+        const dash = '—';
+        const rows = [
+            ['Ime i prezime', p.fullName],
+            ['Email', p.email],
+            ['Datum rođenja', p.birthDate ? new Date(p.birthDate).toLocaleDateString('hr-HR') : null],
+            ['Spol', p.gender === 'M' ? 'Muški' : p.gender === 'F' ? 'Ženski' : null],
+            ['Telefon', p.phone],
+            !isTrainer && ['Visina', p.heightCm ? `${p.heightCm} cm` : null],
+            !isTrainer && ['Težina', p.weightKg != null ? `${p.weightKg} kg` : null],
+            !isTrainer && ['Razina aktivnosti', this.activityLabel(p.activityLevel)],
+            !isTrainer && ['Treninga tjedno', p.preferredWeeklyTrainingCount != null ? `${p.preferredWeeklyTrainingCount}×` : null],
+            !isTrainer && ['Preferirani tip', this.trainingTypeLabel(p.preferredTrainingType)],
+            !isTrainer && ['Cilj', p.goal],
+            !isTrainer && ['Zdravstvene napomene', p.healthNotes]
+        ].filter(Boolean);
+
+        const avatarHtml = p.profileImageUrl
+            ? `<div class="profile-avatar-row"><div class="avatar-preview"><img src="${this.escape(p.profileImageUrl)}" alt=""></div></div>`
+            : '';
+
+        container.innerHTML = avatarHtml + rows.map(([k, v]) => {
+            const isEmpty = v === null || v === undefined || v === '';
+            const valHtml = isEmpty
+                ? `<span class="profile-val muted">${dash}</span>`
+                : `<span class="profile-val">${this.escape(String(v))}</span>`;
+            return `<div class="profile-row"><span class="profile-key">${k}</span>${valHtml}</div>`;
+        }).join('');
+    },
+
+    activityLabel(v) {
+        if (v === 'Beginner') return 'Početnik';
+        if (v === 'Intermediate') return 'Srednji';
+        if (v === 'Advanced') return 'Napredni';
+        return null;
+    },
+
+    trainingTypeLabel(v) {
+        if (!v) return null;
+        const map = {
+            Strength: 'Snaga',
+            HIIT: 'HIIT',
+            Kardio: 'Kardio',
+            Cicle: 'Ciklični',
+            Funkcionalni: 'Funkcionalni',
+            FullBody: 'Full Body',
+            Power: 'Power'
+        };
+        return map[v] ?? v;
+    },
+
+    avatarHtml(url, sizeClass = 'avatar-sm') {
+        if (url) {
+            return `<span class="${sizeClass}"><img src="${this.escape(url)}" alt=""></span>`;
+        }
+        return `<span class="${sizeClass}"><span>👤</span></span>`;
+    },
+
+    escape(s) {
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+    }
+};
