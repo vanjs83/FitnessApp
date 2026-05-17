@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitnessApp</title>
+    <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+    <header>
+        <h1>💪 <span data-i18n="app.title">FitnessApp</span></h1>
+        <div class="header-right">
+            <div class="lang-switch">
+                <button class="lang-btn" data-lang="hr" title="Hrvatski"><span class="flag">🇭🇷</span></button>
+                <button class="lang-btn" data-lang="en" title="English"><span class="flag">🇺🇸</span></button>
+            </div>
+            <div id="userInfo" class="hidden">
+                <div class="avatar-mini" id="headerAvatar">
+                    <span id="headerAvatarPlaceholder">👤</span>
+                    <img id="headerAvatarImg" alt="" class="hidden">
+                </div>
+                <span id="userRole" class="badge"></span>
+                <span id="userEmail"></span>
+                <button id="settingsBtn" class="secondary" data-i18n-title="common.settings" title="Postavke">⚙️</button>
+                <button id="logoutBtn" class="secondary" data-i18n="common.logout">Odjava</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Auth section -->
+        <section id="authSection">
+            <div class="tabs">
+                <button class="tab active" data-tab="login" data-i18n="auth.login">Prijava</button>
+                <button class="tab" data-tab="register" data-i18n="auth.register">Registracija</button>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <h2 data-i18n="auth.login">Prijava</h2>
+                <input type="email" id="loginEmail" data-i18n-ph="common.email" placeholder="Email" required>
+                <input type="password" id="loginPassword" data-i18n-ph="common.password" placeholder="Lozinka" required>
+                <button type="submit" data-i18n="auth.loginBtn">Prijavi se</button>
+                <div class="error" id="loginError"></div>
+            </form>
+
+            <form id="registerForm" class="auth-form hidden">
+                <h2 data-i18n="auth.register">Registracija</h2>
+
+                <div class="role-picker">
+                    <label class="role-option">
+                        <input type="radio" name="role" value="Client" checked>
+                        <span data-i18n="auth.role.client">👤 Klijent</span>
+                        <small data-i18n="auth.role.client.desc">Pratim svoje treninge</small>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" name="role" value="Trainer">
+                        <span data-i18n="auth.role.trainer">🏋️ Trener</span>
+                        <small data-i18n="auth.role.trainer.desc">Vodim klijente</small>
+                    </label>
+                </div>
+
+                <input type="text" id="registerFullName" data-i18n-ph="common.fullName" placeholder="Ime i prezime">
+                <input type="email" id="registerEmail" data-i18n-ph="common.email" placeholder="Email" required>
+                <input type="password" id="registerPassword" data-i18n-ph="auth.passwordMin" placeholder="Lozinka (min 6)" required minlength="6">
+
+                <div id="trainerPickerWrap">
+                    <label class="muted small" data-i18n="auth.trainerPicker">Tvoj trener (opcionalno)</label>
+                    <select id="registerTrainer">
+                        <option value="" data-i18n="auth.noTrainer">— bez trenera —</option>
+                    </select>
+                </div>
+
+                <button type="submit" data-i18n="auth.registerBtn">Registriraj se</button>
+                <div class="error" id="registerError"></div>
+            </form>
+        </section>
+
+        <!-- Client panel -->
+        <section id="clientPanel" class="hidden">
+            <div id="clientTrainerBanner" class="trainer-banner hidden"></div>
+            <nav class="app-nav">
+                <button class="nav-btn active" data-view="workouts" data-i18n="nav.workouts">Dodatni treninzi</button>
+                <button class="nav-btn" data-view="myPlans" data-i18n="nav.myPlans">Moj plan</button>
+                <button class="nav-btn" data-view="myNutrition" data-i18n="nav.myNutrition">Prehrana</button>
+                <button class="nav-btn" data-view="stats" data-i18n="nav.stats">Statistika</button>
+                <button class="nav-btn" data-view="profile" data-i18n="nav.profile">Osobni podaci</button>
+            </nav>
+
+            <div id="workoutsView" class="view">
+                <div class="view-header">
+                    <h2 data-i18n="workouts.title">Moji dodatni treninzi</h2>
+                    <button id="newWorkoutBtn" data-i18n="workouts.new">+ Novi trening</button>
+                </div>
+
+                <div id="newWorkoutForm" class="card hidden">
+                    <h3 data-i18n="workouts.newTitle">Novi trening</h3>
+                    <input type="text" id="workoutName" data-i18n-ph="workouts.namePh" placeholder="Npr. Push Day" required>
+                    <label class="muted small" data-i18n="workouts.date">Datum</label>
+                    <input type="date" id="workoutDate">
+                    <input type="number" id="workoutDuration" data-i18n-ph="workouts.durationPh" placeholder="Trajanje (min)">
+                    <textarea id="workoutNotes" data-i18n-ph="workouts.notesPh" placeholder="Napomene..."></textarea>
+                    <div class="row">
+                        <button id="saveWorkoutBtn" data-i18n="common.save">Spremi</button>
+                        <button id="cancelWorkoutBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                </div>
+
+                <div id="workoutsList" class="list"></div>
+
+                <div id="workoutDetail" class="card hidden">
+                    <button id="backToListBtn" class="secondary" data-i18n="common.back">← Nazad</button>
+                    <h3 id="detailWorkoutName"></h3>
+                    <p id="detailWorkoutMeta" class="muted"></p>
+                    <div id="exerciseList"></div>
+                    <div class="card-inset">
+                        <h4 data-i18n="workouts.addExercise">Dodaj vježbu</h4>
+                        <select id="exerciseSelect"></select>
+                        <button id="addExerciseBtn" data-i18n="common.add">Dodaj</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="exercisesView" class="view hidden">
+                <div class="view-header">
+                    <h2 data-i18n="exercises.title">Katalog vježbi</h2>
+                    <button id="newExerciseBtn" data-i18n="exercises.new">+ Nova vježba</button>
+                </div>
+
+                <div id="newExerciseForm" class="card hidden">
+                    <h3 data-i18n="exercises.newTitle">Nova vježba</h3>
+                    <input type="text" id="exerciseName" data-i18n-ph="exercises.namePh" placeholder="Naziv" required>
+                    <input type="text" id="exerciseMuscleGroup" data-i18n-ph="exercises.musclePh" placeholder="Mišićna grupa">
+                    <label class="muted small" data-i18n="exercises.type">Tip</label>
+                    <select id="exerciseType">
+                        <option value="Strength" selected data-i18n="exercises.type.strength">Snaga</option>
+                        <option value="HIIT" data-i18n="exercises.type.hiit">HIIT</option>
+                        <option value="Kardio" data-i18n="exercises.type.kardio">Kardio</option>
+                        <option value="Cicle" data-i18n="exercises.type.cicle">Cicle</option>
+                        <option value="Funkcionalni" data-i18n="exercises.type.funkcionalni">Funkcionalni</option>
+                        <option value="FullBody" data-i18n="exercises.type.fullbody">Full Body</option>
+                        <option value="Power" data-i18n="exercises.type.power">Power</option>
+                    </select>
+                    <input type="text" id="exerciseVideoUrl" data-i18n-ph="exercises.videoPh" placeholder="YouTube link (opcionalno)">
+                    <textarea id="exerciseDescription" data-i18n-ph="exercises.descPh" placeholder="Opis..."></textarea>
+                    <div class="row">
+                        <button id="saveExerciseBtn" data-i18n="common.save">Spremi</button>
+                        <button id="cancelExerciseBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <input type="text" id="exercisesSearch" class="search-input" data-i18n-ph="exercises.searchPh" placeholder="🔍 Pretraga (naziv ili mišićna grupa)...">
+                    <select id="exercisesTypeFilter">
+                        <option value="" data-i18n="exercises.allTypes">Svi tipovi</option>
+                        <option value="Strength" data-i18n="exercises.type.strength">Snaga</option>
+                        <option value="HIIT" data-i18n="exercises.type.hiit">HIIT</option>
+                        <option value="Kardio" data-i18n="exercises.type.kardio">Kardio</option>
+                        <option value="Cicle" data-i18n="exercises.type.cicle">Cicle</option>
+                        <option value="Funkcionalni" data-i18n="exercises.type.funkcionalni">Funkcionalni</option>
+                        <option value="FullBody" data-i18n="exercises.type.fullbody">Full Body</option>
+                        <option value="Power" data-i18n="exercises.type.power">Power</option>
+                    </select>
+                </div>
+                <div id="exercisesList" class="list"></div>
+            </div>
+
+            <div id="myPlansView" class="view hidden">
+                <h2 data-i18n="myPlans.title">Plan koji mi je trener zadao</h2>
+                <div id="myPlansList" class="list"></div>
+                <div id="myPlanDetail" class="card hidden">
+                    <button id="backToMyPlansBtn" class="secondary" data-i18n="nav.plans">← Planovi</button>
+                    <h3 id="myPlanName"></h3>
+                    <p id="myPlanMeta" class="muted"></p>
+                    <div id="myPlanPayment" class="payment-box"></div>
+                    <p id="myPlanExpectations" class="muted small"></p>
+                    <div id="myPlanExportRow" class="row hidden" style="margin: 0.5rem 0;">
+                        <button id="myPlanPdfBtn" class="secondary small-btn" data-i18n="plans.downloadPdf">Preuzmi PDF</button>
+                        <button id="myPlanQrBtn" class="secondary small-btn" data-i18n="plans.showQr">Prikaži QR</button>
+                    </div>
+                    <div id="myPlanDays"></div>
+                </div>
+            </div>
+
+            <div id="myNutritionView" class="view hidden">
+                <h2 data-i18n="myNutrition.title">Plan prehrane</h2>
+                <div id="myNutritionList" class="list"></div>
+                <div id="myNutritionDetail" class="card hidden">
+                    <button id="backToMyNutritionBtn" class="secondary"><span data-i18n="common.back">← Nazad</span></button>
+                    <h3 id="myNutritionName"></h3>
+                    <p id="myNutritionMeta" class="muted"></p>
+                    <div id="myNutritionPayment" class="payment-box"></div>
+                    <p id="myNutritionNotes" class="muted small"></p>
+                    <div class="row" style="margin: 0.5rem 0;">
+                        <button id="myNutritionPdfBtn" class="secondary small-btn" data-i18n="nutrition.downloadPdf">📄 Preuzmi PDF</button>
+                        <button id="myNutritionQrBtn" class="secondary small-btn" data-i18n="nutrition.showQr">📱 Prikaži QR</button>
+                    </div>
+                    <div id="myNutritionDays"></div>
+                </div>
+            </div>
+
+            <div id="statsView" class="view hidden">
+                <h2 data-i18n="stats.title">Statistika napretka</h2>
+
+                <div class="card" id="statsPlanCard">
+                    <h4 data-i18n="stats.progressByWeight">Progresija po kilažama (plan)</h4>
+                    <label class="muted small" data-i18n="stats.plan">Plan</label>
+                    <select id="statsPlanSelect"></select>
+                    <label class="muted small" data-i18n="stats.planExercise">Vježba iz plana</label>
+                    <select id="statsPlanExerciseSelect"></select>
+                    <div class="chart-wrap"><canvas id="statsPlanChart"></canvas></div>
+                    <div id="statsPlanSummary" class="muted small"></div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Shared profile view (klijent + trener edit svoj profil) -->
+        <section id="profileView" class="hidden">
+            <h2 data-i18n="profile.title">Osobni podaci</h2>
+            <div class="card">
+                <div class="avatar-edit">
+                    <div class="avatar-preview" id="pfAvatarPreview">
+                        <span id="pfAvatarPlaceholder">👤</span>
+                        <img id="pfAvatarImg" alt="" class="hidden">
+                    </div>
+                    <div class="avatar-actions">
+                        <input type="file" id="pfAvatarFile" accept="image/jpeg,image/png,image/webp" class="hidden">
+                        <button type="button" id="pfAvatarUploadBtn" class="secondary small-btn" data-i18n="profile.avatarChange">Promijeni sliku</button>
+                        <button type="button" id="pfAvatarRemoveBtn" class="secondary small-btn hidden" data-i18n="profile.avatarRemove">Ukloni</button>
+                        <div class="muted small" data-i18n="profile.avatarHint">JPG/PNG/WEBP, do 5 MB</div>
+                        <div id="pfAvatarMsg" class="error"></div>
+                    </div>
+                </div>
+
+                <label class="muted small" data-i18n="common.email">Email</label>
+                <input type="email" id="pfEmail" disabled>
+
+                <label class="muted small" data-i18n="common.fullName">Ime i prezime</label>
+                <input type="text" id="pfFullName" data-i18n-ph="profile.fullNamePh" placeholder="npr. Ivan Horvat">
+
+                <div class="row">
+                    <div style="flex:1">
+                        <label class="muted small" data-i18n="profile.birthDate">Datum rođenja</label>
+                        <input type="date" id="pfBirthDate">
+                    </div>
+                    <div style="flex:1">
+                        <label class="muted small" data-i18n="profile.gender">Spol</label>
+                        <select id="pfGender">
+                            <option value="">—</option>
+                            <option value="M" data-i18n="profile.gender.male">Muški</option>
+                            <option value="F" data-i18n="profile.gender.female">Ženski</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="pfHeightWeightRow" class="row">
+                    <div style="flex:1">
+                        <label class="muted small" data-i18n="profile.height">Visina (cm)</label>
+                        <input type="number" id="pfHeight" min="50" max="260">
+                    </div>
+                    <div style="flex:1">
+                        <label class="muted small" data-i18n="profile.weight">Težina (kg)</label>
+                        <input type="number" id="pfWeight" step="0.1" min="20" max="400">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div id="pfActivityCol" style="flex:1">
+                        <label class="muted small" data-i18n="profile.activity">Razina aktivnosti</label>
+                        <select id="pfActivityLevel">
+                            <option value="">—</option>
+                            <option value="Beginner" data-i18n="profile.activity.beginner">Početnik</option>
+                            <option value="Intermediate" data-i18n="profile.activity.intermediate">Srednji</option>
+                            <option value="Advanced" data-i18n="profile.activity.advanced">Napredni</option>
+                        </select>
+                    </div>
+                    <div style="flex:1">
+                        <label class="muted small" data-i18n="common.phone">Telefon</label>
+                        <input type="tel" id="pfPhone" placeholder="+385...">
+                    </div>
+                </div>
+
+                <div id="pfClientPrefs">
+                    <h3 class="muted small" style="margin-top:18px" data-i18n="profile.prefsTitle">Preferencije treninga</h3>
+                    <div class="row">
+                        <div style="flex:1">
+                            <label class="muted small" data-i18n="profile.weeklyCount">Broj treninga tjedno</label>
+                            <input type="number" id="pfWeeklyCount" min="1" max="14" data-i18n-ph="profile.weeklyCountPh" placeholder="npr. 3">
+                        </div>
+                        <div style="flex:1">
+                            <label class="muted small" data-i18n="profile.trainingType">Preferirani tip treninga</label>
+                            <select id="pfTrainingType">
+                                <option value="" data-i18n="profile.trainingType.none">— bez preferencije —</option>
+                                <option value="Strength" data-i18n="exercises.type.strength">Snaga</option>
+                                <option value="HIIT" data-i18n="exercises.type.hiit">HIIT</option>
+                                <option value="Kardio" data-i18n="exercises.type.kardio">Kardio</option>
+                                <option value="Cicle" data-i18n="exercises.type.cicle">Ciklični</option>
+                                <option value="Funkcionalni" data-i18n="exercises.type.funkcionalni">Funkcionalni</option>
+                                <option value="FullBody" data-i18n="exercises.type.fullbody">Full Body</option>
+                                <option value="Power" data-i18n="exercises.type.power">Power</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pfGoalBlock">
+                    <label class="muted small" data-i18n="profile.goal">Cilj treninga</label>
+                    <textarea id="pfGoal" data-i18n-ph="profile.goalPh" placeholder="npr. mršavljenje 5 kg, masa, rehabilitacija..."></textarea>
+                </div>
+
+                <div id="pfHealthBlock">
+                    <label class="muted small" data-i18n="profile.healthNotes">Zdravstvene napomene</label>
+                    <textarea id="pfHealthNotes" data-i18n-ph="profile.healthNotesPh" placeholder="ozljede, lijekovi, alergije..."></textarea>
+                </div>
+
+                <button id="saveProfileFullBtn" data-i18n="common.save">Spremi</button>
+                <div id="profileFullMsg" class="error"></div>
+            </div>
+        </section>
+
+        <!-- SuperAdmin panel -->
+        <section id="adminPanel" class="hidden">
+            <div id="adminStats" class="stats-grid"></div>
+
+            <nav class="app-nav">
+                <button class="admin-tab active" data-admin-tab="trainers" data-i18n="admin.tab.trainers">Treneri</button>
+                <button class="admin-tab" data-admin-tab="clients" data-i18n="admin.tab.clients">Klijenti</button>
+                <button class="admin-tab" data-admin-tab="workouts" data-i18n="admin.tab.workouts">Treninzi</button>
+            </nav>
+
+            <!-- Trainers tab -->
+            <div id="adminTrainersTab" class="admin-view">
+                <div class="view-header">
+                    <h2 data-i18n="admin.trainers.title">Treneri</h2>
+                    <button id="newTrainerBtn" data-i18n="admin.trainers.new">+ Dodaj trenera</button>
+                </div>
+
+                <div id="newTrainerForm" class="card hidden">
+                    <h3 data-i18n="admin.trainers.newTitle">Novi trener</h3>
+                    <input type="text" id="adminTrainerFullName" data-i18n-ph="common.fullName" placeholder="Ime i prezime">
+                    <input type="email" id="adminTrainerEmail" data-i18n-ph="common.email" placeholder="Email" required>
+                    <input type="password" id="adminTrainerPassword" data-i18n-ph="auth.passwordMin" placeholder="Lozinka (min 6)" required minlength="6">
+                    <div class="row">
+                        <button id="saveTrainerBtn" data-i18n="common.save">Spremi</button>
+                        <button id="cancelTrainerBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                    <div class="error" id="adminTrainerError"></div>
+                </div>
+
+                <input type="text" id="adminTrainersSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga (ime ili email)...">
+                <div id="adminTrainersList" class="list"></div>
+            </div>
+
+            <!-- Clients tab -->
+            <div id="adminClientsTab" class="admin-view hidden">
+                <h2 data-i18n="admin.clients.title">Svi klijenti</h2>
+                <input type="text" id="adminClientsSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga (ime, email ili trener)...">
+                <div id="adminClientsList" class="list"></div>
+            </div>
+
+            <!-- Workouts tab -->
+            <div id="adminWorkoutsTab" class="admin-view hidden">
+                <h2 data-i18n="admin.workouts.title">Svi treninzi</h2>
+                <input type="text" id="adminWorkoutsSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga (naziv ili klijent)...">
+                <div id="adminWorkoutsList" class="list"></div>
+            </div>
+        </section>
+
+        <!-- Trainer panel -->
+        <section id="trainerPanel" class="hidden">
+            <nav class="app-nav">
+                <button class="trainer-nav-btn active" data-trainer-view="clients" data-i18n="nav.clients">Klijent</button>
+                <button class="trainer-nav-btn" data-trainer-view="plans" data-i18n="nav.plans">Trening</button>
+                <button class="trainer-nav-btn" data-trainer-view="nutrition" data-i18n="nav.nutrition">Prehrana</button>
+                <button class="trainer-nav-btn" data-trainer-view="templates" data-i18n="nav.templates">Predlošci</button>
+                <button class="trainer-nav-btn" data-trainer-view="profile" data-i18n="nav.profile">Osobni podaci</button>
+            </nav>
+
+            <div id="clientsView" class="view">
+                <div class="view-header">
+                    <h2 data-i18n="trainer.clients.title">Moji klijenti</h2>
+                    <button id="newClientBtn" data-i18n="trainer.clients.new">+ Dodaj klijenta</button>
+                </div>
+
+                <div id="newClientForm" class="card hidden">
+                    <h3 data-i18n="trainer.clients.newTitle">Novi klijent</h3>
+                    <input type="text" id="newClientFullName" data-i18n-ph="common.fullName" placeholder="Ime i prezime">
+                    <input type="email" id="newClientEmail" data-i18n-ph="common.email" placeholder="Email" required>
+                    <input type="password" id="newClientPassword" data-i18n-ph="auth.passwordMin" placeholder="Lozinka (min 6)" required minlength="6">
+                    <p class="muted small" data-i18n="trainer.clients.credentialsHint">Nakon kreiranja, daj klijentu ove kredencijale.</p>
+                    <div class="row">
+                        <button id="saveClientBtn" data-i18n="common.save">Spremi</button>
+                        <button id="cancelClientBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                    <div class="error" id="newClientError"></div>
+                </div>
+
+                <input type="text" id="trainerClientsSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga klijenata...">
+                <div id="clientsList" class="list"></div>
+            </div>
+
+            <div id="clientDetail" class="card hidden">
+                <button id="backToClientsBtn" class="secondary"><span data-i18n="common.back">← Nazad</span></button>
+                <h3 id="clientDetailName"></h3>
+                <p id="clientDetailMeta" class="muted"></p>
+                <div class="row" style="margin-top:0.4rem">
+                    <button id="emailClientBtn" class="secondary">✉️ Pošalji email</button>
+                </div>
+
+                <details class="card-inset">
+                    <summary><strong data-i18n="trainer.clientProfile">Osobni podaci klijenta</strong></summary>
+                    <div id="clientDetailProfile" class="profile-readonly"></div>
+                </details>
+
+                <div class="row" style="justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0;" data-i18n="trainer.clientPlans">Planovi treninga</h4>
+                    <button id="trainerNewClientPlanBtn" data-i18n="plans.new">+ Novi plan</button>
+                </div>
+
+                <div id="clientPlansList" class="list"></div>
+
+                <div class="row" style="justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0;">Planovi prehrane</h4>
+                    <button id="trainerNewClientNutritionBtn">+ Novi plan prehrane</button>
+                </div>
+
+                <div id="clientNutritionPlansList" class="list"></div>
+
+                <div class="row" style="justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0;" data-i18n="trainer.clientWorkouts">Treninzi klijenta</h4>
+                    <button id="trainerNewClientWorkoutBtn" data-i18n="trainer.newClientWorkout">+ Kreiraj trening</button>
+                </div>
+
+                <div id="trainerNewClientWorkoutForm" class="card-inset hidden">
+                    <input type="text" id="trainerWorkoutName" data-i18n-ph="workouts.namePh" placeholder="Naziv treninga">
+                    <input type="datetime-local" id="trainerWorkoutDate">
+                    <input type="number" id="trainerWorkoutDuration" data-i18n-ph="workouts.durationPh" placeholder="Trajanje (min)">
+                    <textarea id="trainerWorkoutNotes" data-i18n-ph="workouts.notesPh" placeholder="Napomene..."></textarea>
+                    <div class="row">
+                        <button id="trainerSaveWorkoutBtn" data-i18n="common.save">Spremi</button>
+                        <button id="trainerCancelWorkoutBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                </div>
+
+                <div id="clientWorkoutsList" class="list"></div>
+
+                <div id="clientWorkoutDetail" class="card-inset hidden">
+                    <button id="backToClientWorkoutsBtn" class="secondary small-btn"><span data-i18n="common.back">← Nazad</span></button>
+                    <h4 id="clientWorkoutName"></h4>
+                    <p id="clientWorkoutMeta" class="muted"></p>
+                    <div id="clientWorkoutExercises"></div>
+
+                    <div class="card-inset">
+                        <h4 data-i18n="workouts.addExercise">Dodaj vježbu</h4>
+                        <select id="trainerExerciseSelect"></select>
+                        <button id="trainerAddExerciseBtn" data-i18n="common.add">Dodaj</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4 data-i18n="stats.clientProgress">Progresija klijenta</h4>
+                    <label class="muted small" data-i18n="stats.exercise">Vježba</label>
+                    <select id="trainerStatsExerciseSelect"></select>
+                    <div class="chart-wrap"><canvas id="trainerProgressChart"></canvas></div>
+                    <div id="trainerStatsSummary" class="muted small"></div>
+                </div>
+
+                <div class="card" id="trainerStatsPlanCard">
+                    <h4 data-i18n="stats.progressByWeight">Progresija po kilažama (plan)</h4>
+                    <label class="muted small" data-i18n="stats.plan">Plan</label>
+                    <select id="trainerStatsPlanSelect"></select>
+                    <label class="muted small" data-i18n="stats.planExercise">Vježba iz plana</label>
+                    <select id="trainerStatsPlanExerciseSelect"></select>
+                    <div class="chart-wrap"><canvas id="trainerStatsPlanChart"></canvas></div>
+                    <div id="trainerStatsPlanSummary" class="muted small"></div>
+                </div>
+            </div>
+
+            <!-- Plans view -->
+            <div id="plansView" class="view hidden">
+                <div class="view-header">
+                    <h2 data-i18n="plans.title">Planovi treninga</h2>
+                    <button id="newPlanBtn" data-i18n="plans.new">+ Novi plan</button>
+                </div>
+
+                <div id="newPlanForm" class="card hidden plan-form">
+                    <h3 data-i18n="plans.newTitle">Novi plan</h3>
+                    <label class="muted small" data-i18n="plans.client">Klijent</label>
+                    <select id="planClientSelect"></select>
+                    <label class="muted small" data-i18n="plans.template">Iz predloška (opcionalno)</label>
+                    <select id="planTemplateSelect">
+                        <option value="" data-i18n="plans.noTemplate">— bez predloška (prazan plan) —</option>
+                    </select>
+                    <label class="muted small">Naziv</label>
+                    <input type="text" id="planName" data-i18n-ph="plans.namePh" placeholder="npr. Push/Pull/Legs">
+                    <div class="row">
+                        <div style="flex:1">
+                            <label class="muted small" data-i18n="plans.start">Početak</label>
+                            <input type="date" id="planStartDate">
+                        </div>
+                        <div style="flex:1">
+                            <label class="muted small" data-i18n="plans.end">Kraj</label>
+                            <input type="date" id="planEndDate">
+                        </div>
+                    </div>
+                    <label class="muted small">Očekivanja trenera</label>
+                    <textarea id="planExpectations" data-i18n-ph="plans.expectationsPh" placeholder="npr. +2 kg na bench, smanjiti % masti..."></textarea>
+                    <div class="row">
+                        <div style="flex:2">
+                            <label class="muted small" data-i18n="plans.price">Cijena (0 = besplatno / odmah dostupno)</label>
+                            <input type="number" id="planPrice" min="0" step="0.5" value="0">
+                        </div>
+                        <div style="flex:1">
+                            <label class="muted small" data-i18n="plans.currency">Valuta</label>
+                            <select id="planCurrency">
+                                <option value="EUR" selected>EUR</option>
+                                <option value="BAM">BAM</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <button id="savePlanBtn" data-i18n="common.save">Spremi</button>
+                        <button id="cancelPlanBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                    <div class="error" id="newPlanError"></div>
+                </div>
+
+                <div id="plansList" class="list"></div>
+
+                <!-- Plan detail -->
+                <div id="planDetail" class="card hidden">
+                    <button id="backToPlansBtn" class="secondary"><span data-i18n="common.back">← Nazad</span></button>
+                    <h3 id="planDetailName"></h3>
+                    <p id="planDetailMeta" class="muted"></p>
+                    <div id="planDetailPayment" class="payment-box"></div>
+                    <p id="planDetailExpectations" class="muted small"></p>
+                    <div class="row">
+                        <button id="editPlanBtn" class="secondary">✏️ Uredi</button>
+                        <button id="saveAsTemplateBtn" class="secondary" data-i18n="plans.saveAsTemplate">📋 Spremi kao predložak</button>
+                        <button id="trainerPlanPdfBtn" class="secondary" data-i18n="plans.downloadPdf">📄 Preuzmi PDF</button>
+                        <button id="trainerPlanQrBtn" class="secondary" data-i18n="plans.showQr">📱 Prikaži QR</button>
+                        <button id="trainerPlanNotifyBtn" class="secondary">✉️ Obavijesti klijenta</button>
+                        <button id="deletePlanBtn" class="btn-delete">🗑 Obriši plan</button>
+                    </div>
+
+                    <div class="card-inset">
+                        <h4 data-i18n="plans.addDay">Dodaj dan</h4>
+                        <div class="row">
+                            <select id="newDayOfWeek">
+                                <option value="Monday" data-i18n="day.monday">Ponedjeljak</option>
+                                <option value="Tuesday" data-i18n="day.tuesday">Utorak</option>
+                                <option value="Wednesday" data-i18n="day.wednesday">Srijeda</option>
+                                <option value="Thursday" data-i18n="day.thursday">Četvrtak</option>
+                                <option value="Friday" data-i18n="day.friday">Petak</option>
+                                <option value="Saturday" data-i18n="day.saturday">Subota</option>
+                                <option value="Sunday" data-i18n="day.sunday">Nedjelja</option>
+                            </select>
+                            <input type="text" id="newDayLabel" data-i18n-ph="plans.dayLabelPh" placeholder="Oznaka (Push, Pull, Legs...)">
+                            <button id="addDayBtn" data-i18n="plans.dayBtn">+ Dan</button>
+                        </div>
+                    </div>
+
+                    <div id="planDaysList"></div>
+
+                    <div class="card-inset">
+                        <h4 data-i18n="plans.quickExerciseTitle">Brzo dodaj novu vježbu u katalog</h4>
+                        <div class="row">
+                            <input type="text" id="quickExerciseName" data-i18n-ph="plans.quickExerciseNamePh" placeholder="Naziv (npr. Bench press)">
+                            <input type="text" id="quickExerciseMuscle" data-i18n-ph="exercises.musclePh" placeholder="Mišićna grupa">
+                            <select id="quickExerciseType">
+                                <option value="Strength" data-i18n="exercises.type.strength">Snaga</option>
+                                <option value="HIIT" data-i18n="exercises.type.hiit">HIIT</option>
+                                <option value="Kardio" data-i18n="exercises.type.kardio">Kardio</option>
+                                <option value="Cicle" data-i18n="exercises.type.cicle">Cicle</option>
+                                <option value="Funkcionalni" data-i18n="exercises.type.funkcionalni">Funkcionalni</option>
+                                <option value="FullBody" data-i18n="exercises.type.fullbody">Full Body</option>
+                                <option value="Power" data-i18n="exercises.type.power">Power</option>
+                            </select>
+                            <input type="text" id="quickExerciseVideoUrl" data-i18n-ph="exercises.videoPh" placeholder="YouTube link (opcionalno)">
+                            <button id="quickExerciseBtn" data-i18n="plans.quickExerciseBtn">+ Vježba</button>
+                        </div>
+                        <textarea id="quickExerciseDescription" data-i18n-ph="plans.quickExerciseDescPh" placeholder="Opis vježbe (opcionalno)"></textarea>
+                        <div id="myExercisesList" class="my-exercises"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates view -->
+            <div id="templatesView" class="view hidden">
+                <div class="view-header">
+                    <h2 data-i18n="templates.title">Predlošci planova</h2>
+                    <button id="newTemplateBtn" data-i18n="templates.new">+ Novi predložak</button>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab tpl-type-tab active" data-tpl-type="training">Predlošci treninga</button>
+                    <button class="tab tpl-type-tab" data-tpl-type="nutrition">Predlošci prehrane</button>
+                </div>
+
+                <p class="muted small" data-i18n="templates.intro">Tvoji privatni predlošci. Kreiraj kostur plana, pa kod kreiranja plana za klijenta odaberi predložak — sve se kopira i samo ga doradiš za klijenta.</p>
+
+                <div id="newTemplateForm" class="card hidden">
+                    <h3 data-i18n="templates.newTitle">Novi predložak treninga</h3>
+                    <input type="text" id="templateName" data-i18n-ph="templates.namePh" placeholder="Naziv (npr. PPL osnovni, Početnik 3x tjedno...)">
+                    <textarea id="templateExpectations" data-i18n-ph="templates.expectationsPh" placeholder="Opis / očekivanja (opcionalno)"></textarea>
+                    <div class="row">
+                        <button id="saveTemplateBtn" data-i18n="common.save">Spremi</button>
+                        <button id="cancelTemplateBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                    <div class="error" id="newTemplateError"></div>
+                </div>
+
+                <div id="newNutritionTemplateForm" class="card hidden">
+                    <h3>Novi predložak prehrane</h3>
+                    <input type="text" id="nutritionTemplateName" placeholder="Naziv (npr. Definicija 1800 kcal)">
+                    <textarea id="nutritionTemplateNotes" placeholder="Napomene / opis"></textarea>
+                    <div class="row">
+                        <button id="saveNutritionTemplateBtn" data-i18n="common.save">Spremi</button>
+                        <button id="cancelNutritionTemplateBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                    <div class="error" id="newNutritionTemplateError"></div>
+                </div>
+
+                <div id="templatesList" class="list"></div>
+                <div id="nutritionTemplatesList" class="list hidden"></div>
+
+                <!-- Template detail (reuses planDays editor) -->
+                <div id="templateDetail" class="card hidden">
+                    <button id="backToTemplatesBtn" class="secondary"><span data-i18n="common.back">← Nazad</span></button>
+                    <h3 id="templateDetailName"></h3>
+                    <p id="templateDetailMeta" class="muted"></p>
+                    <p id="templateDetailExpectations" class="muted small"></p>
+
+                    <div class="row">
+                        <button id="editTemplateBtn" class="secondary" data-i18n="templates.edit">Uredi naziv/opis</button>
+                        <button id="deleteTemplateBtn" class="btn-delete" data-i18n="templates.delete">🗑 Obriši predložak</button>
+                    </div>
+
+                    <div class="card-inset">
+                        <h4 data-i18n="plans.addDay">Dodaj dan</h4>
+                        <div class="row">
+                            <select id="newTemplateDayOfWeek">
+                                <option value="Monday" data-i18n="day.monday">Ponedjeljak</option>
+                                <option value="Tuesday" data-i18n="day.tuesday">Utorak</option>
+                                <option value="Wednesday" data-i18n="day.wednesday">Srijeda</option>
+                                <option value="Thursday" data-i18n="day.thursday">Četvrtak</option>
+                                <option value="Friday" data-i18n="day.friday">Petak</option>
+                                <option value="Saturday" data-i18n="day.saturday">Subota</option>
+                                <option value="Sunday" data-i18n="day.sunday">Nedjelja</option>
+                            </select>
+                            <input type="text" id="newTemplateDayLabel" data-i18n-ph="plans.dayLabelPh" placeholder="Oznaka (Push, Pull, Legs...)">
+                            <button id="addTemplateDayBtn" data-i18n="plans.dayBtn">+ Dan</button>
+                        </div>
+                    </div>
+
+                    <div id="templateDaysList"></div>
+                </div>
+            </div>
+
+            <!-- Nutrition view -->
+            <div id="nutritionView" class="view hidden">
+                <div class="view-header">
+                    <h2 data-i18n="nutrition.title">Planovi prehrane</h2>
+                    <button id="newNutritionPlanBtn" data-i18n="nutrition.new">+ Novi plan prehrane</button>
+                </div>
+
+                <div id="newNutritionPlanForm" class="card hidden plan-form">
+                    <h3 data-i18n="nutrition.newTitle">Novi plan prehrane</h3>
+                    <label class="muted small" data-i18n="plans.client">Klijent</label>
+                    <select id="nutritionPlanClientSelect"></select>
+                    <label class="muted small" data-i18n="plans.template">Iz predloška (opcionalno)</label>
+                    <select id="nutritionPlanTemplateSelect">
+                        <option value="" data-i18n="plans.noTemplate">— bez predloška (prazan plan) —</option>
+                    </select>
+                    <label class="muted small">Naziv</label>
+                    <input type="text" id="nutritionPlanName" data-i18n-ph="nutrition.namePh" placeholder="npr. Definicija, Bulk 2800 kcal...">
+                    <div class="row">
+                        <div style="flex:1">
+                            <label class="muted small" data-i18n="plans.start">Početak</label>
+                            <input type="date" id="nutritionPlanStartDate">
+                        </div>
+                        <div style="flex:1">
+                            <label class="muted small" data-i18n="plans.end">Kraj</label>
+                            <input type="date" id="nutritionPlanEndDate">
+                        </div>
+                    </div>
+                    <label class="muted small">Napomene</label>
+                    <textarea id="nutritionPlanNotes" data-i18n-ph="nutrition.notesPh" placeholder="npr. cilj, ograničenja, hidratacija..."></textarea>
+                    <div class="row">
+                        <div style="flex:2">
+                            <label class="muted small" data-i18n="plans.price">Cijena (0 = besplatno / odmah dostupno)</label>
+                            <input type="number" id="nutritionPlanPrice" min="0" step="0.5" value="0">
+                        </div>
+                        <div style="flex:1">
+                            <label class="muted small" data-i18n="plans.currency">Valuta</label>
+                            <select id="nutritionPlanCurrency">
+                                <option value="EUR" selected>EUR</option>
+                                <option value="BAM">BAM</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <button id="saveNutritionPlanBtn" data-i18n="common.save">Spremi</button>
+                        <button id="cancelNutritionPlanBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                    <div class="error" id="newNutritionPlanError"></div>
+                </div>
+
+                <div id="nutritionPlansList" class="list"></div>
+
+                <!-- Plan/template detail (reused) -->
+                <div id="nutritionDetail" class="card hidden">
+                    <button id="backToNutritionListBtn" class="secondary"><span data-i18n="common.back">← Nazad</span></button>
+                    <h3 id="nutritionDetailName"></h3>
+                    <p id="nutritionDetailMeta" class="muted"></p>
+                    <div id="nutritionDetailPayment" class="payment-box"></div>
+                    <p id="nutritionDetailNotes" class="muted small"></p>
+
+                    <div class="row" id="nutritionDetailActions">
+                        <button id="editNutritionBtn" class="secondary">✏️ Uredi</button>
+                        <button id="saveNutritionAsTemplateBtn" class="secondary" data-i18n="nutrition.saveAsTemplate">📋 Spremi kao predložak</button>
+                        <button id="nutritionPdfBtn" class="secondary" data-i18n="nutrition.downloadPdf">📄 Preuzmi PDF</button>
+                        <button id="nutritionQrBtn" class="secondary" data-i18n="nutrition.showQr">📱 Prikaži QR</button>
+                        <button id="nutritionNotifyBtn" class="secondary">✉️ Obavijesti klijenta</button>
+                        <button id="deleteNutritionBtn" class="btn-delete">🗑 Obriši</button>
+                    </div>
+
+                    <div class="card-inset">
+                        <h4 data-i18n="nutrition.addDay">Dodaj dan</h4>
+                        <div class="row">
+                            <select id="newNutritionDayOfWeek">
+                                <option value="Monday" data-i18n="day.monday">Ponedjeljak</option>
+                                <option value="Tuesday" data-i18n="day.tuesday">Utorak</option>
+                                <option value="Wednesday" data-i18n="day.wednesday">Srijeda</option>
+                                <option value="Thursday" data-i18n="day.thursday">Četvrtak</option>
+                                <option value="Friday" data-i18n="day.friday">Petak</option>
+                                <option value="Saturday" data-i18n="day.saturday">Subota</option>
+                                <option value="Sunday" data-i18n="day.sunday">Nedjelja</option>
+                            </select>
+                            <input type="text" id="newNutritionDayLabel" data-i18n-ph="nutrition.dayLabelPh" placeholder="Oznaka (Trening dan, Off dan...)">
+                            <input type="number" id="newNutritionDayCalories" placeholder="kcal cilj" min="0" max="20000" style="max-width:120px">
+                            <button id="addNutritionDayBtn" data-i18n="plans.dayBtn">+ Dan</button>
+                        </div>
+                    </div>
+
+                    <div id="nutritionDaysList"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Exercise detail modal -->
+    <div id="exerciseDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeExerciseDetailBtn" class="modal-close">×</button>
+
+            <div id="exerciseDetailView">
+                <h2 id="exerciseDetailName"></h2>
+                <div id="exerciseDetailMeta" class="muted small"></div>
+
+                <div id="exerciseDetailVideoWrap" class="video-wrap hidden">
+                    <iframe id="exerciseDetailVideo" allowfullscreen
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                </div>
+                <p id="exerciseDetailNoVideo" class="muted small hidden" data-i18n="exercises.noVideo">Video nije dodan.</p>
+
+                <h4 data-i18n="exercises.descTitle">Opis</h4>
+                <p id="exerciseDetailDescription"></p>
+
+                <div class="row">
+                    <button id="editExerciseBtn" class="hidden" data-i18n="common.edit">Uredi</button>
+                </div>
+            </div>
+
+            <div id="exerciseEditView" class="hidden">
+                <h2 data-i18n="common.edit">Uredi vježbu</h2>
+                <input type="text" id="editExerciseName" data-i18n-ph="exercises.namePh" placeholder="Naziv">
+                <input type="text" id="editExerciseMuscleGroup" data-i18n-ph="exercises.musclePh" placeholder="Mišićna grupa">
+                <label class="muted small" data-i18n="exercises.type">Tip</label>
+                <select id="editExerciseType">
+                    <option value="Strength" data-i18n="exercises.type.strength">Snaga</option>
+                    <option value="HIIT" data-i18n="exercises.type.hiit">HIIT</option>
+                    <option value="Kardio" data-i18n="exercises.type.kardio">Kardio</option>
+                    <option value="Cicle" data-i18n="exercises.type.cicle">Cicle</option>
+                    <option value="Funkcionalni" data-i18n="exercises.type.funkcionalni">Funkcionalni</option>
+                    <option value="FullBody" data-i18n="exercises.type.fullbody">Full Body</option>
+                    <option value="Power" data-i18n="exercises.type.power">Power</option>
+                </select>
+                <input type="text" id="editExerciseVideoUrl" data-i18n-ph="exercises.videoPh" placeholder="YouTube link (opcionalno)">
+                <textarea id="editExerciseDescription" data-i18n-ph="exercises.descPh" placeholder="Opis..."></textarea>
+                <div class="row">
+                    <button id="saveExerciseEditBtn" data-i18n="common.save">Spremi</button>
+                    <button id="cancelExerciseEditBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                </div>
+                <div id="exerciseEditMsg" class="error"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trainer profile (read-only) modal -->
+    <div id="trainerProfileModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeTrainerProfileBtn" class="modal-close">×</button>
+            <h2 id="trainerProfileTitle">Profil trenera</h2>
+            <div id="trainerProfileBody" class="profile-readonly"></div>
+        </div>
+    </div>
+
+    <!-- Settings modal -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeSettingsBtn" class="modal-close">×</button>
+            <h2 data-i18n="settings.title">Postavke</h2>
+
+            <div class="card-inset">
+                <h4 data-i18n="settings.profileTitle">Profil</h4>
+                <div class="muted small" id="profileEmailLabel"></div>
+                <div class="muted small" id="profileRoleLabel"></div>
+                <div class="muted small" id="profileTrainerLabel"></div>
+                <input type="text" id="profileFullName" data-i18n-ph="common.fullName" placeholder="Ime i prezime">
+                <button id="saveProfileBtn" data-i18n="settings.saveProfile">Spremi profil</button>
+                <div id="profileMsg" class="error"></div>
+            </div>
+
+            <div id="trainerChangeSection" class="card-inset hidden">
+                <h4 data-i18n="settings.trainerTitle">Trener</h4>
+                <div class="muted small" id="currentTrainerLabel"></div>
+                <input type="text" id="settingsTrainerSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga trenera...">
+                <div id="settingsTrainersList" class="trainers-pick-list"></div>
+                <div id="trainerChangeMsg" class="error"></div>
+            </div>
+
+            <div class="card-inset">
+                <h4 data-i18n="settings.passwordTitle">Promjena lozinke</h4>
+                <input type="password" id="currentPassword" data-i18n-ph="settings.currentPassword" placeholder="Trenutna lozinka">
+                <input type="password" id="newPassword" data-i18n-ph="settings.newPassword" placeholder="Nova lozinka (min 6)">
+                <button id="changePasswordBtn" data-i18n="settings.changePassword">Promijeni lozinku</button>
+                <div id="passwordMsg" class="error"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email client modal -->
+    <div id="emailClientModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeEmailModalBtn" class="modal-close">×</button>
+            <h2>✉️ Pošalji email klijentu</h2>
+            <p class="muted small" id="emailClientTo"></p>
+            <label class="muted small">Predmet</label>
+            <input type="text" id="emailSubject" placeholder="npr. Tvoj novi plan treninga je spreman">
+            <label class="muted small">Poruka</label>
+            <textarea id="emailBody" rows="8" placeholder="Bok,&#10;&#10;Tvoj plan je spreman u aplikaciji..."></textarea>
+            <div class="row">
+                <button id="sendEmailBtn">Pošalji</button>
+                <button id="cancelEmailBtn" class="secondary">Otkaži</button>
+            </div>
+            <div class="error" id="emailSendMsg"></div>
+        </div>
+    </div>
+
+    <!-- Edit plan modal (shared for training + nutrition) -->
+    <div id="editPlanModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeEditPlanBtn" class="modal-close">×</button>
+            <h2 id="editPlanTitle">Uredi plan</h2>
+            <label class="muted small">Naziv</label>
+            <input type="text" id="editPlanName">
+            <div class="row">
+                <div style="flex:1">
+                    <label class="muted small">Početak</label>
+                    <input type="date" id="editPlanStart">
+                </div>
+                <div style="flex:1">
+                    <label class="muted small">Kraj</label>
+                    <input type="date" id="editPlanEnd">
+                </div>
+            </div>
+            <label class="muted small" id="editPlanNotesLabel">Očekivanja / napomene</label>
+            <textarea id="editPlanNotes" rows="4"></textarea>
+            <div class="row">
+                <div style="flex:2">
+                    <label class="muted small">Cijena</label>
+                    <input type="number" id="editPlanPrice" min="0" step="0.5">
+                </div>
+                <div style="flex:1">
+                    <label class="muted small">Valuta</label>
+                    <select id="editPlanCurrency">
+                        <option value="EUR">EUR</option>
+                        <option value="BAM">BAM</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <button id="saveEditPlanBtn">Spremi</button>
+                <button id="cancelEditPlanBtn" class="secondary">Otkaži</button>
+            </div>
+            <div class="error" id="editPlanError"></div>
+        </div>
+    </div>
+
+    <!-- QR share modal -->
+    <div id="qrShareModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeQrShareBtn" class="modal-close">×</button>
+            <h2 data-i18n="qr.title">QR za preuzimanje PDF-a</h2>
+            <p class="muted small" data-i18n="qr.hint">Skeniraj QR mobitelom — link vrijedi 24 h.</p>
+            <div id="qrShareImage" class="qr-image"></div>
+            <div class="muted small" id="qrShareUrl" style="word-break: break-all;"></div>
+            <div id="qrShareMsg" class="error"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/workouts.js"></script>
+    <script src="js/exercises.js"></script>
+    <script src="js/trainers.js"></script>
+    <script src="js/plans.js"></script>
+    <script src="js/templates.js"></script>
+    <script src="js/nutrition.js"></script>
+    <script src="js/myNutrition.js"></script>
+    <script src="js/editPlanModal.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
