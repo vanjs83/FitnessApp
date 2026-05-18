@@ -141,6 +141,8 @@
                         <option value="Power" data-i18n="exercises.type.power">Power</option>
                     </select>
                     <input type="text" id="exerciseVideoUrl" data-i18n-ph="exercises.videoPh" placeholder="YouTube link (opcionalno)">
+                    <label class="muted small" style="margin-top:6px;">ili učitaj video (mp4, mov, webm, m4v, avi, mkv, 3gp — do 100 MB):</label>
+                    <input type="file" id="exerciseVideoFile" accept="video/*,.mp4,.mov,.webm,.m4v,.avi,.mkv,.3gp">
                     <textarea id="exerciseDescription" data-i18n-ph="exercises.descPh" placeholder="Opis..."></textarea>
                     <div class="row">
                         <button id="saveExerciseBtn" data-i18n="common.save">Spremi</button>
@@ -386,8 +388,7 @@
                     <h3 data-i18n="trainer.clients.newTitle">Novi klijent</h3>
                     <input type="text" id="newClientFullName" data-i18n-ph="common.fullName" placeholder="Ime i prezime">
                     <input type="email" id="newClientEmail" data-i18n-ph="common.email" placeholder="Email" required>
-                    <input type="password" id="newClientPassword" data-i18n-ph="auth.passwordMin" placeholder="Lozinka (min 6)" required minlength="6">
-                    <p class="muted small" data-i18n="trainer.clients.credentialsHint">Nakon kreiranja, daj klijentu ove kredencijale.</p>
+                    <p class="muted small">Sustav će automatski generirati lozinku i poslati klijentu email s pristupnim podacima (jezik mail-a = jezik aplikacije).</p>
                     <div class="row">
                         <button id="saveClientBtn" data-i18n="common.save">Spremi</button>
                         <button id="cancelClientBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
@@ -760,10 +761,7 @@
                 <h2 id="exerciseDetailName"></h2>
                 <div id="exerciseDetailMeta" class="muted small"></div>
 
-                <div id="exerciseDetailVideoWrap" class="video-wrap hidden">
-                    <iframe id="exerciseDetailVideo" allowfullscreen
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-                </div>
+                <div id="exerciseDetailVideoWrap" class="video-wrap hidden"></div>
                 <p id="exerciseDetailNoVideo" class="muted small hidden" data-i18n="exercises.noVideo">Video nije dodan.</p>
 
                 <h4 data-i18n="exercises.descTitle">Opis</h4>
@@ -789,6 +787,9 @@
                     <option value="Power" data-i18n="exercises.type.power">Power</option>
                 </select>
                 <input type="text" id="editExerciseVideoUrl" data-i18n-ph="exercises.videoPh" placeholder="YouTube link (opcionalno)">
+                <label class="muted small" style="margin-top:6px;">ili učitaj video (do 100 MB):</label>
+                <input type="file" id="editExerciseVideoFile" accept="video/*,.mp4,.mov,.webm,.m4v,.avi,.mkv,.3gp">
+                <div class="row" id="editExerciseVideoCurrent" style="margin-top:4px;"></div>
                 <textarea id="editExerciseDescription" data-i18n-ph="exercises.descPh" placeholder="Opis..."></textarea>
                 <div class="row">
                     <button id="saveExerciseEditBtn" data-i18n="common.save">Spremi</button>
@@ -838,6 +839,15 @@
                 <input type="password" id="newPassword" data-i18n-ph="settings.newPassword" placeholder="Nova lozinka (min 6)">
                 <button id="changePasswordBtn" data-i18n="settings.changePassword">Promijeni lozinku</button>
                 <div id="passwordMsg" class="error"></div>
+            </div>
+
+            <div class="card-inset">
+                <h4>Korisnička podrška</h4>
+                <p class="muted small">Imaš problem ili pitanje? Pošalji poruku timu podrške.</p>
+                <input type="text" id="supportSubject" placeholder="Predmet (npr. Ne mogu dodati vježbu)">
+                <textarea id="supportBody" rows="5" placeholder="Opiši problem ili pitanje..."></textarea>
+                <button id="sendSupportBtn">Pošalji podršci</button>
+                <div id="supportMsg" class="error"></div>
             </div>
         </div>
     </div>

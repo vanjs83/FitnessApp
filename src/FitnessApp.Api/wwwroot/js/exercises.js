@@ -82,14 +82,24 @@ const Exercises = {
         const name = document.getElementById('exerciseName').value.trim();
         if (!name) return;
 
+        const fileInput = document.getElementById('exerciseVideoFile');
+        const videoFile = fileInput && fileInput.files && fileInput.files[0];
+
         try {
-            await API.post('/exercises', {
+            const created = await API.post('/exercises', {
                 name,
                 muscleGroup: document.getElementById('exerciseMuscleGroup').value || null,
                 description: document.getElementById('exerciseDescription').value || null,
-                videoUrl: document.getElementById('exerciseVideoUrl').value || null,
+                videoUrl: videoFile ? null : (document.getElementById('exerciseVideoUrl').value || null),
                 type: document.getElementById('exerciseType').value
             });
+            if (videoFile && created && created.id) {
+                try {
+                    await this.uploadVideo(created.id, videoFile);
+                } catch (uploadErr) {
+                    alert('Vježba kreirana, ali upload videa nije uspio: ' + uploadErr.message);
+                }
+            }
             this.resetForm();
             await this.load();
         } catch (err) {
@@ -102,8 +112,43 @@ const Exercises = {
         document.getElementById('exerciseMuscleGroup').value = '';
         document.getElementById('exerciseDescription').value = '';
         document.getElementById('exerciseVideoUrl').value = '';
+        const fileInput = document.getElementById('exerciseVideoFile');
+        if (fileInput) fileInput.value = '';
         document.getElementById('exerciseType').value = 'Strength';
         document.getElementById('newExerciseForm').classList.add('hidden');
+    },
+
+    async uploadVideo(exerciseId, file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch(`/api/exercises/${exerciseId}/video`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: fd
+        });
+        if (!res.ok) {
+            let msg = 'Upload failed.';
+            try { const j = await res.json(); if (j && j.message) msg = j.message; } catch {}
+            throw new Error(msg);
+        }
+        return await res.json();
+    },
+
+    async deleteVideo(exerciseId) {
+        const res = await fetch(`/api/exercises/${exerciseId}/video`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!res.ok) {
+            let msg = 'Delete failed.';
+            try { const j = await res.json(); if (j && j.message) msg = j.message; } catch {}
+            throw new Error(msg);
+        }
+        return await res.json();
+    },
+
+    isLocalVideo(url) {
+        return typeof url === 'string' && url.startsWith('/uploads/exercises/');
     },
 
     showDetail(id) {
@@ -126,17 +171,32 @@ const Exercises = {
         document.getElementById('exerciseDetailMeta').textContent = metaParts.join(' · ');
 
         const videoWrap = document.getElementById('exerciseDetailVideoWrap');
-        const videoFrame = document.getElementById('exerciseDetailVideo');
         const noVideo = document.getElementById('exerciseDetailNoVideo');
-        const embed = this.toYouTubeEmbed(e.videoUrl);
-        if (embed) {
-            videoFrame.src = embed;
+        videoWrap.innerHTML = '';
+        if (this.isLocalVideo(e.videoUrl)) {
+            const v = document.createElement('video');
+            v.src = e.videoUrl;
+            v.controls = true;
+            v.playsInline = true;
+            v.style.width = '100%';
+            v.style.borderRadius = '8px';
+            videoWrap.appendChild(v);
             videoWrap.classList.remove('hidden');
             noVideo.classList.add('hidden');
         } else {
-            videoFrame.src = '';
-            videoWrap.classList.add('hidden');
-            noVideo.classList.remove('hidden');
+            const embed = this.toYouTubeEmbed(e.videoUrl);
+            if (embed) {
+                const iframe = document.createElement('iframe');
+                iframe.src = embed;
+                iframe.allowFullscreen = true;
+                iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                videoWrap.appendChild(iframe);
+                videoWrap.classList.remove('hidden');
+                noVideo.classList.add('hidden');
+            } else {
+                videoWrap.classList.add('hidden');
+                noVideo.classList.remove('hidden');
+            }
         }
 
         document.getElementById('exerciseDetailDescription').textContent = e.description || '—';
@@ -147,7 +207,8 @@ const Exercises = {
     },
 
     closeDetail() {
-        document.getElementById('exerciseDetailVideo').src = '';
+        const wrap = document.getElementById('exerciseDetailVideoWrap');
+        if (wrap) wrap.innerHTML = '';
         document.getElementById('exerciseDetailModal').classList.add('hidden');
         this.current = null;
     },
@@ -158,11 +219,44 @@ const Exercises = {
         document.getElementById('editExerciseName').value = e.name || '';
         document.getElementById('editExerciseMuscleGroup').value = e.muscleGroup || '';
         document.getElementById('editExerciseType').value = e.type || 'Strength';
-        document.getElementById('editExerciseVideoUrl').value = e.videoUrl || '';
+        const ytInput = document.getElementById('editExerciseVideoUrl');
+        ytInput.value = this.isLocalVideo(e.videoUrl) ? '' : (e.videoUrl || '');
+        const fileInput = document.getElementById('editExerciseVideoFile');
+        if (fileInput) fileInput.value = '';
+        this.renderEditVideoCurrent(e);
         document.getElementById('editExerciseDescription').value = e.description || '';
         document.getElementById('exerciseEditMsg').textContent = '';
         document.getElementById('exerciseDetailView').classList.add('hidden');
         document.getElementById('exerciseEditView').classList.remove('hidden');
+    },
+
+    renderEditVideoCurrent(e) {
+        const slot = document.getElementById('editExerciseVideoCurrent');
+        if (!slot) return;
+        slot.innerHTML = '';
+        if (!this.isLocalVideo(e.videoUrl)) return;
+        const label = document.createElement('span');
+        label.className = 'muted small';
+        label.textContent = '✓ Učitan video';
+        label.style.marginRight = '0.6rem';
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'secondary';
+        removeBtn.textContent = 'Ukloni video';
+        removeBtn.addEventListener('click', async () => {
+            if (!confirm('Ukloniti učitani video?')) return;
+            try {
+                const updated = await this.deleteVideo(e.id);
+                this.current = updated;
+                const idx = this.list.findIndex(x => x.id === updated.id);
+                if (idx >= 0) this.list[idx] = updated;
+                this.renderEditVideoCurrent(updated);
+            } catch (err) {
+                document.getElementById('exerciseEditMsg').textContent = err.message;
+            }
+        });
+        slot.appendChild(label);
+        slot.appendChild(removeBtn);
     },
 
     cancelEdit() {
@@ -179,14 +273,27 @@ const Exercises = {
             return;
         }
 
+        const fileInput = document.getElementById('editExerciseVideoFile');
+        const videoFile = fileInput && fileInput.files && fileInput.files[0];
+        const ytLink = document.getElementById('editExerciseVideoUrl').value.trim();
+        const keepLocal = this.isLocalVideo(e.videoUrl) && !videoFile && !ytLink;
+
         try {
-            const updated = await API.put(`/exercises/${e.id}`, {
+            let updated = await API.put(`/exercises/${e.id}`, {
                 name,
                 muscleGroup: document.getElementById('editExerciseMuscleGroup').value || null,
                 description: document.getElementById('editExerciseDescription').value || null,
-                videoUrl: document.getElementById('editExerciseVideoUrl').value || null,
+                videoUrl: videoFile ? null : (ytLink ? ytLink : (keepLocal ? e.videoUrl : null)),
                 type: document.getElementById('editExerciseType').value
             });
+            if (videoFile) {
+                try {
+                    updated = await this.uploadVideo(e.id, videoFile);
+                } catch (uploadErr) {
+                    document.getElementById('exerciseEditMsg').textContent = 'Upload videa nije uspio: ' + uploadErr.message;
+                    return;
+                }
+            }
             this.current = updated;
             const idx = this.list.findIndex(x => x.id === updated.id);
             if (idx >= 0) this.list[idx] = updated;

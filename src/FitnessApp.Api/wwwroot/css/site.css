@@ -146,12 +146,18 @@ button {
     background: #4dabf7;
     border: none;
     color: white;
-    padding: 0.7rem 1.2rem;
-    border-radius: 6px;
+    padding: 0.38rem 0.85rem;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 500;
     transition: background 0.15s;
+}
+
+.modal-content .row > button,
+.modal-content > .row button {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
 }
 button:hover:not(:disabled) { background: #3b95e0; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }

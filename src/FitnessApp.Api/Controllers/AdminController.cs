@@ -55,7 +55,7 @@ public class AdminController : ControllerBase
     {
         var existing = await _userManager.FindByEmailAsync(request.Email);
         if (existing != null)
-            return BadRequest(new { message = "Korisnik s tim emailom već postoji." });
+            return BadRequest(new { message = "A user with this email already exists." });
 
         var user = new ApplicationUser
         {
@@ -180,7 +180,7 @@ public class AdminController : ControllerBase
         var trainer = await _userManager.FindByIdAsync(id);
         if (trainer == null) return NotFound();
         if (!await _userManager.IsInRoleAsync(trainer, Roles.Trainer))
-            return BadRequest(new { message = "Korisnik nije trener." });
+            return BadRequest(new { message = "User is not a trainer." });
 
         var clients = await _db.Users.Where(u => u.TrainerId == id).ToListAsync();
         foreach (var c in clients)

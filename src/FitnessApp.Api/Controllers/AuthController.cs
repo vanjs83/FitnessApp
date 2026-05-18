@@ -50,18 +50,18 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
     {
         if (!Roles.SelfRegisterable.Contains(request.Role))
-            return BadRequest(new { message = $"Nevažeća rola. Dozvoljene: {string.Join(", ", Roles.SelfRegisterable)}." });
+            return BadRequest(new { message = $"Invalid role. Allowed: {string.Join(", ", Roles.SelfRegisterable)}." });
 
         var existing = await _userManager.FindByEmailAsync(request.Email);
         if (existing != null)
-            return BadRequest(new { message = "Korisnik s tim emailom već postoji." });
+            return BadRequest(new { message = "A user with this email already exists." });
 
         string? trainerId = null;
         if (request.Role == Roles.Client && !string.IsNullOrWhiteSpace(request.TrainerId))
         {
             var trainer = await _userManager.FindByIdAsync(request.TrainerId);
             if (trainer == null || !await _userManager.IsInRoleAsync(trainer, Roles.Trainer))
-                return BadRequest(new { message = "Odabrani trener nije pronađen." });
+                return BadRequest(new { message = "Selected trainer not found." });
             trainerId = trainer.Id;
         }
 
@@ -100,11 +100,11 @@ public class AuthController : ControllerBase
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
-            return Unauthorized(new { message = "Pogrešan email ili lozinka." });
+            return Unauthorized(new { message = "Invalid email or password." });
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
         if (!result.Succeeded)
-            return Unauthorized(new { message = "Pogrešan email ili lozinka." });
+            return Unauthorized(new { message = "Invalid email or password." });
 
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? Roles.Client;
@@ -181,7 +181,7 @@ public class AuthController : ControllerBase
         {
             var trainer = await _userManager.FindByIdAsync(request.TrainerId);
             if (trainer == null || !await _userManager.IsInRoleAsync(trainer, Roles.Trainer))
-                return BadRequest(new { message = "Odabrani trener nije pronađen." });
+                return BadRequest(new { message = "Selected trainer not found." });
             user.TrainerId = trainer.Id;
         }
 
@@ -203,7 +203,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
-        return Ok(new { message = "Lozinka uspješno promijenjena." });
+        return Ok(new { message = "Password changed successfully." });
     }
 
     [HttpGet("personal-profile")]
@@ -272,7 +272,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
-        return Ok(new { message = "Profil spremljen." });
+        return Ok(new { message = "Profile saved." });
     }
 
     [HttpPost("profile-image")]
@@ -281,9 +281,9 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> UploadProfileImage(IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest(new { message = "Slika nije priložena." });
+            return BadRequest(new { message = "No image attached." });
         if (file.Length > MaxImageBytes)
-            return BadRequest(new { message = "Slika je veća od 5 MB." });
+            return BadRequest(new { message = "Image is larger than 5 MB." });
 
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!AllowedImageExtensions.Contains(ext))
@@ -333,7 +333,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
-        return Ok(new { message = "Slika uklonjena." });
+        return Ok(new { message = "Image removed." });
     }
 
     private static void DeleteExistingProfileImage(ApplicationUser user, string webRoot)

@@ -1,3 +1,4 @@
+
 using System.Text.Json.Serialization;
 using FitnessApp.Api.Data;
 using FitnessApp.Api.Services;
@@ -8,10 +9,16 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
+using Serilog;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, services, cfg) => cfg
+    .ReadFrom.Configuration(ctx.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext());
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -24,6 +31,7 @@ builder.Services.AddSingleton<TrainingPlanPdfService>();
 builder.Services.AddSingleton<NutritionPlanPdfService>();
 builder.Services.AddSingleton<PlanShareTokenService>();
 builder.Services.AddSingleton<EmailService>();
+builder.Services.AddSingleton<EmailTemplateService>();
 
 builder.Services.AddCors(options =>
 {
@@ -61,6 +69,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging();
 
 using (var scope = app.Services.CreateScope())
 {

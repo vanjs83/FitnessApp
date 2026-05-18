@@ -33,17 +33,17 @@ public class EmailController : ControllerBase
     public async Task<IActionResult> NotifyPlanReady([FromBody] NotifyPlanReadyRequest request)
     {
         if (!_email.IsConfigured)
-            return BadRequest(new { message = "SMTP nije konfiguriran u appsettings.json." });
+            return BadRequest(new { message = "SMTP is not configured in appsettings.json." });
 
         var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.ClientId);
-        if (client == null) return NotFound(new { message = "Klijent ne postoji." });
+        if (client == null) return NotFound(new { message = "Client not found." });
         if (client.TrainerId != UserId) return Forbid();
         if (string.IsNullOrWhiteSpace(client.Email))
-            return BadRequest(new { message = "Klijent nema email adresu." });
+            return BadRequest(new { message = "Client has no email address." });
 
         var trainer = await _db.Users.FirstOrDefaultAsync(u => u.Id == UserId);
         if (string.IsNullOrWhiteSpace(trainer?.Email))
-            return BadRequest(new { message = "Tvoj trenerski profil nema email." });
+            return BadRequest(new { message = "Your trainer profile has no email." });
 
         var trainerName = trainer.FullName ?? trainer.Email;
         var planLabel = request.PlanType == "nutrition" ? "plan prehrane" : "plan treninga";
@@ -73,7 +73,7 @@ Pozdrav,
         }
         catch (Exception ex)
         {
-            return BadRequest(new { message = $"Slanje nije uspjelo: {ex.Message}" });
+            return BadRequest(new { message = $"Sending failed: {ex.Message}" });
         }
     }
 
@@ -81,17 +81,17 @@ Pozdrav,
     public async Task<IActionResult> SendToClient(SendEmailToClientRequest request)
     {
         if (!_email.IsConfigured)
-            return BadRequest(new { message = "SMTP nije konfiguriran u appsettings.json." });
+            return BadRequest(new { message = "SMTP is not configured in appsettings.json." });
 
         var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.ClientId);
-        if (client == null) return NotFound(new { message = "Klijent ne postoji." });
+        if (client == null) return NotFound(new { message = "Client not found." });
         if (client.TrainerId != UserId) return Forbid();
         if (string.IsNullOrWhiteSpace(client.Email))
-            return BadRequest(new { message = "Klijent nema email adresu." });
+            return BadRequest(new { message = "Client has no email address." });
 
         var trainer = await _db.Users.FirstOrDefaultAsync(u => u.Id == UserId);
         if (string.IsNullOrWhiteSpace(trainer?.Email))
-            return BadRequest(new { message = "Tvoj trenerski profil nema email." });
+            return BadRequest(new { message = "Your trainer profile has no email." });
 
         var trainerName = trainer.FullName ?? trainer.Email;
         var htmlBody = WrapBody(request.Body, trainerName);
@@ -110,7 +110,7 @@ Pozdrav,
         }
         catch (Exception ex)
         {
-            return BadRequest(new { message = $"Slanje nije uspjelo: {ex.Message}" });
+            return BadRequest(new { message = $"Sending failed: {ex.Message}" });
         }
     }
 

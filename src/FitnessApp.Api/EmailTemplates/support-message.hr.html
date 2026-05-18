@@ -1,0 +1,41 @@
+<!--
+  Mail koji ide korisničkoj podršci - HR
+  Placeholderi: {{UserName}} {{UserEmail}} {{UserRole}} {{Subject}} {{Body}}
+-->
+<!DOCTYPE html>
+<html lang="hr">
+<head><meta charset="utf-8"><title>Poruka korisničkoj podršci</title></head>
+<body style="margin:0;background:#f4f6f9;font-family:Arial,sans-serif;color:#222;">
+<div style="max-width:640px;margin:0 auto;padding:24px;">
+  <div style="border-bottom:2px solid #4dabf7;padding-bottom:12px;margin-bottom:20px;">
+    <h2 style="margin:0;color:#4dabf7;">FitnessApp &mdash; poruka podršci</h2>
+  </div>
+
+  <table style="border-collapse:collapse;margin:16px 0;width:100%;">
+    <tr>
+      <td style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;width:120px;"><strong>Korisnik</strong></td>
+      <td style="padding:6px 12px;background:#fff;border:1px solid #e2e8f0;">{{UserName}}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;"><strong>Email</strong></td>
+      <td style="padding:6px 12px;background:#fff;border:1px solid #e2e8f0;font-family:monospace;">{{UserEmail}}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;"><strong>Uloga</strong></td>
+      <td style="padding:6px 12px;background:#fff;border:1px solid #e2e8f0;">{{UserRole}}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;"><strong>Predmet</strong></td>
+      <td style="padding:6px 12px;background:#fff;border:1px solid #e2e8f0;">{{Subject}}</td>
+    </tr>
+  </table>
+
+  <h3 style="margin:24px 0 8px;">Poruka</h3>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:14px;white-space:pre-wrap;line-height:1.6;">{{Body}}</div>
+
+  <div style="margin-top:30px;padding-top:16px;border-top:1px solid #eee;color:#888;font-size:13px;">
+    Mail je generiran iz FitnessApp aplikacije. Odgovori &rarr; idu direktno korisniku ({{UserEmail}}).
+  </div>
+</div>
+</body>
+</html>

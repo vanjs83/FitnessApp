@@ -3,6 +3,7 @@ using FitnessApp.Application.DTOs.Exercises;
 using FitnessApp.Domain.Entities;
 using FitnessApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,10 +15,17 @@ namespace FitnessApp.Api.Controllers;
 public class ExercisesController : ControllerBase
 {
     private readonly Infrastructure.Persistence.AppDbContext _db;
+    private readonly IWebHostEnvironment _env;
 
-    public ExercisesController(Infrastructure.Persistence.AppDbContext db)
+    private static readonly string[] AllowedVideoExtensions =
+        { ".mp4", ".mov", ".webm", ".m4v", ".avi", ".mkv", ".3gp" };
+    private const long MaxVideoBytes = 100 * 1024 * 1024;
+    private const string VideoUploadsRelative = "/uploads/exercises/";
+
+    public ExercisesController(Infrastructure.Persistence.AppDbContext db, IWebHostEnvironment env)
     {
         _db = db;
+        _env = env;
     }
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -76,7 +84,7 @@ public class ExercisesController : ControllerBase
 
         var usedInPlan = await _db.PlannedExercises.AnyAsync(pe => pe.ExerciseId == id);
         if (usedInPlan)
-            return BadRequest(new { message = "Vježba je u upotrebi u planovima — prvo je makni iz njih." });
+            return BadRequest(new { message = "Exercise is in use in plans — remove it from them first." });
 
         _db.Exercises.Remove(e);
         await _db.SaveChangesAsync();
@@ -135,5 +143,67 @@ public class ExercisesController : ControllerBase
         if (string.IsNullOrWhiteSpace(url)) return null;
         var trimmed = url.Trim();
         return trimmed.Length == 0 ? null : trimmed;
+    }
+
+    [HttpPost("{id:int}/video")]
+    [RequestSizeLimit(MaxVideoBytes + 1024)]
+    public async Task<ActionResult<ExerciseDto>> UploadVideo(int id, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { message = "No video attached." });
+        if (file.Length > MaxVideoBytes)
+            return BadRequest(new { message = $"Video is larger than {MaxVideoBytes / (1024 * 1024)} MB." });
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!AllowedVideoExtensions.Contains(ext))
+            return BadRequest(new { message = $"Allowed formats: {string.Join(", ", AllowedVideoExtensions)}." });
+
+        var e = await _db.Exercises.FindAsync(id);
+        if (e == null) return NotFound();
+        if (e.CreatedByUserId != UserId) return Forbid();
+
+        var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+        var folder = Path.Combine(webRoot, "uploads", "exercises");
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"{e.Id}_{Guid.NewGuid():N}{ext}";
+        var fullPath = Path.Combine(folder, fileName);
+        await using (var stream = System.IO.File.Create(fullPath))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        DeleteExistingLocalVideo(e, webRoot);
+
+        e.VideoUrl = $"{VideoUploadsRelative}{fileName}";
+        await _db.SaveChangesAsync();
+
+        return Ok(MapDto(e));
+    }
+
+    [HttpDelete("{id:int}/video")]
+    public async Task<ActionResult<ExerciseDto>> DeleteVideo(int id)
+    {
+        var e = await _db.Exercises.FindAsync(id);
+        if (e == null) return NotFound();
+        if (e.CreatedByUserId != UserId) return Forbid();
+
+        var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+        DeleteExistingLocalVideo(e, webRoot);
+
+        e.VideoUrl = null;
+        await _db.SaveChangesAsync();
+
+        return Ok(MapDto(e));
+    }
+
+    private static void DeleteExistingLocalVideo(Exercise e, string webRoot)
+    {
+        if (string.IsNullOrWhiteSpace(e.VideoUrl)) return;
+        if (!e.VideoUrl.StartsWith(VideoUploadsRelative, StringComparison.OrdinalIgnoreCase)) return;
+        var relative = e.VideoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var full = Path.Combine(webRoot, relative);
+        try { if (System.IO.File.Exists(full)) System.IO.File.Delete(full); }
+        catch { /* ignore — file might be in use, will be GC-cleaned later */ }
     }
 }

@@ -129,10 +129,10 @@ public class NutritionPlansController : ControllerBase
     public async Task<ActionResult<NutritionPlanDetailDto>> Create(CreateNutritionPlanRequest request)
     {
         if (request.EndDate < request.StartDate)
-            return BadRequest(new { message = "Datum kraja mora biti nakon datuma početka." });
+            return BadRequest(new { message = "End date must be after start date." });
 
         var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.ClientId);
-        if (client == null) return BadRequest(new { message = "Klijent ne postoji." });
+        if (client == null) return BadRequest(new { message = "Client not found." });
         if (client.TrainerId != UserId) return Forbid();
 
         var plan = new NutritionPlan
@@ -161,7 +161,7 @@ public class NutritionPlansController : ControllerBase
     public async Task<IActionResult> Update(int id, UpdateNutritionPlanRequest request)
     {
         if (request.EndDate < request.StartDate)
-            return BadRequest(new { message = "Datum kraja mora biti nakon datuma početka." });
+            return BadRequest(new { message = "End date must be after start date." });
 
         var plan = await _db.NutritionPlans.FirstOrDefaultAsync(p => p.Id == id);
         if (plan == null) return NotFound();
@@ -192,7 +192,7 @@ public class NutritionPlansController : ControllerBase
         if (plan == null) return NotFound();
         if (plan.ClientId != UserId) return Forbid();
         if (plan.PaymentStatus == PaymentStatus.Approved)
-            return BadRequest(new { message = "Plan je već odobren." });
+            return BadRequest(new { message = "Plan is already approved." });
 
         plan.PaymentStatus = PaymentStatus.PaymentClaimed;
         plan.PaymentClaimedAt = DateTime.UtcNow;
@@ -222,7 +222,7 @@ public class NutritionPlansController : ControllerBase
         if (plan == null) return NotFound();
         if (plan.TrainerId != UserId) return Forbid();
         if (plan.Price <= 0)
-            return BadRequest(new { message = "Besplatni plan se ne može zaključati." });
+            return BadRequest(new { message = "A free plan cannot be locked." });
 
         plan.PaymentStatus = PaymentStatus.Pending;
         plan.ApprovedAt = null;
@@ -290,7 +290,7 @@ public class NutritionPlansController : ControllerBase
         var tpl = await _db.NutritionPlans.FirstOrDefaultAsync(p => p.Id == id);
         if (tpl == null) return NotFound();
         if (tpl.TrainerId != UserId) return Forbid();
-        if (!tpl.IsTemplate) return BadRequest(new { message = "Nije predložak." });
+        if (!tpl.IsTemplate) return BadRequest(new { message = "Not a template." });
 
         tpl.Name = request.Name;
         tpl.Notes = request.Notes;
@@ -303,17 +303,17 @@ public class NutritionPlansController : ControllerBase
     public async Task<ActionResult<NutritionPlanDetailDto>> CloneTemplate(int templateId, CloneNutritionTemplateRequest request)
     {
         if (request.EndDate < request.StartDate)
-            return BadRequest(new { message = "Datum kraja mora biti nakon datuma početka." });
+            return BadRequest(new { message = "End date must be after start date." });
 
         var tpl = await _db.NutritionPlans
             .Include(p => p.Days).ThenInclude(d => d.Meals).ThenInclude(m => m.Items)
             .FirstOrDefaultAsync(p => p.Id == templateId);
         if (tpl == null) return NotFound();
         if (tpl.TrainerId != UserId) return Forbid();
-        if (!tpl.IsTemplate) return BadRequest(new { message = "Plan nije predložak." });
+        if (!tpl.IsTemplate) return BadRequest(new { message = "Plan is not a template." });
 
         var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.ClientId);
-        if (client == null) return BadRequest(new { message = "Klijent ne postoji." });
+        if (client == null) return BadRequest(new { message = "Client not found." });
         if (client.TrainerId != UserId) return Forbid();
 
         var plan = new NutritionPlan
@@ -631,7 +631,7 @@ public class NutritionPlansController : ControllerBase
     {
         var plan = await _db.NutritionPlans.FirstOrDefaultAsync(p => p.Id == id);
         if (plan == null) return NotFound();
-        if (plan.IsTemplate) return BadRequest(new { message = "Predlošci se ne dijele." });
+        if (plan.IsTemplate) return BadRequest(new { message = "Templates cannot be shared." });
 
         if (IsTrainer && plan.TrainerId != UserId) return Forbid();
         if (!IsTrainer && plan.ClientId != UserId) return Forbid();
@@ -658,7 +658,7 @@ public class NutritionPlansController : ControllerBase
     public async Task<IActionResult> DownloadSharedPdf(string token)
     {
         if (!_shareTokens.TryValidateForKind(ShareKind, token, out var planId))
-            return NotFound(new { message = "Link je istekao ili nije valjan." });
+            return NotFound(new { message = "Link expired or invalid." });
 
         var plan = await _db.NutritionPlans
             .Include(p => p.Days).ThenInclude(d => d.Meals).ThenInclude(m => m.Items)

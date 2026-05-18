@@ -41,7 +41,7 @@ public class EmailService
         string? replyToName = null)
     {
         if (!IsConfigured)
-            throw new InvalidOperationException("SMTP nije konfiguriran u appsettings.json (Smtp sekcija).");
+            throw new InvalidOperationException("SMTP is not configured in appsettings.json (Smtp section).");
 
         var displayFrom = string.IsNullOrWhiteSpace(fromEmail) ? _settings.FromEmail : fromEmail;
         var displayName = string.IsNullOrWhiteSpace(fromName) ? _settings.FromName : fromName;
@@ -65,6 +65,6 @@ public class EmailService
         };
 
         await client.SendMailAsync(msg);
-        _logger.LogInformation("Email poslan na {To} (from: {From}, subject: {Subject})", toEmail, displayFrom, subject);
+        _logger.LogInformation("Email sent to {To} (from: {From}, subject: {Subject})", toEmail, displayFrom, subject);
     }
 }

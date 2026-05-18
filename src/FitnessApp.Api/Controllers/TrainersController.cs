@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.DTOs.Stats;
 using FitnessApp.Application.DTOs.Trainers;
@@ -20,11 +22,22 @@ public class TrainersController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly Infrastructure.Persistence.AppDbContext _db;
+    private readonly EmailService _email;
+    private readonly EmailTemplateService _emailTemplates;
+    private readonly ILogger<TrainersController> _logger;
 
-    public TrainersController(UserManager<ApplicationUser> userManager, Infrastructure.Persistence.AppDbContext db)
+    public TrainersController(
+        UserManager<ApplicationUser> userManager,
+        Infrastructure.Persistence.AppDbContext db,
+        EmailService email,
+        EmailTemplateService emailTemplates,
+        ILogger<TrainersController> logger)
     {
         _userManager = userManager;
         _db = db;
+        _email = email;
+        _emailTemplates = emailTemplates;
+        _logger = logger;
     }
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -51,7 +64,19 @@ public class TrainersController : ControllerBase
     {
         var existing = await _userManager.FindByEmailAsync(request.Email);
         if (existing != null)
-            return BadRequest(new { message = "Korisnik s tim emailom već postoji." });
+            return BadRequest(new { message = "A user with this email already exists." });
+
+        if (!_email.IsConfigured)
+            return BadRequest(new { message = "SMTP is not configured. Client was not created." });
+
+        var trainer = await _db.Users.FirstOrDefaultAsync(u => u.Id == UserId);
+        if (trainer == null || string.IsNullOrWhiteSpace(trainer.Email))
+            return BadRequest(new { message = "Trainer has no email in profile. Client was not created." });
+
+        var tempPassword = GenerateTempPassword();
+
+        if (!await TrySendWelcomeEmailAsync(request, trainer, tempPassword))
+            return BadRequest(new { message = "Sending email failed. Client was not created — check the email address and try again." });
 
         var user = new ApplicationUser
         {
@@ -62,9 +87,13 @@ public class TrainersController : ControllerBase
             TrainerId = UserId
         };
 
-        var result = await _userManager.CreateAsync(user, request.Password);
+        var result = await _userManager.CreateAsync(user, tempPassword);
         if (!result.Succeeded)
+        {
+            _logger.LogError("Welcome email was sent to {Email} but user creation failed: {Errors}",
+                request.Email, string.Join("; ", result.Errors.Select(e => e.Description)));
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+        }
 
         await _userManager.AddToRoleAsync(user, Roles.Client);
 
@@ -78,6 +107,67 @@ public class TrainersController : ControllerBase
             PerformedSetCount = 0,
             ProfileImageUrl = user.ProfileImagePath
         });
+    }
+
+    private async Task<bool> TrySendWelcomeEmailAsync(CreateClientRequest request, ApplicationUser trainer, string tempPassword)
+    {
+        var trainerName = trainer.FullName ?? trainer.Email!;
+        var lang = (request.Language ?? "hr").ToLowerInvariant();
+        var loginUrl = $"{Request.Scheme}://{Request.Host}/";
+
+        var greeting = lang == "en"
+            ? (string.IsNullOrWhiteSpace(request.FullName) ? "Hi" : $"Hi {request.FullName}")
+            : (string.IsNullOrWhiteSpace(request.FullName) ? "Bok" : $"Bok {request.FullName}");
+
+        var subject = lang == "en"
+            ? "Welcome to FitnessApp — your sign-in details"
+            : "Dobrodošao u FitnessApp — tvoji pristupni podaci";
+
+        var placeholders = new Dictionary<string, string>
+        {
+            ["Greeting"] = greeting,
+            ["TrainerName"] = trainerName,
+            ["Email"] = request.Email,
+            ["Password"] = tempPassword,
+            ["LoginUrl"] = loginUrl
+        };
+
+        string html;
+        try
+        {
+            html = _emailTemplates.Render("welcome-client", lang, placeholders);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to render welcome-client email template (lang={Lang}).", lang);
+            return false;
+        }
+
+        try
+        {
+            await _email.SendAsync(
+                toEmail: request.Email,
+                subject: subject,
+                body: html,
+                replyTo: trainer.Email,
+                replyToName: trainerName);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send welcome email to {ClientEmail}.", request.Email);
+            return false;
+        }
+    }
+
+    private static string GenerateTempPassword(int length = 10)
+    {
+        const string chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        var bytes = RandomNumberGenerator.GetBytes(length);
+        var sb = new System.Text.StringBuilder(length);
+        for (int i = 0; i < length; i++)
+            sb.Append(chars[bytes[i] % chars.Length]);
+        return sb.ToString();
     }
 
     [HttpGet("me/clients")]
@@ -107,7 +197,7 @@ public class TrainersController : ControllerBase
     public async Task<ActionResult<IEnumerable<TrainedExerciseDto>>> GetClientTrainedExercises(string clientId)
     {
         var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == clientId);
-        if (client == null) return NotFound(new { message = "Klijent ne postoji." });
+        if (client == null) return NotFound(new { message = "Client not found." });
         if (client.TrainerId != UserId) return Forbid();
 
         var data = await _db.PerformedSets
@@ -167,9 +257,9 @@ public class TrainersController : ControllerBase
     public async Task<ActionResult<PersonalProfileDto>> GetTrainerProfile(string trainerId)
     {
         var trainer = await _userManager.FindByIdAsync(trainerId);
-        if (trainer == null) return NotFound(new { message = "Trener ne postoji." });
+        if (trainer == null) return NotFound(new { message = "Trainer not found." });
         if (!await _userManager.IsInRoleAsync(trainer, Roles.Trainer))
-            return BadRequest(new { message = "Korisnik nije trener." });
+            return BadRequest(new { message = "User is not a trainer." });
 
         return Ok(new PersonalProfileDto
         {
@@ -195,7 +285,7 @@ public class TrainersController : ControllerBase
     public async Task<ActionResult<PersonalProfileDto>> GetClientProfile(string clientId)
     {
         var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == clientId);
-        if (client == null) return NotFound(new { message = "Klijent ne postoji." });
+        if (client == null) return NotFound(new { message = "Client not found." });
         if (client.TrainerId != UserId) return Forbid();
 
         return Ok(new PersonalProfileDto
@@ -303,7 +393,7 @@ public class TrainersController : ControllerBase
         if (workout.TrainerId != UserId) return Forbid();
 
         var exercise = await _db.Exercises.FirstOrDefaultAsync(e => e.Id == request.ExerciseId);
-        if (exercise == null) return BadRequest(new { message = "Vježba ne postoji." });
+        if (exercise == null) return BadRequest(new { message = "Exercise not found." });
 
         var entity = new WorkoutExercise
         {
@@ -326,7 +416,7 @@ public class TrainersController : ControllerBase
         if (workout == null) return NotFound();
         if (workout.TrainerId != UserId) return Forbid();
         if (!workout.Exercises.Any(we => we.Id == request.WorkoutExerciseId))
-            return BadRequest(new { message = "Vježba ne pripada ovom treningu." });
+            return BadRequest(new { message = "Exercise does not belong to this workout." });
 
         var entity = new WorkoutSet
         {

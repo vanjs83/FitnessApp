@@ -1,0 +1,52 @@
+<!--
+  Welcome mail za novog klijenta — HR
+  Placeholderi: {{Greeting}} {{TrainerName}} {{Email}} {{Password}} {{LoginUrl}}
+-->
+<!DOCTYPE html>
+<html lang="hr">
+<head><meta charset="utf-8"><title>Dobrodošao u FitnessApp</title></head>
+<body style="margin:0;background:#f4f6f9;font-family:Arial,sans-serif;color:#222;">
+<div style="max-width:600px;margin:0 auto;padding:24px;">
+  <div style="border-bottom:2px solid #4dabf7;padding-bottom:12px;margin-bottom:20px;">
+    <h2 style="margin:0;color:#4dabf7;">&#128170; FitnessApp</h2>
+  </div>
+
+  <p>{{Greeting}},</p>
+  <p>
+    Tvoj trener <strong>{{TrainerName}}</strong> ti je otvorio nalog u FitnessApp aplikaciji.
+    Tvoj nalog je već <strong>povezan s ovim trenerom</strong> — čim se prijaviš, vidjet ćeš
+    planove treninga i prehrane koje ti on zada.
+  </p>
+  <p>Prijavi se svojim emailom i privremenom lozinkom:</p>
+
+  <table style="border-collapse:collapse;margin:16px 0;">
+    <tr>
+      <td style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;"><strong>Email</strong></td>
+      <td style="padding:6px 12px;background:#fff;border:1px solid #e2e8f0;font-family:monospace;">{{Email}}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;"><strong>Lozinka</strong></td>
+      <td style="padding:6px 12px;background:#fff;border:1px solid #e2e8f0;font-family:monospace;">{{Password}}</td>
+    </tr>
+  </table>
+
+  <p>
+    <a href="{{LoginUrl}}" style="display:inline-block;background:#4dabf7;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">
+      Prijavi se u FitnessApp
+    </a>
+  </p>
+
+  <p style="margin-top:24px;"><strong>Kad se prvi put prijaviš, napravi tri stvari:</strong></p>
+  <ol style="padding-left:20px;line-height:1.7;">
+    <li>Otvori <em>Postavke &rarr; Promjena lozinke</em> i postavi svoju lozinku.</li>
+    <li>Otvori <em>Osobni podaci</em> i ispuni profil (visina, težina, cilj, razina aktivnosti, zdravstvene napomene) — trener te podatke koristi za izradu tvog plana.</li>
+    <li>Pogledaj svoje planove treninga i prehrane koje ti je trener {{TrainerName}} pripremio.</li>
+  </ol>
+
+  <div style="margin-top:30px;padding-top:16px;border-top:1px solid #eee;color:#888;font-size:13px;">
+    Mail je poslan u ime tvog trenera <strong>{{TrainerName}}</strong> preko FitnessApp platforme.
+    Ako želiš odgovoriti treneru, jednostavno odgovori na ovaj email.
+  </div>
+</div>
+</body>
+</html>

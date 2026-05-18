@@ -11,6 +11,8 @@ const Settings = {
         });
         document.getElementById('saveProfileBtn').addEventListener('click', () => this.saveProfile());
         document.getElementById('changePasswordBtn').addEventListener('click', () => this.changePassword());
+        const supportBtn = document.getElementById('sendSupportBtn');
+        if (supportBtn) supportBtn.addEventListener('click', () => this.sendSupport());
 
         document.getElementById('settingsTrainerSearch').addEventListener('input', e => {
             this.trainerSearch = e.target.value.toLowerCase();
@@ -135,6 +137,37 @@ const Settings = {
         document.getElementById('settingsModal').classList.add('hidden');
         document.getElementById('currentPassword').value = '';
         document.getElementById('newPassword').value = '';
+        const supSubj = document.getElementById('supportSubject');
+        const supBody = document.getElementById('supportBody');
+        const supMsg = document.getElementById('supportMsg');
+        if (supSubj) supSubj.value = '';
+        if (supBody) supBody.value = '';
+        if (supMsg) { supMsg.textContent = ''; supMsg.style.color = ''; }
+    },
+
+    async sendSupport() {
+        const msg = document.getElementById('supportMsg');
+        msg.textContent = '';
+        msg.style.color = '';
+
+        const subject = document.getElementById('supportSubject').value.trim();
+        const body = document.getElementById('supportBody').value.trim();
+        if (!subject) { msg.textContent = 'Predmet je obavezan.'; return; }
+        if (!body) { msg.textContent = 'Poruka je obavezna.'; return; }
+
+        try {
+            await API.post('/support/contact', {
+                subject,
+                body,
+                language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
+            });
+            msg.style.color = '#51cf66';
+            msg.textContent = '✓ Poruka poslana podršci.';
+            document.getElementById('supportSubject').value = '';
+            document.getElementById('supportBody').value = '';
+        } catch (err) {
+            msg.textContent = err.message;
+        }
     },
 
     async saveProfile() {

@@ -21,6 +21,8 @@ namespace FitnessApp.Api.Controllers;
 [Route("api/training-plans")]
 public class TrainingPlansController : ControllerBase
 {
+    private const string ShareKind = "training";
+
     private readonly AppDbContext _db;
     private readonly TrainingPlanPdfService _pdfService;
     private readonly PlanShareTokenService _shareTokens;
@@ -133,10 +135,10 @@ public class TrainingPlansController : ControllerBase
     public async Task<ActionResult<TrainingPlanDetailDto>> Create(CreateTrainingPlanRequest request)
     {
         if (request.EndDate < request.StartDate)
-            return BadRequest(new { message = "Datum kraja mora biti nakon datuma početka." });
+            return BadRequest(new { message = "End date must be after start date." });
 
         var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.ClientId);
-        if (client == null) return BadRequest(new { message = "Klijent ne postoji." });
+        if (client == null) return BadRequest(new { message = "Client not found." });
         if (client.TrainerId != UserId) return Forbid();
 
         var plan = new TrainingPlan
@@ -165,7 +167,7 @@ public class TrainingPlansController : ControllerBase
     public async Task<IActionResult> Update(int id, UpdateTrainingPlanRequest request)
     {
         if (request.EndDate < request.StartDate)
-            return BadRequest(new { message = "Datum kraja mora biti nakon datuma početka." });
+            return BadRequest(new { message = "End date must be after start date." });
 
         var plan = await _db.TrainingPlans.FirstOrDefaultAsync(p => p.Id == id);
         if (plan == null) return NotFound();
@@ -201,7 +203,7 @@ public class TrainingPlansController : ControllerBase
         if (plan.ClientId != UserId) return Forbid();
 
         if (plan.PaymentStatus == PaymentStatus.Approved)
-            return BadRequest(new { message = "Plan je već odobren." });
+            return BadRequest(new { message = "Plan is already approved." });
 
         plan.PaymentStatus = PaymentStatus.PaymentClaimed;
         plan.PaymentClaimedAt = DateTime.UtcNow;
@@ -234,7 +236,7 @@ public class TrainingPlansController : ControllerBase
         if (plan.TrainerId != UserId) return Forbid();
 
         if (plan.Price <= 0)
-            return BadRequest(new { message = "Besplatni plan se ne može zaključati." });
+            return BadRequest(new { message = "A free plan cannot be locked." });
 
         plan.PaymentStatus = PaymentStatus.Pending;
         plan.ApprovedAt = null;
@@ -309,7 +311,7 @@ public class TrainingPlansController : ControllerBase
         var template = await _db.TrainingPlans.FirstOrDefaultAsync(p => p.Id == id);
         if (template == null) return NotFound();
         if (template.TrainerId != UserId) return Forbid();
-        if (!template.IsTemplate) return BadRequest(new { message = "Nije predložak." });
+        if (!template.IsTemplate) return BadRequest(new { message = "Not a template." });
 
         template.Name = request.Name;
         template.TrainerExpectations = request.TrainerExpectations;
@@ -322,17 +324,17 @@ public class TrainingPlansController : ControllerBase
     public async Task<ActionResult<TrainingPlanDetailDto>> CloneTemplateToClient(int templateId, CloneTemplateToClientRequest request)
     {
         if (request.EndDate < request.StartDate)
-            return BadRequest(new { message = "Datum kraja mora biti nakon datuma početka." });
+            return BadRequest(new { message = "End date must be after start date." });
 
         var template = await _db.TrainingPlans
             .Include(p => p.Days).ThenInclude(d => d.Exercises)
             .FirstOrDefaultAsync(p => p.Id == templateId);
         if (template == null) return NotFound();
         if (template.TrainerId != UserId) return Forbid();
-        if (!template.IsTemplate) return BadRequest(new { message = "Plan nije predložak." });
+        if (!template.IsTemplate) return BadRequest(new { message = "Plan is not a template." });
 
         var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.ClientId);
-        if (client == null) return BadRequest(new { message = "Klijent ne postoji." });
+        if (client == null) return BadRequest(new { message = "Client not found." });
         if (client.TrainerId != UserId) return Forbid();
 
         var newPlan = new TrainingPlan
@@ -491,12 +493,12 @@ public class TrainingPlansController : ControllerBase
         if (day.TrainingPlan.TrainerId != UserId) return Forbid();
 
         var exercise = await _db.Exercises.FindAsync(request.ExerciseId);
-        if (exercise == null) return BadRequest(new { message = "Vježba ne postoji." });
+        if (exercise == null) return BadRequest(new { message = "Exercise not found." });
         if (exercise.CreatedByUserId != UserId)
-            return BadRequest(new { message = "Možeš koristiti samo svoje vježbe." });
+            return BadRequest(new { message = "You can only use your own exercises." });
 
         if (request.TargetReps <= 0 && !request.TargetDurationSeconds.HasValue)
-            return BadRequest(new { message = "Vježba mora imati ili ponavljanja ili trajanje." });
+            return BadRequest(new { message = "Exercise must have either reps or duration." });
 
         var pe = new PlannedExercise
         {
@@ -584,9 +586,9 @@ public class TrainingPlansController : ControllerBase
         if (day == null) return NotFound();
         if (day.TrainingPlan.ClientId != UserId) return Forbid();
         if (day.TrainingPlan.PaymentStatus != PaymentStatus.Approved)
-            return BadRequest(new { message = "Plan nije odobren." });
+            return BadRequest(new { message = "Plan is not approved." });
         if (!day.Exercises.Any())
-            return BadRequest(new { message = "Dan nema vježbi za označiti." });
+            return BadRequest(new { message = "The day has no exercises to mark." });
 
         var today = DateTime.UtcNow.Date;
         var tomorrow = today.AddDays(1);
@@ -630,7 +632,7 @@ public class TrainingPlansController : ControllerBase
         if (pe == null) return NotFound();
         if (pe.TrainingDay.TrainingPlan.ClientId != UserId) return Forbid();
         if (pe.TrainingDay.TrainingPlan.PaymentStatus != PaymentStatus.Approved)
-            return BadRequest(new { message = "Plan nije odobren." });
+            return BadRequest(new { message = "Plan is not approved." });
 
         var today = DateTime.UtcNow.Date;
         var tomorrow = today.AddDays(1);
@@ -699,7 +701,7 @@ public class TrainingPlansController : ControllerBase
         if (pe == null) return NotFound();
         if (pe.TrainingDay.TrainingPlan.ClientId != UserId) return Forbid();
         if (pe.TrainingDay.TrainingPlan.PaymentStatus != PaymentStatus.Approved)
-            return BadRequest(new { message = "Plan nije odobren." });
+            return BadRequest(new { message = "Plan is not approved." });
 
         var entity = new PerformedSet
         {
@@ -735,7 +737,7 @@ public class TrainingPlansController : ControllerBase
         if (ps == null) return NotFound();
         if (ps.PlannedExercise.TrainingDay.TrainingPlan.ClientId != UserId) return Forbid();
         if (ps.PlannedExercise.TrainingDay.TrainingPlan.PaymentStatus != PaymentStatus.Approved)
-            return BadRequest(new { message = "Plan nije odobren." });
+            return BadRequest(new { message = "Plan is not approved." });
 
         _db.PerformedSets.Remove(ps);
         await _db.SaveChangesAsync();
@@ -836,7 +838,7 @@ public class TrainingPlansController : ControllerBase
         if (IsTrainer && plan.TrainerId != UserId) return Forbid();
         if (!IsTrainer && plan.ClientId != UserId) return Forbid();
         if (!IsTrainer && plan.PaymentStatus != PaymentStatus.Approved)
-            return BadRequest(new { message = "Plan nije odobren." });
+            return BadRequest(new { message = "Plan is not approved." });
 
         var bytes = await BuildPdfBytes(plan);
         return File(bytes, "application/pdf", PdfFileName(plan));
@@ -856,10 +858,10 @@ public class TrainingPlansController : ControllerBase
         {
             if (plan.ClientId != UserId) return Forbid();
             if (plan.PaymentStatus != PaymentStatus.Approved)
-                return BadRequest(new { message = "Plan nije odobren." });
+                return BadRequest(new { message = "Plan is not approved." });
         }
 
-        var token = _shareTokens.Create(plan.Id);
+        var token = _shareTokens.CreateForKind(ShareKind, plan.Id);
         var baseUrl = BuildPublicBaseUrl();
         var shareUrl = $"{baseUrl}/api/training-plans/share/{token}/pdf";
 
@@ -880,13 +882,13 @@ public class TrainingPlansController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> DownloadSharedPdf(string token)
     {
-        if (!_shareTokens.TryValidate(token, out var planId))
-            return NotFound(new { message = "Link je istekao ili nije valjan." });
+        if (!_shareTokens.TryValidateForKind(ShareKind, token, out var planId))
+            return NotFound(new { message = "Link expired or invalid." });
 
         var plan = await LoadPlanForExport(planId);
         if (plan == null) return NotFound();
         if (plan.PaymentStatus != PaymentStatus.Approved)
-            return NotFound(new { message = "Plan nije dostupan." });
+            return NotFound(new { message = "Plan is not available." });
 
         var bytes = await BuildPdfBytes(plan);
         return File(bytes, "application/pdf", PdfFileName(plan));

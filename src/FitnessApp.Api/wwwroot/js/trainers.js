@@ -58,16 +58,15 @@ const Trainers = {
         errorEl.textContent = '';
 
         const email = document.getElementById('newClientEmail').value.trim();
-        const password = document.getElementById('newClientPassword').value;
         if (!email) { errorEl.textContent = 'Email je obavezan.'; return; }
-        if (password.length < 6) { errorEl.textContent = 'Lozinka mora imati barem 6 znakova.'; return; }
 
         try {
             await API.post('/trainers/me/clients', {
                 email,
-                password,
-                fullName: document.getElementById('newClientFullName').value || null
+                fullName: document.getElementById('newClientFullName').value || null,
+                language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
             });
+            alert(`✓ Klijent kreiran. Mail s pristupnim podacima poslan na ${email}.`);
             this.resetNewClientForm();
             await this.load();
         } catch (err) {
@@ -78,8 +77,9 @@ const Trainers = {
     resetNewClientForm() {
         document.getElementById('newClientFullName').value = '';
         document.getElementById('newClientEmail').value = '';
-        document.getElementById('newClientPassword').value = '';
         document.getElementById('newClientError').textContent = '';
+        const resultBox = document.getElementById('newClientResultBox');
+        if (resultBox) resultBox.classList.add('hidden');
         document.getElementById('newClientForm').classList.add('hidden');
     },
 
@@ -240,16 +240,10 @@ const Trainers = {
     },
 
     async loadClientNutritionPlans() {
-        console.log('[NUT] loadClientNutritionPlans called', this.currentClient?.id);
         const container = document.getElementById('clientNutritionPlansList');
-        if (!container) {
-            console.warn('[NUT] clientNutritionPlansList element NOT in DOM — stale HTML?');
-            return;
-        }
+        if (!container) return;
         try {
-            console.log('[NUT] calling API.get /nutrition-plans/client/', this.currentClient.id);
             const plans = await API.get(`/nutrition-plans/client/${this.currentClient.id}`);
-            console.log('[NUT] got', plans.length, 'plans');
             if (!plans.length) {
                 container.innerHTML = '<p class="muted">Klijent još nema plan prehrane.</p>';
                 return;
