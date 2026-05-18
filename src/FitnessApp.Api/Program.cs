@@ -7,6 +7,7 @@ using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
 using Serilog;
@@ -32,6 +33,9 @@ builder.Services.AddSingleton<NutritionPlanPdfService>();
 builder.Services.AddSingleton<PlanShareTokenService>();
 builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<EmailTemplateService>();
+builder.Services.AddSingleton<FileStorageService>();
+
+builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection("Storage"));
 
 builder.Services.AddCors(options =>
 {
@@ -98,6 +102,27 @@ defaultFiles.DefaultFileNames.Add("landing.html");
 defaultFiles.DefaultFileNames.Add("index.html");
 app.UseDefaultFiles(defaultFiles);
 app.UseStaticFiles();
+
+var storage = app.Configuration.GetSection("Storage").Get<StorageSettings>() ?? new StorageSettings();
+foreach (var (rawPath, urlPrefix) in new[]
+{
+    (storage.ProfileImagesPath, storage.ProfileImagesUrl),
+    (storage.ExerciseVideosPath, storage.ExerciseVideosUrl)
+})
+{
+    if (string.IsNullOrWhiteSpace(rawPath) || string.IsNullOrWhiteSpace(urlPrefix)) continue;
+    var resolved = Path.IsPathRooted(rawPath) ? rawPath : Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, rawPath));
+    Directory.CreateDirectory(resolved);
+    var wwwroot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+    if (!resolved.StartsWith(wwwroot, StringComparison.OrdinalIgnoreCase))
+    {
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(resolved),
+            RequestPath = urlPrefix.TrimEnd('/')
+        });
+    }
+}
 
 app.UseCors();
 

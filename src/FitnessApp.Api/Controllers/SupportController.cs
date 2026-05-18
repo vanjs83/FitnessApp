@@ -95,5 +95,5 @@ public class SupportController : ControllerBase
         }
     }
 
-    private string? SupportEmail => _config["Support:Email"];
+    private string? SupportEmail => _config["Smtp:FromEmail"];
 }

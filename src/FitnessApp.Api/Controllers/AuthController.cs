@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FitnessApp.Api.Data;
+using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Common;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Api.Controllers;
 
@@ -24,6 +26,8 @@ public class AuthController : ControllerBase
     private readonly ITokenService _tokenService;
     private readonly Infrastructure.Persistence.AppDbContext _db;
     private readonly IWebHostEnvironment _env;
+    private readonly StorageSettings _storage;
+    private readonly FileStorageService _files;
 
     private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
     private const long MaxImageBytes = 5 * 1024 * 1024;
@@ -34,7 +38,9 @@ public class AuthController : ControllerBase
         RoleManager<IdentityRole> roleManager,
         ITokenService tokenService,
         Infrastructure.Persistence.AppDbContext db,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        IOptions<StorageSettings> storage,
+        FileStorageService files)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -42,7 +48,18 @@ public class AuthController : ControllerBase
         _tokenService = tokenService;
         _db = db;
         _env = env;
+        _storage = storage.Value;
+        _files = files;
     }
+
+    private FileUploadOptions ProfileImageOptions(string userId) => new()
+    {
+        FolderPath = _storage.ResolveProfileImagesPath(_env.ContentRootPath),
+        UrlPrefix = _storage.ProfileImagesUrl,
+        AllowedExtensions = AllowedImageExtensions,
+        MaxBytes = MaxImageBytes,
+        FileNamePrefix = userId
+    };
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
@@ -280,42 +297,25 @@ public class AuthController : ControllerBase
     [RequestSizeLimit(MaxImageBytes + 1024)]
     public async Task<IActionResult> UploadProfileImage(IFormFile file)
     {
-        if (file == null || file.Length == 0)
-            return BadRequest(new { message = "No image attached." });
-        if (file.Length > MaxImageBytes)
-            return BadRequest(new { message = "Image is larger than 5 MB." });
-
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!AllowedImageExtensions.Contains(ext))
-            return BadRequest(new { message = "Dozvoljeni formati: JPG, PNG, WEBP." });
-
         var user = await _userManager.FindByIdAsync(UserId);
         if (user == null) return NotFound();
 
-        var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-        var folder = Path.Combine(webRoot, "uploads", "profiles");
-        Directory.CreateDirectory(folder);
+        var options = ProfileImageOptions(user.Id);
+        var saved = await _files.SaveAsync(file, options);
+        if (!saved.Success)
+            return BadRequest(new { message = saved.ErrorMessage });
 
-        var fileName = $"{user.Id}_{Guid.NewGuid():N}{ext}";
-        var fullPath = Path.Combine(folder, fileName);
-        await using (var stream = System.IO.File.Create(fullPath))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        DeleteExistingProfileImage(user, webRoot);
-
-        var relative = $"/uploads/profiles/{fileName}";
-        user.ProfileImagePath = relative;
+        _files.DeleteByUrl(user.ProfileImagePath, options.FolderPath, options.UrlPrefix);
+        user.ProfileImagePath = saved.Url;
 
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {
-            System.IO.File.Delete(fullPath);
+            _files.DeleteByUrl(saved.Url, options.FolderPath, options.UrlPrefix);
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
         }
 
-        return Ok(new { profileImageUrl = relative });
+        return Ok(new { profileImageUrl = saved.Url });
     }
 
     [HttpDelete("profile-image")]
@@ -325,23 +325,14 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByIdAsync(UserId);
         if (user == null) return NotFound();
 
-        var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-        DeleteExistingProfileImage(user, webRoot);
-
+        var options = ProfileImageOptions(user.Id);
+        _files.DeleteByUrl(user.ProfileImagePath, options.FolderPath, options.UrlPrefix);
         user.ProfileImagePath = null;
+
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
         return Ok(new { message = "Image removed." });
-    }
-
-    private static void DeleteExistingProfileImage(ApplicationUser user, string webRoot)
-    {
-        if (string.IsNullOrWhiteSpace(user.ProfileImagePath)) return;
-        var relative = user.ProfileImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-        var full = Path.Combine(webRoot, relative);
-        try { if (System.IO.File.Exists(full)) System.IO.File.Delete(full); }
-        catch { /* ignore — best effort cleanup */ }
     }
 }
