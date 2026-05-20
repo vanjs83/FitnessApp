@@ -328,6 +328,7 @@
                 <button class="admin-tab active" data-admin-tab="trainers" data-i18n="admin.tab.trainers">Treneri</button>
                 <button class="admin-tab" data-admin-tab="clients" data-i18n="admin.tab.clients">Klijenti</button>
                 <button class="admin-tab" data-admin-tab="workouts" data-i18n="admin.tab.workouts">Treninzi</button>
+                <button class="admin-tab" data-admin-tab="mail" data-i18n="admin.tab.mail">Mail</button>
             </nav>
 
             <!-- Trainers tab -->
@@ -365,6 +366,34 @@
                 <h2 data-i18n="admin.workouts.title">Svi treninzi</h2>
                 <input type="text" id="adminWorkoutsSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga (naziv ili klijent)...">
                 <div id="adminWorkoutsList" class="list"></div>
+            </div>
+
+            <!-- Mail tab -->
+            <div id="adminMailTab" class="admin-view hidden">
+                <h2 data-i18n="admin.mail.title">Pošalji email trenerima</h2>
+                <p class="muted small" id="adminMailStatus"></p>
+
+                <div class="card">
+                    <label class="muted small" data-i18n="admin.mail.recipients">Primatelji</label>
+                    <div class="row" style="margin-bottom:0.5rem;">
+                        <button id="adminMailSelectAll" class="secondary small-btn" type="button" data-i18n="admin.mail.selectAll">Označi sve</button>
+                        <button id="adminMailSelectNone" class="secondary small-btn" type="button" data-i18n="admin.mail.selectNone">Odznači sve</button>
+                    </div>
+                    <input type="text" id="adminMailTrainerSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga trenera...">
+                    <div id="adminMailTrainersList" class="list" style="max-height:280px;overflow-y:auto;"></div>
+
+                    <label class="muted small" style="margin-top:0.8rem;" data-i18n="admin.mail.subject">Predmet</label>
+                    <input type="text" id="adminMailSubject" data-i18n-ph="admin.mail.subjectPh" placeholder="npr. Obavijest o ažuriranju sustava">
+
+                    <label class="muted small" data-i18n="admin.mail.body">Poruka</label>
+                    <textarea id="adminMailBody" rows="8" data-i18n-ph="admin.mail.bodyPh" placeholder="Pozdrav,&#10;&#10;..."></textarea>
+
+                    <div class="row">
+                        <button id="adminMailSendBtn" data-i18n="admin.mail.send">Pošalji</button>
+                        <button id="adminMailResetBtn" class="secondary" type="button" data-i18n="common.clear">Očisti</button>
+                    </div>
+                    <div class="error" id="adminMailMsg"></div>
+                </div>
             </div>
         </section>
 

@@ -1,5 +1,8 @@
+using System.Security.Claims;
 using FitnessApp.Api.Data;
+using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Admin;
+using FitnessApp.Application.DTOs.Email;
 using FitnessApp.Domain.Common;
 using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Persistence;
@@ -17,12 +20,19 @@ public class AdminController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly Infrastructure.Persistence.AppDbContext _db;
+    private readonly EmailService _email;
 
-    public AdminController(UserManager<ApplicationUser> userManager, Infrastructure.Persistence.AppDbContext db)
+    public AdminController(
+        UserManager<ApplicationUser> userManager,
+        Infrastructure.Persistence.AppDbContext db,
+        EmailService email)
     {
         _userManager = userManager;
         _db = db;
+        _email = email;
     }
+
+    private string AdminId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     [HttpGet("trainers")]
     public async Task<ActionResult<IEnumerable<TrainerAdminDto>>> GetTrainers()
@@ -190,5 +200,77 @@ public class AdminController : ControllerBase
         await _db.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    [HttpGet("email/status")]
+    public ActionResult<EmailStatusDto> GetEmailStatus() =>
+        Ok(new EmailStatusDto { Configured = _email.IsConfigured });
+
+    [HttpPost("email/send-to-trainers")]
+    public async Task<ActionResult<EmailSendResultDto>> SendToTrainers(SendEmailToTrainersRequest request)
+    {
+        var admin = await _userManager.FindByIdAsync(AdminId);
+        if (admin == null || string.IsNullOrWhiteSpace(admin.Email))
+            return BadRequest(new { message = "Administrator profil nema email." });
+
+        var adminName = admin.FullName ?? admin.Email!;
+        var lang = (request.Language ?? "hr").ToLowerInvariant();
+
+        var trainers = await _userManager.GetUsersInRoleAsync(Roles.Trainer);
+        var trainersById = trainers.ToDictionary(t => t.Id);
+
+        var result = new EmailSendResultDto();
+
+        foreach (var trainerId in request.TrainerIds.Distinct())
+        {
+            if (!trainersById.TryGetValue(trainerId, out var trainer))
+            {
+                result.Failed.Add(new EmailFailureDto
+                {
+                    TrainerId = trainerId,
+                    Email = string.Empty,
+                    Error = "Trener nije pronađen ili nema rolu Trainer."
+                });
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(trainer.Email))
+            {
+                result.Failed.Add(new EmailFailureDto
+                {
+                    TrainerId = trainerId,
+                    Email = string.Empty,
+                    Error = "Trener nema email adresu."
+                });
+                continue;
+            }
+
+            var (ok, error) = await _email.SendTemplatedAsync(
+                toEmail: trainer.Email!,
+                subject: request.Subject,
+                templateKey: "admin-to-trainer",
+                language: lang,
+                placeholders: new Dictionary<string, string>
+                {
+                    ["TrainerName"] = trainer.FullName ?? trainer.Email!,
+                    ["AdminName"] = adminName,
+                    ["Subject"] = request.Subject,
+                    ["Body"] = request.Body
+                },
+                replyTo: admin.Email,
+                replyToName: adminName);
+
+            if (ok)
+                result.Sent.Add(trainer.Email!);
+            else
+                result.Failed.Add(new EmailFailureDto
+                {
+                    TrainerId = trainerId,
+                    Email = trainer.Email!,
+                    Error = error ?? "Slanje neuspjelo."
+                });
+        }
+
+        return Ok(result);
     }
 }

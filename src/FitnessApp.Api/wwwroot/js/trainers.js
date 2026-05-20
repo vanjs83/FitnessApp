@@ -431,13 +431,30 @@ const Trainers = {
                         · ${w.exerciseCount} ${w.exerciseCount === 1 ? 'vježba' : 'vježbi'}
                     </div>
                 </div>
-                <span class="muted">→</span>
+                <button class="danger delete-client-workout-btn" data-id="${w.id}" data-name="${this.escape(w.name)}" title="Obriši trening">🗑 Obriši</button>
             </div>
         `).join('');
 
         container.querySelectorAll('.list-item').forEach(el => {
             el.addEventListener('click', () => this.showWorkoutDetail(parseInt(el.dataset.id)));
         });
+
+        container.querySelectorAll('.delete-client-workout-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                this.deleteClientWorkout(parseInt(btn.dataset.id), btn.dataset.name);
+            });
+        });
+    },
+
+    async deleteClientWorkout(workoutId, workoutName) {
+        if (!confirm(`Obrisati trening "${workoutName}"? Sve vježbe i serije unutar tog treninga će biti obrisane.`)) return;
+        try {
+            await API.delete(`/trainers/me/clients/${this.currentClient.id}/workouts/${workoutId}`);
+            await this.loadClientWorkouts();
+        } catch (err) {
+            alert(err.message);
+        }
     },
 
     async createWorkout() {
@@ -495,7 +512,10 @@ const Trainers = {
 
         container.innerHTML = this.currentWorkout.exercises.map(we => `
             <div class="exercise-block" data-we-id="${we.id}">
-                <h4>${this.escape(we.exerciseName)}</h4>
+                <div class="row" style="justify-content: space-between; align-items: center;">
+                    <h4 style="margin:0;">${this.escape(we.exerciseName)}</h4>
+                    <button class="danger delete-we-btn" data-we-id="${we.id}" data-name="${this.escape(we.exerciseName)}" title="Obriši vježbu iz treninga">🗑 Obriši vježbu</button>
+                </div>
                 ${we.sets.map(s => `
                     <div class="set-row">
                         <span class="set-num">#${s.setNumber}</span>
@@ -519,6 +539,22 @@ const Trainers = {
         container.querySelectorAll('.icon-btn').forEach(btn => {
             btn.addEventListener('click', e => this.deleteSet(parseInt(e.target.dataset.setId)));
         });
+        container.querySelectorAll('.delete-we-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                this.deleteWorkoutExercise(parseInt(btn.dataset.weId), btn.dataset.name);
+            });
+        });
+    },
+
+    async deleteWorkoutExercise(weId, exerciseName) {
+        if (!confirm(`Obrisati vježbu "${exerciseName}" (i sve njene serije) iz treninga?`)) return;
+        try {
+            await API.delete(`/trainers/me/clients/${this.currentClient.id}/workouts/${this.currentWorkout.id}/exercises/${weId}`);
+            await this.showWorkoutDetail(this.currentWorkout.id);
+        } catch (err) {
+            alert(err.message);
+        }
     },
 
     async populateExerciseSelect() {

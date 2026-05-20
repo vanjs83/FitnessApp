@@ -1,0 +1,30 @@
+<!--
+  Notification that client's plan is ready (EN)
+  Placeholders: {{ClientName}} {{TrainerName}} {{PlanLabel}} {{PlanName}} {{LoginUrl}}
+  PlanLabel: "training plan" | "nutrition plan"
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Your plan is ready</title></head>
+<body style="margin:0;background:#f4f6f9;font-family:Arial,sans-serif;color:#222;">
+<div style="max-width:600px;margin:0 auto;padding:20px;">
+  <div style="border-bottom:2px solid #4dabf7;padding-bottom:12px;margin-bottom:20px;">
+    <h2 style="margin:0;color:#4dabf7;">&#128170; FitnessApp</h2>
+  </div>
+
+  <p style="font-size:15px;line-height:1.6;">Hi <strong>{{ClientName}}</strong>,</p>
+  <p style="font-size:15px;line-height:1.6;">
+    Your new <strong>{{PlanLabel}}</strong> &mdash; &ldquo;{{PlanName}}&rdquo; &mdash; is ready in the FitnessApp.
+  </p>
+  <p>
+    <a href="{{LoginUrl}}" style="display:inline-block;background:#4dabf7;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">
+      Open FitnessApp
+    </a>
+  </p>
+
+  <div style="margin-top:30px;padding-top:16px;border-top:1px solid #eee;color:#888;font-size:13px;">
+    Sent by trainer <strong>{{TrainerName}}</strong> via the FitnessApp platform.
+  </div>
+</div>
+</body>
+</html>

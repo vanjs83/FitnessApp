@@ -5,6 +5,9 @@ const Admin = {
     trainerSearch: '',
     clientSearch: '',
     workoutSearch: '',
+    mailTrainerSearch: '',
+    mailSelectedIds: new Set(),
+    mailConfigured: null,
 
     init() {
         document.getElementById('newTrainerBtn').addEventListener('click', () => {
@@ -29,6 +32,15 @@ const Admin = {
             this.workoutSearch = e.target.value.toLowerCase();
             this.renderWorkouts();
         });
+
+        document.getElementById('adminMailTrainerSearch').addEventListener('input', e => {
+            this.mailTrainerSearch = e.target.value.toLowerCase();
+            this.renderMailTrainers();
+        });
+        document.getElementById('adminMailSelectAll').addEventListener('click', () => this.mailSelectAll(true));
+        document.getElementById('adminMailSelectNone').addEventListener('click', () => this.mailSelectAll(false));
+        document.getElementById('adminMailSendBtn').addEventListener('click', () => this.sendMail());
+        document.getElementById('adminMailResetBtn').addEventListener('click', () => this.resetMailForm());
     },
 
     async load() {
@@ -40,10 +52,12 @@ const Admin = {
         document.getElementById('adminTrainersTab').classList.toggle('hidden', tab !== 'trainers');
         document.getElementById('adminClientsTab').classList.toggle('hidden', tab !== 'clients');
         document.getElementById('adminWorkoutsTab').classList.toggle('hidden', tab !== 'workouts');
+        document.getElementById('adminMailTab').classList.toggle('hidden', tab !== 'mail');
 
         if (tab === 'trainers') this.loadTrainers();
         if (tab === 'clients') this.loadClients();
         if (tab === 'workouts') this.loadWorkouts();
+        if (tab === 'mail') this.loadMail();
     },
 
     async loadStats() {
@@ -221,6 +235,123 @@ const Admin = {
         document.getElementById('adminTrainerPassword').value = '';
         document.getElementById('adminTrainerError').textContent = '';
         document.getElementById('newTrainerForm').classList.add('hidden');
+    },
+
+    async loadMail() {
+        try {
+            const status = await API.get('/admin/email/status');
+            this.mailConfigured = !!status.configured;
+        } catch (err) {
+            this.mailConfigured = false;
+        }
+        const statusEl = document.getElementById('adminMailStatus');
+        if (this.mailConfigured) {
+            statusEl.textContent = '';
+            statusEl.style.color = '';
+        } else {
+            statusEl.textContent = 'SMTP nije konfiguriran (appsettings.json → Smtp). Slanje će biti odbijeno.';
+            statusEl.style.color = '#d9534f';
+        }
+
+        if (this.trainers.length === 0) await this.loadTrainers();
+        this.renderMailTrainers();
+    },
+
+    renderMailTrainers() {
+        const container = document.getElementById('adminMailTrainersList');
+        const filtered = this.trainers.filter(t =>
+            !this.mailTrainerSearch ||
+            (t.fullName || '').toLowerCase().includes(this.mailTrainerSearch) ||
+            (t.email || '').toLowerCase().includes(this.mailTrainerSearch)
+        );
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<p class="muted">${this.trainers.length === 0 ? 'Nema trenera.' : 'Nema rezultata.'}</p>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map(t => {
+            const checked = this.mailSelectedIds.has(t.id) ? 'checked' : '';
+            return `
+                <label class="list-item" style="cursor:pointer;">
+                    <input type="checkbox" class="admin-mail-trainer-cb" value="${this.escape(t.id)}" ${checked} style="margin-right:0.6rem;">
+                    <div>
+                        <h4 style="margin:0;">${this.escape(t.fullName || t.email)}</h4>
+                        <div class="meta">${this.escape(t.email)}</div>
+                    </div>
+                </label>
+            `;
+        }).join('');
+
+        container.querySelectorAll('.admin-mail-trainer-cb').forEach(cb => {
+            cb.addEventListener('change', e => {
+                if (e.target.checked) this.mailSelectedIds.add(e.target.value);
+                else this.mailSelectedIds.delete(e.target.value);
+            });
+        });
+    },
+
+    mailSelectAll(all) {
+        const filtered = this.trainers.filter(t =>
+            !this.mailTrainerSearch ||
+            (t.fullName || '').toLowerCase().includes(this.mailTrainerSearch) ||
+            (t.email || '').toLowerCase().includes(this.mailTrainerSearch)
+        );
+        if (all) filtered.forEach(t => this.mailSelectedIds.add(t.id));
+        else filtered.forEach(t => this.mailSelectedIds.delete(t.id));
+        this.renderMailTrainers();
+    },
+
+    async sendMail() {
+        const msgEl = document.getElementById('adminMailMsg');
+        msgEl.style.color = '';
+        msgEl.textContent = '';
+
+        const trainerIds = Array.from(this.mailSelectedIds);
+        const subject = document.getElementById('adminMailSubject').value.trim();
+        const body = document.getElementById('adminMailBody').value.trim();
+
+        if (trainerIds.length === 0) { msgEl.textContent = 'Odaberi barem jednog trenera.'; return; }
+        if (!subject) { msgEl.textContent = 'Predmet je obavezan.'; return; }
+        if (!body) { msgEl.textContent = 'Poruka je obavezna.'; return; }
+
+        const btn = document.getElementById('adminMailSendBtn');
+        btn.disabled = true;
+        try {
+            const lang = (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr';
+            const result = await API.post('/admin/email/send-to-trainers', {
+                trainerIds, subject, body, language: lang
+            });
+            const sentCount = (result.sent || []).length;
+            const failedCount = (result.failed || []).length;
+            if (failedCount === 0) {
+                msgEl.style.color = '#52c452';
+                msgEl.textContent = `✓ Poslano ${sentCount} ${sentCount === 1 ? 'treneru' : 'trenera'}.`;
+                this.resetMailForm(false);
+            } else {
+                msgEl.style.color = '#d9534f';
+                const failures = result.failed.map(f => `${f.email || f.trainerId}: ${f.error}`).join('\n');
+                msgEl.style.whiteSpace = 'pre-wrap';
+                msgEl.textContent = `Poslano: ${sentCount} / Neuspjelo: ${failedCount}\n${failures}`;
+            }
+        } catch (err) {
+            msgEl.style.color = '#d9534f';
+            msgEl.textContent = err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    },
+
+    resetMailForm(clearMessage = true) {
+        document.getElementById('adminMailSubject').value = '';
+        document.getElementById('adminMailBody').value = '';
+        this.mailSelectedIds.clear();
+        this.renderMailTrainers();
+        if (clearMessage) {
+            const msgEl = document.getElementById('adminMailMsg');
+            msgEl.textContent = '';
+            msgEl.style.color = '';
+        }
     },
 
     formatDate(s) {

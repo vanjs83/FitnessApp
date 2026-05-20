@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# === FitnessApp secrets — NEVER commit ===
+# Firebase service account credentials (admin access to Firebase project)
+src/FitnessApp.Api/firebase/*.json
+# Uploaded user content
+src/FitnessApp.Api/wwwroot/uploads/
+# Local Serilog output
+/logs/
+C:/logs/

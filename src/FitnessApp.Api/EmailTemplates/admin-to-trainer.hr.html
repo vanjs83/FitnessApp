@@ -1,0 +1,24 @@
+<!--
+  Mail koji SuperAdmin šalje treneru - HR
+  Placeholderi: {{TrainerName}} {{AdminName}} {{Subject}} {{Body}}
+-->
+<!DOCTYPE html>
+<html lang="hr">
+<head><meta charset="utf-8"><title>Poruka od administratora</title></head>
+<body style="margin:0;background:#f4f6f9;font-family:Arial,sans-serif;color:#222;">
+<div style="max-width:640px;margin:0 auto;padding:24px;">
+  <div style="border-bottom:2px solid #4dabf7;padding-bottom:12px;margin-bottom:20px;">
+    <h2 style="margin:0;color:#4dabf7;">FitnessApp &mdash; poruka administratora</h2>
+  </div>
+
+  <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Pozdrav <strong>{{TrainerName}}</strong>,</p>
+
+  <h3 style="margin:24px 0 8px;">{{Subject}}</h3>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:14px;white-space:pre-wrap;line-height:1.6;">{{Body}}</div>
+
+  <div style="margin-top:30px;padding-top:16px;border-top:1px solid #eee;color:#888;font-size:13px;">
+    Poslano od administratora <strong>{{AdminName}}</strong> preko FitnessApp platforme. Odgovori &rarr; idu direktno administratoru.
+  </div>
+</div>
+</body>
+</html>

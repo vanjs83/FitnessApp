@@ -15,22 +15,16 @@ public class SupportController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly EmailService _email;
-    private readonly EmailTemplateService _emailTemplates;
     private readonly IConfiguration _config;
-    private readonly ILogger<SupportController> _logger;
 
     public SupportController(
         UserManager<ApplicationUser> userManager,
         EmailService email,
-        EmailTemplateService emailTemplates,
-        IConfiguration config,
-        ILogger<SupportController> logger)
+        IConfiguration config)
     {
         _userManager = userManager;
         _email = email;
-        _emailTemplates = emailTemplates;
         _config = config;
-        _logger = logger;
     }
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -42,9 +36,6 @@ public class SupportController : ControllerBase
     [HttpPost("contact")]
     public async Task<IActionResult> Contact(SupportContactRequest request)
     {
-        if (!_email.IsConfigured)
-            return BadRequest(new { message = "SMTP is not configured." });
-
         var supportEmail = SupportEmail;
         if (string.IsNullOrWhiteSpace(supportEmail))
             return BadRequest(new { message = "Customer support is not configured yet." });
@@ -57,42 +48,28 @@ public class SupportController : ControllerBase
         var role = roles.FirstOrDefault() ?? "User";
         var userName = user.FullName ?? user.Email!;
         var lang = (request.Language ?? "hr").ToLowerInvariant();
+        var subjectPrefix = lang == "en" ? "[FitnessApp support]" : "[FitnessApp podrška]";
 
-        string html;
-        try
-        {
-            html = _emailTemplates.Render("support-message", lang, new Dictionary<string, string>
+        var (ok, error) = await _email.SendTemplatedAsync(
+            toEmail: supportEmail,
+            subject: $"{subjectPrefix} {request.Subject}",
+            templateKey: "support-message",
+            language: lang,
+            placeholders: new Dictionary<string, string>
             {
                 ["UserName"] = userName,
                 ["UserEmail"] = user.Email!,
                 ["UserRole"] = role,
                 ["Subject"] = request.Subject,
                 ["Body"] = request.Body
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to render support-message email template (lang={Lang}).", lang);
-            return BadRequest(new { message = "Failed to prepare the message." });
-        }
+            },
+            replyTo: user.Email,
+            replyToName: userName);
 
-        var subjectPrefix = lang == "en" ? "[FitnessApp support]" : "[FitnessApp podrška]";
+        if (!ok)
+            return BadRequest(new { message = error ?? "Sending the message failed. Try again later." });
 
-        try
-        {
-            await _email.SendAsync(
-                toEmail: supportEmail,
-                subject: $"{subjectPrefix} {request.Subject}",
-                body: html,
-                replyTo: user.Email,
-                replyToName: userName);
-            return Ok(new { sent = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send support message from {UserEmail}.", user.Email);
-            return BadRequest(new { message = "Sending the message failed. Try again later." });
-        }
+        return Ok(new { sent = true });
     }
 
     private string? SupportEmail => _config["Smtp:FromEmail"];

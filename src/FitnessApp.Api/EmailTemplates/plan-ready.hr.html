@@ -1,0 +1,30 @@
+<!--
+  Obavijest klijentu da je plan spreman (HR)
+  Placeholderi: {{ClientName}} {{TrainerName}} {{PlanLabel}} {{PlanName}} {{LoginUrl}}
+  PlanLabel: "plan treninga" | "plan prehrane"
+-->
+<!DOCTYPE html>
+<html lang="hr">
+<head><meta charset="utf-8"><title>Tvoj plan je spreman</title></head>
+<body style="margin:0;background:#f4f6f9;font-family:Arial,sans-serif;color:#222;">
+<div style="max-width:600px;margin:0 auto;padding:20px;">
+  <div style="border-bottom:2px solid #4dabf7;padding-bottom:12px;margin-bottom:20px;">
+    <h2 style="margin:0;color:#4dabf7;">&#128170; FitnessApp</h2>
+  </div>
+
+  <p style="font-size:15px;line-height:1.6;">Bok <strong>{{ClientName}}</strong>,</p>
+  <p style="font-size:15px;line-height:1.6;">
+    Tvoj novi <strong>{{PlanLabel}}</strong> &mdash; &bdquo;{{PlanName}}&ldquo; &mdash; je spreman u FitnessApp aplikaciji.
+  </p>
+  <p>
+    <a href="{{LoginUrl}}" style="display:inline-block;background:#4dabf7;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">
+      Otvori FitnessApp
+    </a>
+  </p>
+
+  <div style="margin-top:30px;padding-top:16px;border-top:1px solid #eee;color:#888;font-size:13px;">
+    Poslano od trenera <strong>{{TrainerName}}</strong> preko FitnessApp platforme.
+  </div>
+</div>
+</body>
+</html>

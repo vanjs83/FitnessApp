@@ -32,100 +32,84 @@ public class EmailController : ControllerBase
     [HttpPost("notify-plan-ready")]
     public async Task<IActionResult> NotifyPlanReady([FromBody] NotifyPlanReadyRequest request)
     {
-        if (!_email.IsConfigured)
-            return BadRequest(new { message = "SMTP is not configured in appsettings.json." });
+        var (trainer, client, err) = await ResolveTrainerAndClientAsync(request.ClientId);
+        if (err != null) return err;
 
-        var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.ClientId);
-        if (client == null) return NotFound(new { message = "Client not found." });
-        if (client.TrainerId != UserId) return Forbid();
-        if (string.IsNullOrWhiteSpace(client.Email))
-            return BadRequest(new { message = "Client has no email address." });
-
-        var trainer = await _db.Users.FirstOrDefaultAsync(u => u.Id == UserId);
-        if (string.IsNullOrWhiteSpace(trainer?.Email))
-            return BadRequest(new { message = "Your trainer profile has no email." });
-
-        var trainerName = trainer.FullName ?? trainer.Email;
-        var planLabel = request.PlanType == "nutrition" ? "plan prehrane" : "plan treninga";
-        var subject = $"Tvoj novi {planLabel} je spreman — {request.PlanName}";
-        var bodyText =
-$@"Bok {client.FullName ?? "klijente"},
-
-Tvoj novi {planLabel} ""{request.PlanName}"" je spreman u FitnessApp aplikaciji.
-
-Prijavi se i pogledaj ga: https://fitnessapp.local/
-
-Pozdrav,
-{trainerName}";
-        var htmlBody = WrapBody(bodyText, trainerName);
-
-        try
+        var lang = (request.Language ?? "hr").ToLowerInvariant();
+        var trainerName = trainer!.FullName ?? trainer.Email!;
+        var planLabel = (request.PlanType, lang) switch
         {
-            await _email.SendAsync(
-                toEmail: client.Email,
-                subject: subject,
-                body: htmlBody,
-                fromEmail: trainer.Email,
-                fromName: trainerName,
-                replyTo: trainer.Email,
-                replyToName: trainerName);
-            return Ok(new { sent = true, to = client.Email });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = $"Sending failed: {ex.Message}" });
-        }
+            ("nutrition", "en") => "nutrition plan",
+            ("nutrition", _) => "plan prehrane",
+            (_, "en") => "training plan",
+            _ => "plan treninga"
+        };
+        var subject = lang == "en"
+            ? $"Your new {planLabel} is ready — {request.PlanName}"
+            : $"Tvoj novi {planLabel} je spreman — {request.PlanName}";
+        var loginUrl = $"{Request.Scheme}://{Request.Host}/";
+
+        var (ok, error) = await _email.SendTemplatedAsync(
+            toEmail: client!.Email!,
+            subject: subject,
+            templateKey: "plan-ready",
+            language: lang,
+            placeholders: new Dictionary<string, string>
+            {
+                ["ClientName"] = client.FullName ?? (lang == "en" ? "athlete" : "klijente"),
+                ["TrainerName"] = trainerName,
+                ["PlanLabel"] = planLabel,
+                ["PlanName"] = request.PlanName,
+                ["LoginUrl"] = loginUrl
+            },
+            replyTo: trainer.Email,
+            replyToName: trainerName);
+
+        if (!ok) return BadRequest(new { message = $"Sending failed: {error}" });
+        return Ok(new { sent = true, to = client.Email });
     }
 
     [HttpPost("send-to-client")]
     public async Task<IActionResult> SendToClient(SendEmailToClientRequest request)
     {
-        if (!_email.IsConfigured)
-            return BadRequest(new { message = "SMTP is not configured in appsettings.json." });
+        var (trainer, client, err) = await ResolveTrainerAndClientAsync(request.ClientId);
+        if (err != null) return err;
 
-        var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.ClientId);
-        if (client == null) return NotFound(new { message = "Client not found." });
-        if (client.TrainerId != UserId) return Forbid();
+        var lang = (request.Language ?? "hr").ToLowerInvariant();
+        var trainerName = trainer!.FullName ?? trainer.Email!;
+
+        var (ok, error) = await _email.SendTemplatedAsync(
+            toEmail: client!.Email!,
+            subject: request.Subject,
+            templateKey: "trainer-to-client",
+            language: lang,
+            placeholders: new Dictionary<string, string>
+            {
+                ["Body"] = request.Body,
+                ["TrainerName"] = trainerName
+            },
+            replyTo: trainer.Email,
+            replyToName: trainerName);
+
+        if (!ok) return BadRequest(new { message = $"Sending failed: {error}" });
+        return Ok(new { sent = true, to = client.Email, from = trainer.Email });
+    }
+
+    private async Task<(Infrastructure.Identity.ApplicationUser? trainer, Infrastructure.Identity.ApplicationUser? client, IActionResult? error)>
+        ResolveTrainerAndClientAsync(string clientId)
+    {
+        var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == clientId);
+        if (client == null)
+            return (null, null, NotFound(new { message = "Client not found." }));
+        if (client.TrainerId != UserId)
+            return (null, null, Forbid());
         if (string.IsNullOrWhiteSpace(client.Email))
-            return BadRequest(new { message = "Client has no email address." });
+            return (null, null, BadRequest(new { message = "Client has no email address." }));
 
         var trainer = await _db.Users.FirstOrDefaultAsync(u => u.Id == UserId);
         if (string.IsNullOrWhiteSpace(trainer?.Email))
-            return BadRequest(new { message = "Your trainer profile has no email." });
+            return (null, null, BadRequest(new { message = "Your trainer profile has no email." }));
 
-        var trainerName = trainer.FullName ?? trainer.Email;
-        var htmlBody = WrapBody(request.Body, trainerName);
-
-        try
-        {
-            await _email.SendAsync(
-                toEmail: client.Email,
-                subject: request.Subject,
-                body: htmlBody,
-                fromEmail: trainer.Email,
-                fromName: trainerName,
-                replyTo: trainer.Email,
-                replyToName: trainerName);
-            return Ok(new { sent = true, to = client.Email, from = trainer.Email });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = $"Sending failed: {ex.Message}" });
-        }
-    }
-
-    private static string WrapBody(string text, string trainerName)
-    {
-        var html = System.Net.WebUtility.HtmlEncode(text).Replace("\n", "<br>");
-        return $@"
-<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #222;'>
-    <div style='border-bottom: 2px solid #4dabf7; padding-bottom: 12px; margin-bottom: 20px;'>
-        <h2 style='margin: 0; color: #4dabf7;'>💪 FitnessApp</h2>
-    </div>
-    <div style='font-size: 15px; line-height: 1.6;'>{html}</div>
-    <div style='margin-top: 30px; padding-top: 16px; border-top: 1px solid #eee; color: #888; font-size: 13px;'>
-        Poslano od trenera <strong>{System.Net.WebUtility.HtmlEncode(trainerName)}</strong> preko FitnessApp platforme.
-    </div>
-</div>";
+        return (trainer, client, null);
     }
 }

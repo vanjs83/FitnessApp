@@ -23,20 +23,17 @@ public class TrainersController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly Infrastructure.Persistence.AppDbContext _db;
     private readonly EmailService _email;
-    private readonly EmailTemplateService _emailTemplates;
     private readonly ILogger<TrainersController> _logger;
 
     public TrainersController(
         UserManager<ApplicationUser> userManager,
         Infrastructure.Persistence.AppDbContext db,
         EmailService email,
-        EmailTemplateService emailTemplates,
         ILogger<TrainersController> logger)
     {
         _userManager = userManager;
         _db = db;
         _email = email;
-        _emailTemplates = emailTemplates;
         _logger = logger;
     }
 
@@ -123,41 +120,23 @@ public class TrainersController : ControllerBase
             ? "Welcome to FitnessApp — your sign-in details"
             : "Dobrodošao u FitnessApp — tvoji pristupni podaci";
 
-        var placeholders = new Dictionary<string, string>
-        {
-            ["Greeting"] = greeting,
-            ["TrainerName"] = trainerName,
-            ["Email"] = request.Email,
-            ["Password"] = tempPassword,
-            ["LoginUrl"] = loginUrl
-        };
+        var (ok, _) = await _email.SendTemplatedAsync(
+            toEmail: request.Email,
+            subject: subject,
+            templateKey: "welcome-client",
+            language: lang,
+            placeholders: new Dictionary<string, string>
+            {
+                ["Greeting"] = greeting,
+                ["TrainerName"] = trainerName,
+                ["Email"] = request.Email,
+                ["Password"] = tempPassword,
+                ["LoginUrl"] = loginUrl
+            },
+            replyTo: trainer.Email,
+            replyToName: trainerName);
 
-        string html;
-        try
-        {
-            html = _emailTemplates.Render("welcome-client", lang, placeholders);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to render welcome-client email template (lang={Lang}).", lang);
-            return false;
-        }
-
-        try
-        {
-            await _email.SendAsync(
-                toEmail: request.Email,
-                subject: subject,
-                body: html,
-                replyTo: trainer.Email,
-                replyToName: trainerName);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send welcome email to {ClientEmail}.", request.Email);
-            return false;
-        }
+        return ok;
     }
 
     private static string GenerateTempPassword(int length = 10)
@@ -380,6 +359,22 @@ public class TrainersController : ControllerBase
         if (workout.TrainerId != UserId) return Forbid();
 
         _db.Workouts.Remove(workout);
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpDelete("me/clients/{clientId}/workouts/{workoutId:int}/exercises/{workoutExerciseId:int}")]
+    [Authorize(Roles = Roles.Trainer)]
+    public async Task<IActionResult> DeleteWorkoutExercise(string clientId, int workoutId, int workoutExerciseId)
+    {
+        var we = await _db.WorkoutExercises
+            .Include(x => x.Workout)
+            .FirstOrDefaultAsync(x => x.Id == workoutExerciseId && x.WorkoutId == workoutId);
+        if (we == null) return NotFound();
+        if (we.Workout.ClientId != clientId) return NotFound();
+        if (we.Workout.TrainerId != UserId) return Forbid();
+
+        _db.WorkoutExercises.Remove(we);
         await _db.SaveChangesAsync();
         return NoContent();
     }
