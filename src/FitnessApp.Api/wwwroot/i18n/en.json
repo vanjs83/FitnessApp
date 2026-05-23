@@ -83,6 +83,7 @@
   "nutrition.edit": "✏️ Edit",
   "nutrition.delete": "🗑 Delete",
   "nutrition.notify": "✉️ Notify client",
+  "nutrition.push": "🔔 Send push",
   "nutrition.template.notesPh": "Notes / description",
 
   "myNutrition.title": "Nutrition plan",
@@ -157,6 +158,7 @@
   "plans.edit": "✏️ Edit",
   "plans.delete": "🗑 Delete plan",
   "plans.notify": "✉️ Notify client",
+  "plans.push": "🔔 Send push",
   "plans.edit.title": "Edit plan",
   "plans.edit.notesLabel": "Expectations / notes",
 

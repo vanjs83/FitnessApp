@@ -22,6 +22,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<NutritionDay> NutritionDays => Set<NutritionDay>();
     public DbSet<Meal> Meals => Set<Meal>();
     public DbSet<MealItem> MealItems => Set<MealItem>();
+    public DbSet<Device> Devices => Set<Device>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -206,6 +207,21 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             e.HasOne(x => x.Meal)
                 .WithMany(m => m.Items)
                 .HasForeignKey(x => x.MealId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Device>(e =>
+        {
+            e.Property(x => x.UserId).IsRequired();
+            e.Property(x => x.Token).IsRequired().HasMaxLength(512);
+            e.Property(x => x.Platform).IsRequired().HasMaxLength(20);
+            e.Property(x => x.UserAgent).HasMaxLength(500);
+            e.HasIndex(x => x.Token).IsUnique();
+            e.HasIndex(x => new { x.UserId, x.IsActive });
+
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

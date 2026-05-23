@@ -83,6 +83,7 @@
   "nutrition.edit": "✏️ Uredi",
   "nutrition.delete": "🗑 Obriši",
   "nutrition.notify": "✉️ Obavijesti klijenta",
+  "nutrition.push": "🔔 Pošalji push",
   "nutrition.template.notesPh": "Napomene / opis",
 
   "myNutrition.title": "Plan prehrane",
@@ -157,6 +158,7 @@
   "plans.edit": "✏️ Uredi",
   "plans.delete": "🗑 Obriši plan",
   "plans.notify": "✉️ Obavijesti klijenta",
+  "plans.push": "🔔 Pošalji push",
   "plans.edit.title": "Uredi plan",
   "plans.edit.notesLabel": "Očekivanja / napomene",
 

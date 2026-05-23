@@ -1,8 +1,11 @@
 using System.Text;
+using FirebaseAdmin;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Infrastructure.Auth;
 using FitnessApp.Infrastructure.Identity;
+using FitnessApp.Infrastructure.Notifications;
 using FitnessApp.Infrastructure.Persistence;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +62,26 @@ public static class DependencyInjection
             });
 
         services.AddAuthorization();
+
+        services.Configure<FirebaseSettings>(configuration.GetSection("Firebase"));
+        var firebase = configuration.GetSection("Firebase").Get<FirebaseSettings>();
+        if (firebase is not null && !string.IsNullOrWhiteSpace(firebase.CredentialsPath))
+        {
+            var path = Path.IsPathRooted(firebase.CredentialsPath)
+                ? firebase.CredentialsPath
+                : Path.Combine(AppContext.BaseDirectory, "firebase", firebase.CredentialsPath);
+
+            if (File.Exists(path) && FirebaseApp.DefaultInstance is null)
+            {
+                FirebaseApp.Create(new AppOptions
+                {
+                    Credential = GoogleCredential.FromFile(path),
+                    ProjectId = firebase.ProjectId
+                });
+            }
+        }
+
+        services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
 
         return services;
     }

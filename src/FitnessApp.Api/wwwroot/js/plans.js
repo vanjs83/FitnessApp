@@ -29,6 +29,8 @@ const Plans = {
         if (trainerQrBtn) trainerQrBtn.addEventListener('click', () => this.openTrainerQr());
         const notifyBtn = document.getElementById('trainerPlanNotifyBtn');
         if (notifyBtn) notifyBtn.addEventListener('click', () => this.notifyClient());
+        const pushBtn = document.getElementById('trainerPlanPushBtn');
+        if (pushBtn) pushBtn.addEventListener('click', () => this.pushClient());
         const editBtn = document.getElementById('editPlanBtn');
         if (editBtn) editBtn.addEventListener('click', () => this.editCurrentPlan());
         const delBtn = document.getElementById('deletePlanBtn');
@@ -544,6 +546,23 @@ const Plans = {
                 planType: 'training'
             });
             alert('✓ Email poslan klijentu.');
+        } catch (err) { alert(err.message); }
+    },
+
+    async pushClient() {
+        if (!this.currentPlan) return;
+        if (!confirm(`Poslati push notifikaciju klijentu (${this.escape(this.currentPlan.clientName)}) za plan "${this.escape(this.currentPlan.name)}"?`)) return;
+        try {
+            const res = await API.post('/notifications/notify-client-plan', {
+                clientId: this.currentPlan.clientId,
+                planName: this.currentPlan.name,
+                planType: 'training'
+            });
+            if (res && res.activeTokens === 0) {
+                alert('⚠ Klijent nema registriran uređaj za push notifikacije.');
+            } else {
+                alert('✓ Push poslan klijentu.');
+            }
         } catch (err) { alert(err.message); }
     },
 
