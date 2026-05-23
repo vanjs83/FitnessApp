@@ -64,11 +64,11 @@ const Admin = {
         try {
             const s = await API.get('/admin/stats');
             document.getElementById('adminStats').innerHTML = `
-                <div class="stat-card"><div class="stat-value">${s.trainersCount}</div><div class="stat-label">Treneri</div></div>
-                <div class="stat-card"><div class="stat-value">${s.clientsCount}</div><div class="stat-label">Klijenti</div></div>
-                <div class="stat-card"><div class="stat-value">${s.clientsWithoutTrainer}</div><div class="stat-label">Bez trenera</div></div>
-                <div class="stat-card"><div class="stat-value">${s.workoutsCount}</div><div class="stat-label">Treninzi</div></div>
-                <div class="stat-card"><div class="stat-value">${s.exercisesCount}</div><div class="stat-label">Vježbe</div></div>
+                <div class="stat-card"><div class="stat-value">${s.trainersCount}</div><div class="stat-label">${I18n.t('admin.stats.trainers')}</div></div>
+                <div class="stat-card"><div class="stat-value">${s.clientsCount}</div><div class="stat-label">${I18n.t('admin.stats.clients')}</div></div>
+                <div class="stat-card"><div class="stat-value">${s.clientsWithoutTrainer}</div><div class="stat-label">${I18n.t('admin.stats.clientsNoTrainer')}</div></div>
+                <div class="stat-card"><div class="stat-value">${s.workoutsCount}</div><div class="stat-label">${I18n.t('admin.stats.workouts')}</div></div>
+                <div class="stat-card"><div class="stat-value">${s.exercisesCount}</div><div class="stat-label">${I18n.t('admin.stats.exerciseLabel')}</div></div>
             `;
         } catch (err) {
             console.error(err);
@@ -92,7 +92,7 @@ const Admin = {
             (t.email || '').toLowerCase().includes(this.trainerSearch)
         );
         if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${this.trainers.length === 0 ? 'Nema trenera.' : 'Nema rezultata za pretragu.'}</p>`;
+            container.innerHTML = `<p class="muted">${I18n.t(this.trainers.length === 0 ? 'admin.empty.trainers' : 'admin.empty.search')}</p>`;
             return;
         }
 
@@ -102,11 +102,11 @@ const Admin = {
                     <h4>${this.escape(t.fullName || t.email)}</h4>
                     <div class="meta">
                         ${this.escape(t.email)}
-                        · ${t.clientCount} ${t.clientCount === 1 ? 'klijent' : 'klijenata'}
-                        · od ${this.formatDate(t.createdAt)}
+                        · ${t.clientCount} ${I18n.t(t.clientCount === 1 ? 'admin.clientUnit.one' : 'admin.clientUnit.many')}
+                        · ${I18n.t('admin.metaFromDate')} ${this.formatDate(t.createdAt)}
                     </div>
                 </div>
-                <button class="danger small-btn" data-id="${t.id}">Obriši</button>
+                <button class="danger small-btn" data-id="${t.id}">${I18n.t('admin.trainers.deleteBtn')}</button>
             </div>
         `).join('');
 
@@ -137,7 +137,7 @@ const Admin = {
         );
 
         if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${this.clients.length === 0 ? 'Nema klijenata.' : 'Nema rezultata za pretragu.'}</p>`;
+            container.innerHTML = `<p class="muted">${I18n.t(this.clients.length === 0 ? 'admin.empty.clients' : 'admin.empty.search')}</p>`;
             return;
         }
 
@@ -147,9 +147,9 @@ const Admin = {
                     <h4>${this.escape(c.fullName || c.email)}</h4>
                     <div class="meta">
                         ${this.escape(c.email)}
-                        · trener: ${c.trainerName ? this.escape(c.trainerName) : '<em>nema</em>'}
-                        · ${c.workoutCount} ${c.workoutCount === 1 ? 'trening' : 'treninga'}
-                        · od ${this.formatDate(c.createdAt)}
+                        · ${I18n.t('admin.metaTrainerLabel')} ${c.trainerName ? this.escape(c.trainerName) : `<em>${I18n.t('admin.metaNoTrainer')}</em>`}
+                        · ${c.workoutCount} ${I18n.t(c.workoutCount === 1 ? 'admin.workoutUnit.one' : 'admin.workoutUnit.many')}
+                        · ${I18n.t('admin.metaFromDate')} ${this.formatDate(c.createdAt)}
                     </div>
                 </div>
             </div>
@@ -175,7 +175,7 @@ const Admin = {
         );
 
         if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${this.workouts.length === 0 ? 'Nema treninga.' : 'Nema rezultata za pretragu.'}</p>`;
+            container.innerHTML = `<p class="muted">${I18n.t(this.workouts.length === 0 ? 'admin.empty.workouts' : 'admin.empty.search')}</p>`;
             return;
         }
 
@@ -184,11 +184,11 @@ const Admin = {
                 <div>
                     <h4>${this.escape(w.name)}</h4>
                     <div class="meta">
-                        klijent: ${this.escape(w.clientName)}
-                        ${w.trainerName ? '· trener: ' + this.escape(w.trainerName) : ''}
+                        ${I18n.t('admin.metaClientLabel')} ${this.escape(w.clientName)}
+                        ${w.trainerName ? '· ' + I18n.t('admin.metaTrainerLabel') + ' ' + this.escape(w.trainerName) : ''}
                         · ${this.formatDate(w.performedAt)}
                         ${w.durationMinutes ? '· ' + w.durationMinutes + ' min' : ''}
-                        · ${w.exerciseCount} ${w.exerciseCount === 1 ? 'vježba' : 'vježbi'}
+                        · ${w.exerciseCount} ${I18n.t(w.exerciseCount === 1 ? 'admin.workouts.exerciseUnit.one' : 'admin.workouts.exerciseUnit.many')}
                     </div>
                 </div>
             </div>
@@ -201,9 +201,9 @@ const Admin = {
 
         const email = document.getElementById('adminTrainerEmail').value.trim();
         const password = document.getElementById('adminTrainerPassword').value;
-        if (!email) { errorEl.textContent = 'Email je obavezan.'; return; }
-        if (!password) { errorEl.textContent = 'Lozinka je obavezna.'; return; }
-        if (password.length < 6) { errorEl.textContent = 'Lozinka mora imati barem 6 znakova.'; return; }
+        if (!email) { errorEl.textContent = I18n.t('admin.trainer.emailRequired'); return; }
+        if (!password) { errorEl.textContent = I18n.t('admin.trainer.passwordRequired'); return; }
+        if (password.length < 6) { errorEl.textContent = I18n.t('admin.trainer.passwordMin'); return; }
 
         try {
             await API.post('/admin/trainers', {
@@ -219,7 +219,7 @@ const Admin = {
     },
 
     async deleteTrainer(id, name) {
-        if (!confirm(`Obrisati trenera "${name}"? Klijenti ostaju u sistemu, samo bez trenera.`)) return;
+        if (!confirm(I18n.tf('admin.trainer.deleteConfirm', { name }))) return;
 
         try {
             await API.delete(`/admin/trainers/${id}`);
@@ -249,7 +249,7 @@ const Admin = {
             statusEl.textContent = '';
             statusEl.style.color = '';
         } else {
-            statusEl.textContent = 'SMTP nije konfiguriran (appsettings.json → Smtp). Slanje će biti odbijeno.';
+            statusEl.textContent = I18n.t('admin.smtp.notConfigured');
             statusEl.style.color = '#d9534f';
         }
 
@@ -266,7 +266,7 @@ const Admin = {
         );
 
         if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${this.trainers.length === 0 ? 'Nema trenera.' : 'Nema rezultata.'}</p>`;
+            container.innerHTML = `<p class="muted">${I18n.t(this.trainers.length === 0 ? 'admin.empty.trainers' : 'admin.empty.searchShort')}</p>`;
             return;
         }
 
@@ -311,9 +311,9 @@ const Admin = {
         const subject = document.getElementById('adminMailSubject').value.trim();
         const body = document.getElementById('adminMailBody').value.trim();
 
-        if (trainerIds.length === 0) { msgEl.textContent = 'Odaberi barem jednog trenera.'; return; }
-        if (!subject) { msgEl.textContent = 'Predmet je obavezan.'; return; }
-        if (!body) { msgEl.textContent = 'Poruka je obavezna.'; return; }
+        if (trainerIds.length === 0) { msgEl.textContent = I18n.t('admin.mail.pickTrainer'); return; }
+        if (!subject) { msgEl.textContent = I18n.t('admin.mail.subjectRequired'); return; }
+        if (!body) { msgEl.textContent = I18n.t('admin.mail.bodyRequired'); return; }
 
         const btn = document.getElementById('adminMailSendBtn');
         btn.disabled = true;
@@ -326,13 +326,16 @@ const Admin = {
             const failedCount = (result.failed || []).length;
             if (failedCount === 0) {
                 msgEl.style.color = '#52c452';
-                msgEl.textContent = `✓ Poslano ${sentCount} ${sentCount === 1 ? 'treneru' : 'trenera'}.`;
+                msgEl.textContent = I18n.tf('admin.mail.sentOk', {
+                    count: sentCount,
+                    unit: I18n.t(sentCount === 1 ? 'admin.mail.recipientUnit.one' : 'admin.mail.recipientUnit.many')
+                });
                 this.resetMailForm(false);
             } else {
                 msgEl.style.color = '#d9534f';
                 const failures = result.failed.map(f => `${f.email || f.trainerId}: ${f.error}`).join('\n');
                 msgEl.style.whiteSpace = 'pre-wrap';
-                msgEl.textContent = `Poslano: ${sentCount} / Neuspjelo: ${failedCount}\n${failures}`;
+                msgEl.textContent = I18n.tf('admin.mail.sentMixed', { sent: sentCount, failed: failedCount }) + '\n' + failures;
             }
         } catch (err) {
             msgEl.style.color = '#d9534f';
@@ -356,7 +359,7 @@ const Admin = {
 
     formatDate(s) {
         const d = new Date(s);
-        return d.toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return d.toLocaleDateString(I18n.lang === 'en' ? 'en-GB' : 'hr-HR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     },
 
     escape(s) {

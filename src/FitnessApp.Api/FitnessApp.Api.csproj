@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\uploads\exercises\" />
+    <Folder Include="wwwroot\landing\hero\" />
     <Folder Include="firebase\" />
   </ItemGroup>
 

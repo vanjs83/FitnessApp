@@ -149,14 +149,14 @@ const App = {
     async openTrainerProfile(trainerId, trainerName) {
         const modal = document.getElementById('trainerProfileModal');
         const body = document.getElementById('trainerProfileBody');
-        document.getElementById('trainerProfileTitle').textContent = `Profil — ${trainerName || 'trener'}`;
-        body.innerHTML = '<p class="muted small">Učitavanje...</p>';
+        document.getElementById('trainerProfileTitle').textContent = `${I18n.t('trainer.profileTitle')} — ${trainerName || I18n.t('role.trainer')}`;
+        body.innerHTML = `<p class="muted small">${I18n.t('app.loading')}</p>`;
         modal.classList.remove('hidden');
         try {
             const p = await API.get(`/trainers/${trainerId}/profile`);
             Profile.renderReadOnly(body, p);
         } catch (err) {
-            body.innerHTML = `<p class="muted small">Greška: ${this.escape(err.message)}</p>`;
+            body.innerHTML = `<p class="muted small">${I18n.t('app.errorPrefix')}${this.escape(err.message)}</p>`;
         }
     },
 

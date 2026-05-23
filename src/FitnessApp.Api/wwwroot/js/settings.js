@@ -152,8 +152,8 @@ const Settings = {
 
         const subject = document.getElementById('supportSubject').value.trim();
         const body = document.getElementById('supportBody').value.trim();
-        if (!subject) { msg.textContent = 'Predmet je obavezan.'; return; }
-        if (!body) { msg.textContent = 'Poruka je obavezna.'; return; }
+        if (!subject) { msg.textContent = I18n.t('support.subjectRequired'); return; }
+        if (!body) { msg.textContent = I18n.t('support.bodyRequired'); return; }
 
         try {
             await API.post('/support/contact', {
@@ -162,7 +162,7 @@ const Settings = {
                 language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
             });
             msg.style.color = '#51cf66';
-            msg.textContent = '✓ Poruka poslana podršci.';
+            msg.textContent = I18n.t('settings.supportSent');
             document.getElementById('supportSubject').value = '';
             document.getElementById('supportBody').value = '';
         } catch (err) {

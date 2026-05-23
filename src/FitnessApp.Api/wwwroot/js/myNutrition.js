@@ -1,17 +1,6 @@
 const MyNutrition = {
     list: [],
     current: null,
-    dayNames: {
-        Sunday: 'Nedjelja', Monday: 'Ponedjeljak', Tuesday: 'Utorak',
-        Wednesday: 'Srijeda', Thursday: 'Četvrtak', Friday: 'Petak', Saturday: 'Subota',
-        0: 'Nedjelja', 1: 'Ponedjeljak', 2: 'Utorak',
-        3: 'Srijeda', 4: 'Četvrtak', 5: 'Petak', 6: 'Subota'
-    },
-    mealTypeLabels: {
-        Breakfast: 'Doručak', Snack1: 'Užina 1', Lunch: 'Ručak',
-        Snack2: 'Užina 2', Dinner: 'Večera', LateSnack: 'Kasna užina', Other: 'Ostalo',
-        0: 'Doručak', 1: 'Užina 1', 2: 'Ručak', 3: 'Užina 2', 4: 'Večera', 5: 'Kasna užina', 99: 'Ostalo'
-    },
 
     init() {
         const back = document.getElementById('backToMyNutritionBtn');
@@ -77,7 +66,7 @@ const MyNutrition = {
             document.getElementById('myNutritionDetail').classList.add('hidden');
             container.classList.remove('hidden');
             if (!this.list.length) {
-                container.innerHTML = '<p class="muted">Trener ti još nije zadao plan prehrane.</p>';
+                container.innerHTML = `<p class="muted">${I18n.t('nutrition.empty.client')}</p>`;
                 return;
             }
             container.innerHTML = this.list.map(p => `
@@ -86,7 +75,7 @@ const MyNutrition = {
                         <h4>${this.escape(p.name)}</h4>
                         <div class="meta">
                             ${this.formatDate(p.startDate)} → ${this.formatDate(p.endDate)}
-                            · ${p.dayCount} ${p.dayCount === 1 ? 'dan' : 'dana'}
+                            · ${p.dayCount} ${I18n.t(p.dayCount === 1 ? 'nutrition.dayUnit.one' : 'nutrition.dayUnit.many')}
                         </div>
                     </div>
                     <span class="muted">→</span>
@@ -96,7 +85,7 @@ const MyNutrition = {
                 el.addEventListener('click', () => this.showDetail(parseInt(el.dataset.id)));
             });
         } catch (err) {
-            container.innerHTML = `<p class="muted">Greška: ${this.escape(err.message)}</p>`;
+            container.innerHTML = `<p class="muted">${I18n.t('app.errorPrefix')}${this.escape(err.message)}</p>`;
         }
     },
 
@@ -114,12 +103,12 @@ const MyNutrition = {
             if (this.current.isLocked) {
                 document.getElementById('myNutritionNotes').textContent = '';
                 document.getElementById('myNutritionDays').innerHTML =
-                    '<p class="muted">🔒 Sadržaj plana je zaključan dok trener ne odobri uplatu.</p>';
+                    `<p class="muted">${I18n.t('payment.locked')}</p>`;
                 return;
             }
 
             document.getElementById('myNutritionNotes').textContent =
-                this.current.notes ? `Napomene trenera: ${this.current.notes}` : '';
+                this.current.notes ? `${I18n.t('nutrition.trainerNotesPrefix')} ${this.current.notes}` : '';
 
             this.renderDays();
         } catch (err) { alert(err.message); }
@@ -129,22 +118,22 @@ const MyNutrition = {
         const box = document.getElementById('myNutritionPayment');
         if (!box) return;
         if (parseFloat(plan.price || 0) === 0) {
-            box.innerHTML = `<span class="muted small">Besplatan plan.</span>`;
+            box.innerHTML = `<span class="muted small">${I18n.t('nutrition.freeplan')}</span>`;
             return;
         }
-        const statusLabel = plan.paymentStatus === 'Approved' ? 'Odobreno'
-            : plan.paymentStatus === 'PaymentClaimed' ? 'Klijent je platio — čeka odobrenje' : 'Čeka plaćanje';
+        const statusLabel = plan.paymentStatus === 'Approved' ? I18n.t('nutrition.paymentApproved')
+            : I18n.paymentStatus(plan.paymentStatus);
         const cls = plan.paymentStatus === 'Approved' ? 'badge approved'
             : plan.paymentStatus === 'PaymentClaimed' ? 'badge claimed' : 'badge pending';
         let action = '';
         if (plan.paymentStatus === 'Pending') {
             const price = `${parseFloat(plan.price).toFixed(2)} ${plan.currency || 'EUR'}`;
-            action = `<button id="claimNutPaymentBtn" data-plan-id="${plan.id}">Plati ${price}</button>`;
+            action = `<button id="claimNutPaymentBtn" data-plan-id="${plan.id}">${I18n.tf('nutrition.payBtn', { price })}</button>`;
         } else if (plan.paymentStatus === 'PaymentClaimed') {
-            action = `<span class="muted small">Čeka da trener potvrdi uplatu.</span>`;
+            action = `<span class="muted small">${I18n.t('payment.waitingApproval')}</span>`;
         }
         box.innerHTML = `
-            <div><strong>Cijena:</strong> ${parseFloat(plan.price).toFixed(2)} ${plan.currency || 'EUR'} · <span class="${cls}">${statusLabel}</span></div>
+            <div><strong>${I18n.t('nutrition.priceLabel')}</strong> ${parseFloat(plan.price).toFixed(2)} ${plan.currency || 'EUR'} · <span class="${cls}">${statusLabel}</span></div>
             ${action}
         `;
         const btn = document.getElementById('claimNutPaymentBtn');
@@ -167,7 +156,7 @@ const MyNutrition = {
     renderDays() {
         const container = document.getElementById('myNutritionDays');
         if (!this.current.days.length) {
-            container.innerHTML = '<p class="muted">Plan nema definirane dane.</p>';
+            container.innerHTML = `<p class="muted">${I18n.t('nutrition.empty.days')}</p>`;
             return;
         }
         container.innerHTML = this.current.days.map(d => this.renderDay(d)).join('');
@@ -176,17 +165,18 @@ const MyNutrition = {
     renderDay(d) {
         const totals = this.computeDayTotals(d);
         const targetLabel = d.totalCaloriesTarget
-            ? ` · cilj <strong>${d.totalCaloriesTarget} kcal</strong>`
+            ? ` · ${I18n.t('nutrition.dayCalorieTarget')} <strong>${d.totalCaloriesTarget} kcal</strong>`
             : '';
+        const P = I18n.t('nutrition.col.protein'), C = I18n.t('nutrition.col.carbs'), F = I18n.t('nutrition.col.fat');
         return `
             <div class="exercise-block">
-                <h4>${this.dayNames[d.dayOfWeek]} — ${this.escape(d.label)}</h4>
+                <h4>${I18n.dayName(d.dayOfWeek)} — ${this.escape(d.label)}</h4>
                 <div class="muted small">
-                    Ukupno: <strong>${totals.calories} kcal</strong> · P ${totals.protein.toFixed(0)}g · UH ${totals.carbs.toFixed(0)}g · M ${totals.fat.toFixed(0)}g
+                    ${I18n.t('nutrition.dayTotalsPrefix')} <strong>${totals.calories} kcal</strong> · ${P} ${totals.protein.toFixed(0)}g · ${C} ${totals.carbs.toFixed(0)}g · ${F} ${totals.fat.toFixed(0)}g
                     ${targetLabel}
                 </div>
                 ${d.meals.length === 0
-                    ? '<p class="muted small">Bez obroka.</p>'
+                    ? `<p class="muted small">${I18n.t('nutrition.empty.meals')}</p>`
                     : d.meals.map(m => this.renderMeal(m)).join('')}
             </div>
         `;
@@ -194,16 +184,17 @@ const MyNutrition = {
 
     renderMeal(m) {
         const totals = this.computeMealTotals(m);
+        const P = I18n.t('nutrition.col.protein'), C = I18n.t('nutrition.col.carbs'), F = I18n.t('nutrition.col.fat');
         return `
             <div class="meal-block" style="border-left: 3px solid #4dabf7; padding-left: 0.75rem; margin: 0.75rem 0;">
-                <strong>${this.mealTypeLabels[m.mealType] || m.mealType}${m.time ? ' · ' + m.time : ''}</strong>
+                <strong>${I18n.mealLabel(m.mealType)}${m.time ? ' · ' + m.time : ''}</strong>
                 ${m.notes ? `<div class="muted small">${this.escape(m.notes)}</div>` : ''}
-                <div class="muted small">${totals.calories} kcal · P ${totals.protein.toFixed(0)}g · UH ${totals.carbs.toFixed(0)}g · M ${totals.fat.toFixed(0)}g</div>
+                <div class="muted small">${totals.calories} kcal · ${P} ${totals.protein.toFixed(0)}g · ${C} ${totals.carbs.toFixed(0)}g · ${F} ${totals.fat.toFixed(0)}g</div>
                 ${m.items.length === 0
-                    ? '<p class="muted small">Bez stavki.</p>'
+                    ? `<p class="muted small">${I18n.t('nutrition.empty.items')}</p>`
                     : `<table class="meal-items" style="width:100%; margin-top:0.4rem; font-size:0.9rem;">
                         <thead><tr style="text-align:left; color:#a0a8b0;">
-                            <th>Namirnica</th><th>Količina</th><th>kcal</th><th>P</th><th>UH</th><th>M</th>
+                            <th>${I18n.t('nutrition.col.food')}</th><th>${I18n.t('nutrition.col.amount')}</th><th>${I18n.t('nutrition.col.kcal')}</th><th>${P}</th><th>${C}</th><th>${F}</th>
                         </tr></thead>
                         <tbody>
                             ${m.items.map(it => `
@@ -246,7 +237,7 @@ const MyNutrition = {
     },
 
     formatDate(s) {
-        return new Date(s).toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return new Date(s).toLocaleDateString(I18n.lang === 'en' ? 'en-GB' : 'hr-HR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     },
 
     escape(s) {

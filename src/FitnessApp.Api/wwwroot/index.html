@@ -141,7 +141,7 @@
                         <option value="Power" data-i18n="exercises.type.power">Power</option>
                     </select>
                     <input type="text" id="exerciseVideoUrl" data-i18n-ph="exercises.videoPh" placeholder="YouTube link (opcionalno)">
-                    <label class="muted small" style="margin-top:6px;">ili učitaj video (mp4, mov, webm, m4v, avi, mkv, 3gp — do 100 MB):</label>
+                    <label class="muted small" style="margin-top:6px;" data-i18n="exercises.videoFile.full">ili učitaj video (mp4, mov, webm, m4v, avi, mkv, 3gp — do 100 MB):</label>
                     <input type="file" id="exerciseVideoFile" accept="video/*,.mp4,.mov,.webm,.m4v,.avi,.mkv,.3gp">
                     <textarea id="exerciseDescription" data-i18n-ph="exercises.descPh" placeholder="Opis..."></textarea>
                     <div class="row">
@@ -417,7 +417,7 @@
                     <h3 data-i18n="trainer.clients.newTitle">Novi klijent</h3>
                     <input type="text" id="newClientFullName" data-i18n-ph="common.fullName" placeholder="Ime i prezime">
                     <input type="email" id="newClientEmail" data-i18n-ph="common.email" placeholder="Email" required>
-                    <p class="muted small">Sustav će automatski generirati lozinku i poslati klijentu email s pristupnim podacima (jezik mail-a = jezik aplikacije).</p>
+                    <p class="muted small" data-i18n="trainer.clients.autoPasswordHint">Sustav će automatski generirati lozinku i poslati klijentu email s pristupnim podacima (jezik mail-a = jezik aplikacije).</p>
                     <div class="row">
                         <button id="saveClientBtn" data-i18n="common.save">Spremi</button>
                         <button id="cancelClientBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
@@ -434,7 +434,7 @@
                 <h3 id="clientDetailName"></h3>
                 <p id="clientDetailMeta" class="muted"></p>
                 <div class="row" style="margin-top:0.4rem">
-                    <button id="emailClientBtn" class="secondary">✉️ Pošalji email</button>
+                    <button id="emailClientBtn" class="secondary" data-i18n="trainer.emailClient">✉️ Pošalji email</button>
                 </div>
 
                 <details class="card-inset">
@@ -533,11 +533,11 @@
                             <input type="date" id="planEndDate">
                         </div>
                     </div>
-                    <label class="muted small">Očekivanja trenera</label>
+                    <label class="muted small" data-i18n="plans.notesLabel">Očekivanja trenera</label>
                     <textarea id="planExpectations" data-i18n-ph="plans.expectationsPh" placeholder="npr. +2 kg na bench, smanjiti % masti..."></textarea>
                     <div class="row">
                         <div style="flex:2">
-                            <label class="muted small" data-i18n="plans.price">Cijena (0 = besplatno / odmah dostupno)</label>
+                            <label class="muted small" data-i18n="plans.priceLabel">Cijena (0 = besplatno / odmah dostupno)</label>
                             <input type="number" id="planPrice" min="0" step="0.5" value="0">
                         </div>
                         <div style="flex:1">
@@ -566,12 +566,12 @@
                     <div id="planDetailPayment" class="payment-box"></div>
                     <p id="planDetailExpectations" class="muted small"></p>
                     <div class="row">
-                        <button id="editPlanBtn" class="secondary">✏️ Uredi</button>
+                        <button id="editPlanBtn" class="secondary" data-i18n="plans.edit">✏️ Uredi</button>
                         <button id="saveAsTemplateBtn" class="secondary" data-i18n="plans.saveAsTemplate">📋 Spremi kao predložak</button>
                         <button id="trainerPlanPdfBtn" class="secondary" data-i18n="plans.downloadPdf">📄 Preuzmi PDF</button>
                         <button id="trainerPlanQrBtn" class="secondary" data-i18n="plans.showQr">📱 Prikaži QR</button>
-                        <button id="trainerPlanNotifyBtn" class="secondary">✉️ Obavijesti klijenta</button>
-                        <button id="deletePlanBtn" class="btn-delete">🗑 Obriši plan</button>
+                        <button id="trainerPlanNotifyBtn" class="secondary" data-i18n="plans.notify">✉️ Obavijesti klijenta</button>
+                        <button id="deletePlanBtn" class="btn-delete" data-i18n="plans.delete">🗑 Obriši plan</button>
                     </div>
 
                     <div class="card-inset">
@@ -624,8 +624,8 @@
                 </div>
 
                 <div class="tabs">
-                    <button class="tab tpl-type-tab active" data-tpl-type="training">Predlošci treninga</button>
-                    <button class="tab tpl-type-tab" data-tpl-type="nutrition">Predlošci prehrane</button>
+                    <button class="tab tpl-type-tab active" data-tpl-type="training" data-i18n="templates.tab.training">Predlošci treninga</button>
+                    <button class="tab tpl-type-tab" data-tpl-type="nutrition" data-i18n="templates.tab.nutrition">Predlošci prehrane</button>
                 </div>
 
                 <p class="muted small" data-i18n="templates.intro">Tvoji privatni predlošci. Kreiraj kostur plana, pa kod kreiranja plana za klijenta odaberi predložak — sve se kopira i samo ga doradiš za klijenta.</p>
@@ -642,9 +642,9 @@
                 </div>
 
                 <div id="newNutritionTemplateForm" class="card hidden">
-                    <h3>Novi predložak prehrane</h3>
-                    <input type="text" id="nutritionTemplateName" placeholder="Naziv (npr. Definicija 1800 kcal)">
-                    <textarea id="nutritionTemplateNotes" placeholder="Napomene / opis"></textarea>
+                    <h3 data-i18n="templates.newNutritionTitle">Novi predložak prehrane</h3>
+                    <input type="text" id="nutritionTemplateName" data-i18n-ph="nutrition.templateNamePh" placeholder="Naziv (npr. Definicija 1800 kcal)">
+                    <textarea id="nutritionTemplateNotes" data-i18n-ph="nutrition.template.notesPh" placeholder="Napomene / opis"></textarea>
                     <div class="row">
                         <button id="saveNutritionTemplateBtn" data-i18n="common.save">Spremi</button>
                         <button id="cancelNutritionTemplateBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
@@ -703,7 +703,7 @@
                     <select id="nutritionPlanTemplateSelect">
                         <option value="" data-i18n="plans.noTemplate">— bez predloška (prazan plan) —</option>
                     </select>
-                    <label class="muted small">Naziv</label>
+                    <label class="muted small" data-i18n="common.name">Naziv</label>
                     <input type="text" id="nutritionPlanName" data-i18n-ph="nutrition.namePh" placeholder="npr. Definicija, Bulk 2800 kcal...">
                     <div class="row">
                         <div style="flex:1">
@@ -715,11 +715,11 @@
                             <input type="date" id="nutritionPlanEndDate">
                         </div>
                     </div>
-                    <label class="muted small">Napomene</label>
+                    <label class="muted small" data-i18n="common.notes">Napomene</label>
                     <textarea id="nutritionPlanNotes" data-i18n-ph="nutrition.notesPh" placeholder="npr. cilj, ograničenja, hidratacija..."></textarea>
                     <div class="row">
                         <div style="flex:2">
-                            <label class="muted small" data-i18n="plans.price">Cijena (0 = besplatno / odmah dostupno)</label>
+                            <label class="muted small" data-i18n="plans.priceLabel">Cijena (0 = besplatno / odmah dostupno)</label>
                             <input type="number" id="nutritionPlanPrice" min="0" step="0.5" value="0">
                         </div>
                         <div style="flex:1">
@@ -749,12 +749,12 @@
                     <p id="nutritionDetailNotes" class="muted small"></p>
 
                     <div class="row" id="nutritionDetailActions">
-                        <button id="editNutritionBtn" class="secondary">✏️ Uredi</button>
+                        <button id="editNutritionBtn" class="secondary" data-i18n="nutrition.edit">✏️ Uredi</button>
                         <button id="saveNutritionAsTemplateBtn" class="secondary" data-i18n="nutrition.saveAsTemplate">📋 Spremi kao predložak</button>
                         <button id="nutritionPdfBtn" class="secondary" data-i18n="nutrition.downloadPdf">📄 Preuzmi PDF</button>
                         <button id="nutritionQrBtn" class="secondary" data-i18n="nutrition.showQr">📱 Prikaži QR</button>
-                        <button id="nutritionNotifyBtn" class="secondary">✉️ Obavijesti klijenta</button>
-                        <button id="deleteNutritionBtn" class="btn-delete">🗑 Obriši</button>
+                        <button id="nutritionNotifyBtn" class="secondary" data-i18n="nutrition.notify">✉️ Obavijesti klijenta</button>
+                        <button id="deleteNutritionBtn" class="btn-delete" data-i18n="nutrition.delete">🗑 Obriši</button>
                     </div>
 
                     <div class="card-inset">
@@ -802,7 +802,7 @@
             </div>
 
             <div id="exerciseEditView" class="hidden">
-                <h2 data-i18n="common.edit">Uredi vježbu</h2>
+                <h2 data-i18n="exercises.editTitle">Uredi vježbu</h2>
                 <input type="text" id="editExerciseName" data-i18n-ph="exercises.namePh" placeholder="Naziv">
                 <input type="text" id="editExerciseMuscleGroup" data-i18n-ph="exercises.musclePh" placeholder="Mišićna grupa">
                 <label class="muted small" data-i18n="exercises.type">Tip</label>
@@ -816,7 +816,7 @@
                     <option value="Power" data-i18n="exercises.type.power">Power</option>
                 </select>
                 <input type="text" id="editExerciseVideoUrl" data-i18n-ph="exercises.videoPh" placeholder="YouTube link (opcionalno)">
-                <label class="muted small" style="margin-top:6px;">ili učitaj video (do 100 MB):</label>
+                <label class="muted small" style="margin-top:6px;" data-i18n="exercises.videoFile.short">ili učitaj video (do 100 MB):</label>
                 <input type="file" id="editExerciseVideoFile" accept="video/*,.mp4,.mov,.webm,.m4v,.avi,.mkv,.3gp">
                 <div class="row" id="editExerciseVideoCurrent" style="margin-top:4px;"></div>
                 <textarea id="editExerciseDescription" data-i18n-ph="exercises.descPh" placeholder="Opis..."></textarea>
@@ -833,7 +833,7 @@
     <div id="trainerProfileModal" class="modal hidden">
         <div class="modal-content">
             <button id="closeTrainerProfileBtn" class="modal-close">×</button>
-            <h2 id="trainerProfileTitle">Profil trenera</h2>
+            <h2 id="trainerProfileTitle" data-i18n="trainer.profileTitle">Profil trenera</h2>
             <div id="trainerProfileBody" class="profile-readonly"></div>
         </div>
     </div>
@@ -871,11 +871,11 @@
             </div>
 
             <div class="card-inset">
-                <h4>Korisnička podrška</h4>
-                <p class="muted small">Imaš problem ili pitanje? Pošalji poruku timu podrške.</p>
-                <input type="text" id="supportSubject" placeholder="Predmet (npr. Ne mogu dodati vježbu)">
-                <textarea id="supportBody" rows="5" placeholder="Opiši problem ili pitanje..."></textarea>
-                <button id="sendSupportBtn">Pošalji podršci</button>
+                <h4 data-i18n="support.title">Korisnička podrška</h4>
+                <p class="muted small" data-i18n="support.intro">Imaš problem ili pitanje? Pošalji poruku timu podrške.</p>
+                <input type="text" id="supportSubject" data-i18n-ph="support.subjectPh" placeholder="Predmet (npr. Ne mogu dodati vježbu)">
+                <textarea id="supportBody" rows="5" data-i18n-ph="support.bodyPh" placeholder="Opiši problem ili pitanje..."></textarea>
+                <button id="sendSupportBtn" data-i18n="support.send">Pošalji podršci</button>
                 <div id="supportMsg" class="error"></div>
             </div>
         </div>
@@ -885,15 +885,15 @@
     <div id="emailClientModal" class="modal hidden">
         <div class="modal-content">
             <button id="closeEmailModalBtn" class="modal-close">×</button>
-            <h2>✉️ Pošalji email klijentu</h2>
+            <h2 data-i18n="trainer.email.title">✉️ Pošalji email klijentu</h2>
             <p class="muted small" id="emailClientTo"></p>
-            <label class="muted small">Predmet</label>
-            <input type="text" id="emailSubject" placeholder="npr. Tvoj novi plan treninga je spreman">
-            <label class="muted small">Poruka</label>
-            <textarea id="emailBody" rows="8" placeholder="Bok,&#10;&#10;Tvoj plan je spreman u aplikaciji..."></textarea>
+            <label class="muted small" data-i18n="admin.mail.subject">Predmet</label>
+            <input type="text" id="emailSubject" data-i18n-ph="trainer.email.subjectPh" placeholder="npr. Tvoj novi plan treninga je spreman">
+            <label class="muted small" data-i18n="admin.mail.body">Poruka</label>
+            <textarea id="emailBody" rows="8" data-i18n-ph="trainer.email.bodyPh" placeholder="Bok,&#10;&#10;Tvoj plan je spreman u aplikaciji..."></textarea>
             <div class="row">
-                <button id="sendEmailBtn">Pošalji</button>
-                <button id="cancelEmailBtn" class="secondary">Otkaži</button>
+                <button id="sendEmailBtn" data-i18n="admin.mail.send">Pošalji</button>
+                <button id="cancelEmailBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
             </div>
             <div class="error" id="emailSendMsg"></div>
         </div>
@@ -903,28 +903,28 @@
     <div id="editPlanModal" class="modal hidden">
         <div class="modal-content">
             <button id="closeEditPlanBtn" class="modal-close">×</button>
-            <h2 id="editPlanTitle">Uredi plan</h2>
-            <label class="muted small">Naziv</label>
+            <h2 id="editPlanTitle" data-i18n="plans.edit.title">Uredi plan</h2>
+            <label class="muted small" data-i18n="common.name">Naziv</label>
             <input type="text" id="editPlanName">
             <div class="row">
                 <div style="flex:1">
-                    <label class="muted small">Početak</label>
+                    <label class="muted small" data-i18n="plans.start">Početak</label>
                     <input type="date" id="editPlanStart">
                 </div>
                 <div style="flex:1">
-                    <label class="muted small">Kraj</label>
+                    <label class="muted small" data-i18n="plans.end">Kraj</label>
                     <input type="date" id="editPlanEnd">
                 </div>
             </div>
-            <label class="muted small" id="editPlanNotesLabel">Očekivanja / napomene</label>
+            <label class="muted small" id="editPlanNotesLabel" data-i18n="plans.edit.notesLabel">Očekivanja / napomene</label>
             <textarea id="editPlanNotes" rows="4"></textarea>
             <div class="row">
                 <div style="flex:2">
-                    <label class="muted small">Cijena</label>
+                    <label class="muted small" data-i18n="plans.price">Cijena</label>
                     <input type="number" id="editPlanPrice" min="0" step="0.5">
                 </div>
                 <div style="flex:1">
-                    <label class="muted small">Valuta</label>
+                    <label class="muted small" data-i18n="plans.currency">Valuta</label>
                     <select id="editPlanCurrency">
                         <option value="EUR">EUR</option>
                         <option value="BAM">BAM</option>
@@ -933,8 +933,8 @@
                 </div>
             </div>
             <div class="row">
-                <button id="saveEditPlanBtn">Spremi</button>
-                <button id="cancelEditPlanBtn" class="secondary">Otkaži</button>
+                <button id="saveEditPlanBtn" data-i18n="common.save">Spremi</button>
+                <button id="cancelEditPlanBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
             </div>
             <div class="error" id="editPlanError"></div>
         </div>

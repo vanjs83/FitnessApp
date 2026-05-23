@@ -1,12 +1,17 @@
-const ExerciseTypeLabels = {
-    Strength: 'Snaga',
-    HIIT: 'HIIT',
-    Kardio: 'Kardio',
-    Cicle: 'Cicle',
-    Funkcionalni: 'Funkcionalni',
-    FullBody: 'Full Body',
-    Power: 'Power'
-};
+const ExerciseTypeLabels = new Proxy({}, {
+    get(_, type) {
+        const keys = {
+            Strength: 'exercises.type.strength',
+            HIIT: 'exercises.type.hiit',
+            Kardio: 'exercises.type.kardio',
+            Cicle: 'exercises.type.cicle',
+            Funkcionalni: 'exercises.type.funkcionalni',
+            FullBody: 'exercises.type.fullbody',
+            Power: 'exercises.type.power'
+        };
+        return keys[type] ? I18n.t(keys[type]) : type;
+    }
+});
 
 const Exercises = {
     list: [],
@@ -56,7 +61,7 @@ const Exercises = {
             return matchesSearch && matchesType;
         });
         if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${this.list.length === 0 ? 'Nema vježbi.' : 'Nema rezultata za pretragu.'}</p>`;
+            container.innerHTML = `<p class="muted">${I18n.t(this.list.length === 0 ? 'exercises.empty.list' : 'exercises.empty.search')}</p>`;
             return;
         }
 
@@ -97,7 +102,7 @@ const Exercises = {
                 try {
                     await this.uploadVideo(created.id, videoFile);
                 } catch (uploadErr) {
-                    alert('Vježba kreirana, ali upload videa nije uspio: ' + uploadErr.message);
+                    alert(I18n.t('exercises.videoUploadFailed') + ' ' + uploadErr.message);
                 }
             }
             this.resetForm();
@@ -237,14 +242,14 @@ const Exercises = {
         if (!this.isLocalVideo(e.videoUrl)) return;
         const label = document.createElement('span');
         label.className = 'muted small';
-        label.textContent = '✓ Učitan video';
+        label.textContent = I18n.t('exercises.videoLoadedLabel');
         label.style.marginRight = '0.6rem';
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'secondary';
-        removeBtn.textContent = 'Ukloni video';
+        removeBtn.textContent = I18n.t('profile.avatarRemove');
         removeBtn.addEventListener('click', async () => {
-            if (!confirm('Ukloniti učitani video?')) return;
+            if (!confirm(I18n.t('exercises.removeVideoConfirm'))) return;
             try {
                 const updated = await this.deleteVideo(e.id);
                 this.current = updated;

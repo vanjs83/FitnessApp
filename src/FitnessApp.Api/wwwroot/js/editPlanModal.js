@@ -25,8 +25,8 @@ const EditPlanModal = {
     },
 
     open({ title, notesLabel, plan, onSave }) {
-        document.getElementById('editPlanTitle').textContent = title || 'Uredi plan';
-        document.getElementById('editPlanNotesLabel').textContent = notesLabel || 'Napomene';
+        document.getElementById('editPlanTitle').textContent = title || I18n.t('plans.edit.title');
+        document.getElementById('editPlanNotesLabel').textContent = notesLabel || I18n.t('common.notes');
         document.getElementById('editPlanName').value = plan.name || '';
         document.getElementById('editPlanStart').value = (plan.startDate || '').substring(0, 10);
         document.getElementById('editPlanEnd').value = (plan.endDate || '').substring(0, 10);
@@ -54,13 +54,13 @@ const EditPlanModal = {
             price: parseFloat(document.getElementById('editPlanPrice').value) || 0,
             currency: document.getElementById('editPlanCurrency').value || 'EUR'
         };
-        if (!data.name) { errEl.textContent = 'Naziv je obavezan.'; return; }
-        if (!data.startDate || !data.endDate) { errEl.textContent = 'Datumi su obavezni.'; return; }
+        if (!data.name) { errEl.textContent = I18n.t('editPlan.nameRequired'); return; }
+        if (!data.startDate || !data.endDate) { errEl.textContent = I18n.t('editPlan.datesRequired'); return; }
         try {
             await this._onSave(data);
             this.close();
         } catch (err) {
-            errEl.textContent = err.message || 'Greška pri spremanju.';
+            errEl.textContent = err.message || I18n.t('editPlan.errorSaving');
         }
     }
 };

@@ -25,12 +25,12 @@ const Auth = {
         try {
             const trainers = await API.get('/trainers');
             const select = document.getElementById('registerTrainer');
-            select.innerHTML = '<option value="">— bez trenera —</option>' +
+            select.innerHTML = `<option value="">${I18n.t('auth.noTrainer')}</option>` +
                 trainers.map(t =>
                     `<option value="${t.id}">${this.escape(t.fullName || t.email)}</option>`
                 ).join('');
         } catch (err) {
-            console.warn('Ne mogu učitati trenere:', err);
+            console.warn(I18n.t('app.cantLoadTrainers'), err);
         }
     },
 

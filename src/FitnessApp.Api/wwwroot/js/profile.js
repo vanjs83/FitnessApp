@@ -86,7 +86,7 @@ const Profile = {
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            msg.textContent = 'Slika je veća od 5 MB.';
+            msg.textContent = I18n.t('profile.imageTooLarge');
             return;
         }
 
@@ -106,7 +106,7 @@ const Profile = {
             }
             this.setAvatar(data.profileImageUrl);
             msg.style.color = '#4dc878';
-            msg.textContent = 'Slika spremljena.';
+            msg.textContent = I18n.t('profile.imageSaved');
         } catch (err) {
             msg.textContent = err.message;
         } finally {
@@ -121,7 +121,7 @@ const Profile = {
             await API.delete('/auth/profile-image');
             this.setAvatar(null);
             msg.style.color = '#4dc878';
-            msg.textContent = 'Slika uklonjena.';
+            msg.textContent = I18n.t('profile.imageRemoved');
         } catch (err) {
             msg.textContent = err.message;
         }
@@ -153,7 +153,7 @@ const Profile = {
         try {
             await API.put('/auth/personal-profile', body);
             msg.style.color = '#4dc878';
-            msg.textContent = 'Profil spremljen.';
+            msg.textContent = I18n.t('profile.saved');
         } catch (err) {
             msg.textContent = err.message;
         }
@@ -162,19 +162,20 @@ const Profile = {
     renderReadOnly(container, p) {
         const isTrainer = p.role === 'Trainer';
         const dash = '—';
+        const dateLocale = I18n.lang === 'en' ? 'en-GB' : 'hr-HR';
         const rows = [
-            ['Ime i prezime', p.fullName],
-            ['Email', p.email],
-            ['Datum rođenja', p.birthDate ? new Date(p.birthDate).toLocaleDateString('hr-HR') : null],
-            ['Spol', p.gender === 'M' ? 'Muški' : p.gender === 'F' ? 'Ženski' : null],
-            ['Telefon', p.phone],
-            !isTrainer && ['Visina', p.heightCm ? `${p.heightCm} cm` : null],
-            !isTrainer && ['Težina', p.weightKg != null ? `${p.weightKg} kg` : null],
-            !isTrainer && ['Razina aktivnosti', this.activityLabel(p.activityLevel)],
-            !isTrainer && ['Treninga tjedno', p.preferredWeeklyTrainingCount != null ? `${p.preferredWeeklyTrainingCount}×` : null],
-            !isTrainer && ['Preferirani tip', this.trainingTypeLabel(p.preferredTrainingType)],
-            !isTrainer && ['Cilj', p.goal],
-            !isTrainer && ['Zdravstvene napomene', p.healthNotes]
+            [I18n.t('common.fullName'), p.fullName],
+            [I18n.t('common.email'), p.email],
+            [I18n.t('profile.birthDate'), p.birthDate ? new Date(p.birthDate).toLocaleDateString(dateLocale) : null],
+            [I18n.t('profile.gender'), p.gender === 'M' ? I18n.t('profile.gender.male') : p.gender === 'F' ? I18n.t('profile.gender.female') : null],
+            [I18n.t('common.phone'), p.phone],
+            !isTrainer && [I18n.t('profile.readonly.height'), p.heightCm ? `${p.heightCm} cm` : null],
+            !isTrainer && [I18n.t('profile.readonly.weight'), p.weightKg != null ? `${p.weightKg} kg` : null],
+            !isTrainer && [I18n.t('profile.readonly.activity'), this.activityLabel(p.activityLevel)],
+            !isTrainer && [I18n.t('profile.readonly.weeklyTrainings'), p.preferredWeeklyTrainingCount != null ? `${p.preferredWeeklyTrainingCount}×` : null],
+            !isTrainer && [I18n.t('profile.readonly.preferredType'), this.trainingTypeLabel(p.preferredTrainingType)],
+            !isTrainer && [I18n.t('profile.readonly.goal'), p.goal],
+            !isTrainer && [I18n.t('profile.readonly.healthNotes'), p.healthNotes]
         ].filter(Boolean);
 
         const avatarHtml = p.profileImageUrl
@@ -191,24 +192,15 @@ const Profile = {
     },
 
     activityLabel(v) {
-        if (v === 'Beginner') return 'Početnik';
-        if (v === 'Intermediate') return 'Srednji';
-        if (v === 'Advanced') return 'Napredni';
+        if (v === 'Beginner') return I18n.t('profile.activity.beginner');
+        if (v === 'Intermediate') return I18n.t('profile.activity.intermediate');
+        if (v === 'Advanced') return I18n.t('profile.activity.advanced');
         return null;
     },
 
     trainingTypeLabel(v) {
         if (!v) return null;
-        const map = {
-            Strength: 'Snaga',
-            HIIT: 'HIIT',
-            Kardio: 'Kardio',
-            Cicle: 'Ciklični',
-            Funkcionalni: 'Funkcionalni',
-            FullBody: 'Full Body',
-            Power: 'Power'
-        };
-        return map[v] ?? v;
+        return ExerciseTypeLabels[v] ?? v;
     },
 
     avatarHtml(url, sizeClass = 'avatar-sm') {

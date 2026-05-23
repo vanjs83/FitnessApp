@@ -24,7 +24,7 @@ const Workouts = {
     render() {
         const container = document.getElementById('workoutsList');
         if (this.list.length === 0) {
-            container.innerHTML = '<p class="muted">Još nema treninga. Klikni "+ Novi trening" za početak.</p>';
+            container.innerHTML = `<p class="muted">${I18n.t('workouts.empty.client')}</p>`;
             return;
         }
 
@@ -35,7 +35,7 @@ const Workouts = {
                     <div class="meta">
                         ${this.formatDate(w.performedAt)}
                         ${w.durationMinutes ? '· ' + w.durationMinutes + ' min' : ''}
-                        · ${w.exerciseCount} ${w.exerciseCount === 1 ? 'vježba' : 'vježbi'}
+                        · ${w.exerciseCount} ${I18n.t(w.exerciseCount === 1 ? 'workouts.exerciseUnit.one' : 'workouts.exerciseUnit.many')}
                     </div>
                 </div>
                 <span class="muted">→</span>
@@ -98,7 +98,7 @@ const Workouts = {
     renderExercises() {
         const container = document.getElementById('exerciseList');
         if (!this.current.exercises.length) {
-            container.innerHTML = '<p class="muted">Dodaj prvu vježbu ispod.</p>';
+            container.innerHTML = `<p class="muted">${I18n.t('workouts.empty.day')}</p>`;
             return;
         }
 
@@ -107,9 +107,9 @@ const Workouts = {
                 <div class="row" style="justify-content: space-between; align-items: center;">
                     <h4>${this.escape(we.exerciseName)}</h4>
                     <span class="planned-actions">
-                        <button class="move-we-btn" data-we-id="${we.id}" data-direction="up" ${idx === 0 ? 'disabled' : ''} title="Pomakni gore">▲</button>
-                        <button class="move-we-btn" data-we-id="${we.id}" data-direction="down" ${idx === this.current.exercises.length - 1 ? 'disabled' : ''} title="Pomakni dolje">▼</button>
-                        <button class="btn-delete delete-we-btn" data-we-id="${we.id}" title="Obriši vježbu iz treninga">🗑</button>
+                        <button class="move-we-btn" data-we-id="${we.id}" data-direction="up" ${idx === 0 ? 'disabled' : ''} title="${I18n.t('workouts.moveUp')}">▲</button>
+                        <button class="move-we-btn" data-we-id="${we.id}" data-direction="down" ${idx === this.current.exercises.length - 1 ? 'disabled' : ''} title="${I18n.t('workouts.moveDown')}">▼</button>
+                        <button class="btn-delete delete-we-btn" data-we-id="${we.id}" title="${I18n.t('workouts.deleteExerciseTitle')}">🗑</button>
                     </span>
                 </div>
                 ${we.sets.map(s => `
@@ -117,7 +117,7 @@ const Workouts = {
                         <span class="set-num">#${s.setNumber}</span>
                         <span>${s.weight} kg</span>
                         <span>${s.reps} rep</span>
-                        <button class="icon-btn delete-set-btn" data-set-id="${s.id}" title="Obriši seriju">×</button>
+                        <button class="icon-btn delete-set-btn" data-set-id="${s.id}" title="${I18n.t('workouts.deleteSetTitle')}">×</button>
                     </div>
                 `).join('')}
                 <div class="add-set-form">
@@ -153,7 +153,7 @@ const Workouts = {
     },
 
     async deleteExercise(weId) {
-        if (!confirm('Obrisati vježbu (i sve njene serije) iz treninga?')) return;
+        if (!confirm(I18n.t('workouts.deleteExerciseConfirm'))) return;
         try {
             await API.delete(`/workouts/exercises/${weId}`);
             await this.showDetail(this.current.id);
@@ -192,7 +192,7 @@ const Workouts = {
         const reps = parseInt(block.querySelector('.reps-input').value);
 
         if (!setNum || isNaN(weight) || !reps) {
-            alert('Popuni broj serije, težinu i ponavljanja.');
+            alert(I18n.t('workouts.fillSetWarning'));
             return;
         }
 
@@ -210,7 +210,7 @@ const Workouts = {
     },
 
     async deleteSet(setId) {
-        if (!confirm('Obrisati seriju?')) return;
+        if (!confirm(I18n.t('workouts.deleteSetConfirm'))) return;
         try {
             await API.delete(`/workouts/sets/${setId}`);
             await this.showDetail(this.current.id);
@@ -223,14 +223,14 @@ const Workouts = {
         document.getElementById('workoutDetail').classList.add('hidden');
         document.getElementById('workoutsList').classList.remove('hidden');
         document.getElementById('newWorkoutBtn').classList.remove('hidden');
-        document.querySelector('#workoutsView .view-header h2').textContent = 'Moji dodatni treninzi';
+        document.querySelector('#workoutsView .view-header h2').textContent = I18n.t('workouts.title');
         this.current = null;
         this.load();
     },
 
     formatDate(s) {
         const d = new Date(s);
-        return d.toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return d.toLocaleDateString(I18n.lang === 'en' ? 'en-GB' : 'hr-HR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     },
 
     escape(s) {

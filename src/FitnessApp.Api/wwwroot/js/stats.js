@@ -25,10 +25,10 @@ const Stats = {
             if (summary) summary.textContent = err.message;
         }
         if (!this.plans.length) {
-            planSel.innerHTML = '<option value="">— nema planova —</option>';
+            planSel.innerHTML = `<option value="">${I18n.t('plans.noPlansOption')}</option>`;
             document.getElementById('statsPlanExerciseSelect').innerHTML = '';
             Plans.clearProgressionChart('statsPlanChartObj');
-            if (summary) summary.textContent = 'Trener ti još nije zadao plan.';
+            if (summary) summary.textContent = I18n.t('plans.empty.client');
             return;
         }
         planSel.innerHTML = this.plans.map(p =>
@@ -45,7 +45,7 @@ const Stats = {
     },
 
     formatDate(s) {
-        return new Date(s).toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        return new Date(s).toLocaleDateString(I18n.lang === 'en' ? 'en-GB' : 'hr-HR', { day: '2-digit', month: '2-digit', year: '2-digit' });
     },
 
     escape(s) {
