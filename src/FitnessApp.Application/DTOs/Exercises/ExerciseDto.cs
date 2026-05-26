@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using FitnessApp.Domain.Entities;
 
 namespace FitnessApp.Application.DTOs.Exercises;
@@ -16,34 +15,18 @@ public class ExerciseDto
 
 public class CreateExerciseRequest
 {
-    [Required, MaxLength(120)]
     public string Name { get; set; } = string.Empty;
-
-    [MaxLength(500)]
     public string? Description { get; set; }
-
-    [MaxLength(500)]
     public string? VideoUrl { get; set; }
-
-    [MaxLength(60)]
     public string? MuscleGroup { get; set; }
-
     public ExerciseType Type { get; set; } = ExerciseType.Strength;
 }
 
 public class UpdateExerciseRequest
 {
-    [Required, MaxLength(120)]
     public string Name { get; set; } = string.Empty;
-
-    [MaxLength(500)]
     public string? Description { get; set; }
-
-    [MaxLength(500)]
     public string? VideoUrl { get; set; }
-
-    [MaxLength(60)]
     public string? MuscleGroup { get; set; }
-
     public ExerciseType Type { get; set; } = ExerciseType.Strength;
 }

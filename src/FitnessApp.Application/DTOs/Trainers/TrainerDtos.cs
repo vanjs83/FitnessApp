@@ -21,11 +21,7 @@ public class ClientListItemDto
 
 public class CreateClientRequest
 {
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.ComponentModel.DataAnnotations.EmailAddress]
     public string Email { get; set; } = string.Empty;
-
     public string? FullName { get; set; }
-
     public string? Language { get; set; }
 }

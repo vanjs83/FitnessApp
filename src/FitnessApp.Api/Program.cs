@@ -1,6 +1,7 @@
 
 using System.Text.Json.Serialization;
 using FitnessApp.Api.Data;
+using FitnessApp.Application;
 using FitnessApp.Application.Storage;
 using FitnessApp.Infrastructure;
 using FitnessApp.Infrastructure.Identity;
@@ -10,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,9 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
+builder.Services.AddFluentValidationAutoValidation();
+
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddCors(options =>

@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using FitnessApp.Domain.Entities;
 
 namespace FitnessApp.Application.DTOs.TrainingPlans;
@@ -47,43 +46,24 @@ public class TrainingPlanTemplateListItemDto
 
 public class CreateTrainingPlanTemplateRequest
 {
-    [Required, MaxLength(120)]
     public string Name { get; set; } = string.Empty;
-
-    [MaxLength(2000)]
     public string? TrainerExpectations { get; set; }
 }
 
 public class UpdateTrainingPlanTemplateRequest
 {
-    [Required, MaxLength(120)]
     public string Name { get; set; } = string.Empty;
-
-    [MaxLength(2000)]
     public string? TrainerExpectations { get; set; }
 }
 
 public class CloneTemplateToClientRequest
 {
-    [Required]
     public string ClientId { get; set; } = string.Empty;
-
-    [Required, MaxLength(120)]
     public string Name { get; set; } = string.Empty;
-
-    [Required]
     public DateTime StartDate { get; set; }
-
-    [Required]
     public DateTime EndDate { get; set; }
-
-    [MaxLength(2000)]
     public string? TrainerExpectations { get; set; }
-
-    [Range(0, 99999)]
     public decimal Price { get; set; }
-
-    [MaxLength(8)]
     public string Currency { get; set; } = "EUR";
 }
 
@@ -128,97 +108,48 @@ public class PerformedSetDto
 
 public class LogPerformedSetRequest
 {
-    [Range(1, 50)]
     public int SetNumber { get; set; }
-
-    [Range(1, 1000)]
     public int ActualReps { get; set; }
-
-    [Range(0, 9999)]
     public decimal ActualWeightKg { get; set; }
-
-    [MaxLength(500)]
     public string? Notes { get; set; }
 }
 
 public class CreateTrainingPlanRequest
 {
-    [Required]
     public string ClientId { get; set; } = string.Empty;
-
-    [Required, MaxLength(120)]
     public string Name { get; set; } = string.Empty;
-
-    [Required]
     public DateTime StartDate { get; set; }
-
-    [Required]
     public DateTime EndDate { get; set; }
-
-    [MaxLength(2000)]
     public string? TrainerExpectations { get; set; }
-
-    [Range(0, 99999)]
     public decimal Price { get; set; }
-
-    [MaxLength(8)]
     public string Currency { get; set; } = "EUR";
 }
 
 public class UpdateTrainingPlanRequest
 {
-    [Required, MaxLength(120)]
     public string Name { get; set; } = string.Empty;
-
-    [Required]
     public DateTime StartDate { get; set; }
-
-    [Required]
     public DateTime EndDate { get; set; }
-
-    [MaxLength(2000)]
     public string? TrainerExpectations { get; set; }
-
-    [Range(0, 99999)]
     public decimal Price { get; set; }
-
-    [MaxLength(8)]
     public string Currency { get; set; } = "EUR";
 }
 
 public class AddTrainingDayRequest
 {
-    [Required]
     public DayOfWeek DayOfWeek { get; set; }
-
-    [Required, MaxLength(60)]
     public string Label { get; set; } = string.Empty;
-
-    [MaxLength(500)]
     public string? Notes { get; set; }
 }
 
 public class AddPlannedExerciseRequest
 {
-    [Required]
     public int ExerciseId { get; set; }
     public int Order { get; set; }
-
-    [Range(1, 50)]
     public int TargetSets { get; set; }
-
-    [Range(0, 1000)]
     public int TargetReps { get; set; }
-
-    [Range(0, 9999)]
     public decimal TargetWeightKg { get; set; }
-
-    [Range(1, 7200)]
     public int? TargetDurationSeconds { get; set; }
-
-    [Range(0, 3600)]
     public int? RestSeconds { get; set; }
-
-    [MaxLength(500)]
     public string? Notes { get; set; }
 }
