@@ -83,6 +83,9 @@ const Auth = {
         localStorage.setItem('userEmail', res.email);
         localStorage.setItem('userRole', res.role);
         App.showApp(res.email, res.role);
+        if (typeof FirebasePush !== 'undefined') {
+            FirebasePush.autoRegisterIfGranted();
+        }
     },
 
     logout() {

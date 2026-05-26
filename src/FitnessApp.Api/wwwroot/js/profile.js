@@ -14,6 +14,53 @@ const Profile = {
             fileInput.addEventListener('change', () => this.uploadAvatar(fileInput.files[0]));
         }
         if (removeBtn) removeBtn.addEventListener('click', () => this.removeAvatar());
+
+        const notifChk = document.getElementById('pfReceiveNotifications');
+        if (notifChk) notifChk.addEventListener('change', () => this.toggleNotifications(notifChk.checked));
+    },
+
+    refreshNotifUi() {
+        const chk = document.getElementById('pfReceiveNotifications');
+        const status = document.getElementById('pfNotifStatus');
+        if (!chk || !status || typeof FirebasePush === 'undefined') return;
+
+        if (!FirebasePush.isSupported()) {
+            chk.checked = false;
+            chk.disabled = true;
+            status.textContent = I18n.t('profile.notif.unsupported');
+            return;
+        }
+        const perm = FirebasePush.permission();
+        chk.disabled = (perm === 'denied');
+        if (perm === 'granted') {
+            chk.checked = !!localStorage.getItem(FirebasePush.LS_KEY);
+            status.textContent = chk.checked ? I18n.t('profile.notif.granted') : I18n.t('profile.notif.default');
+        } else if (perm === 'denied') {
+            chk.checked = false;
+            status.textContent = I18n.t('profile.notif.denied');
+        } else {
+            chk.checked = false;
+            status.textContent = I18n.t('profile.notif.default');
+        }
+    },
+
+    async toggleNotifications(enable) {
+        const status = document.getElementById('pfNotifStatus');
+        if (typeof FirebasePush === 'undefined') return;
+        if (enable) {
+            const res = await FirebasePush.requestAndRegister();
+            if (!res.ok) {
+                document.getElementById('pfReceiveNotifications').checked = false;
+                if (status) status.textContent = (res.reason === 'denied')
+                    ? I18n.t('profile.notif.denied')
+                    : I18n.t('profile.notif.requestFailed');
+                return;
+            }
+            if (status) status.textContent = I18n.t('profile.notif.granted');
+        } else {
+            await FirebasePush.unregister();
+            if (status) status.textContent = I18n.t('profile.notif.default');
+        }
     },
 
     async load() {
@@ -54,6 +101,7 @@ const Profile = {
         document.getElementById('pfTrainingType').value = p.preferredTrainingType || '';
 
         this.setAvatar(p.profileImageUrl);
+        this.refreshNotifUi();
 
         const msg = document.getElementById('profileFullMsg');
         if (msg) msg.textContent = '';

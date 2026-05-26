@@ -1,10 +1,15 @@
 using System.Text;
 using FirebaseAdmin;
 using FitnessApp.Application.Interfaces;
+using FitnessApp.Application.Storage;
 using FitnessApp.Infrastructure.Auth;
+using FitnessApp.Infrastructure.Email;
 using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Notifications;
+using FitnessApp.Infrastructure.Pdf;
 using FitnessApp.Infrastructure.Persistence;
+using FitnessApp.Infrastructure.Sharing;
+using FitnessApp.Infrastructure.Storage;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -12,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using QuestPDF.Infrastructure;
 
 namespace FitnessApp.Infrastructure;
 
@@ -19,6 +25,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        QuestPDF.Settings.License = LicenseType.Community;
+
         services.AddDbContext<Persistence.AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
@@ -82,6 +90,14 @@ public static class DependencyInjection
         }
 
         services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
+
+        services.Configure<StorageSettings>(configuration.GetSection("Storage"));
+        services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
+        services.AddSingleton<IEmailService, EmailService>();
+        services.AddSingleton<IFileStorageService, FileStorageService>();
+        services.AddSingleton<IPlanShareTokenService, PlanShareTokenService>();
+        services.AddSingleton<ITrainingPlanPdfService, TrainingPlanPdfService>();
+        services.AddSingleton<INutritionPlanPdfService, NutritionPlanPdfService>();
 
         return services;
     }

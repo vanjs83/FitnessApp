@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using FitnessApp.Api.Data;
-using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Admin;
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Application.DTOs.Email;
 using FitnessApp.Domain.Common;
 using FitnessApp.Infrastructure.Identity;
@@ -20,12 +20,12 @@ public class AdminController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly Infrastructure.Persistence.AppDbContext _db;
-    private readonly EmailService _email;
+    private readonly IEmailService _email;
 
     public AdminController(
         UserManager<ApplicationUser> userManager,
         Infrastructure.Persistence.AppDbContext db,
-        EmailService email)
+        IEmailService email)
     {
         _userManager = userManager;
         _db = db;

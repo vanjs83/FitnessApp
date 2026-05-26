@@ -159,6 +159,13 @@
   "plans.delete": "🗑 Delete plan",
   "plans.notify": "✉️ Notify client",
   "plans.push": "🔔 Send push",
+  "profile.notifTitle": "Notifications",
+  "profile.receiveNotifications": "Receive notifications (push)",
+  "profile.notif.unsupported": "Your browser does not support push notifications.",
+  "profile.notif.granted": "✓ Notifications enabled on this device.",
+  "profile.notif.denied": "🔕 Notifications are blocked in the browser. Change permission in your browser settings for this site.",
+  "profile.notif.default": "Tick to enable push notifications.",
+  "profile.notif.requestFailed": "Could not enable notifications.",
   "plans.edit.title": "Edit plan",
   "plans.edit.notesLabel": "Expectations / notes",
 

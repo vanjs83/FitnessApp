@@ -36,6 +36,9 @@ const App = {
 
         if (Auth.isLoggedIn()) {
             this.showApp(localStorage.getItem('userEmail') || '', localStorage.getItem('userRole') || 'Client');
+            if (typeof FirebasePush !== 'undefined') {
+                FirebasePush.autoRegisterIfGranted();
+            }
         }
     },
 

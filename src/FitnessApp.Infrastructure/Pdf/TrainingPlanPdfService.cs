@@ -1,11 +1,12 @@
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Entities;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace FitnessApp.Api.Services;
+namespace FitnessApp.Infrastructure.Pdf;
 
-public class TrainingPlanPdfService
+public class TrainingPlanPdfService : ITrainingPlanPdfService
 {
     private static readonly Dictionary<DayOfWeek, string> DayNames = new()
     {

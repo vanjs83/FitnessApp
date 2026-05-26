@@ -1,6 +1,7 @@
 using System.Security.Claims;
-using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Exercises;
+using FitnessApp.Application.Interfaces;
+using FitnessApp.Application.Storage;
 using FitnessApp.Domain.Entities;
 using FitnessApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,7 @@ public class ExercisesController : ControllerBase
     private readonly Infrastructure.Persistence.AppDbContext _db;
     private readonly IWebHostEnvironment _env;
     private readonly StorageSettings _storage;
-    private readonly FileStorageService _files;
+    private readonly IFileStorageService _files;
 
     private static readonly string[] AllowedVideoExtensions =
         { ".mp4", ".mov", ".webm", ".m4v", ".avi", ".mkv", ".3gp" };
@@ -29,7 +30,7 @@ public class ExercisesController : ControllerBase
         Infrastructure.Persistence.AppDbContext db,
         IWebHostEnvironment env,
         IOptions<StorageSettings> storage,
-        FileStorageService files)
+        IFileStorageService files)
     {
         _db = db;
         _env = env;

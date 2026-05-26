@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
-using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Auth;
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Application.DTOs.Stats;
 using FitnessApp.Application.DTOs.Trainers;
 using FitnessApp.Application.DTOs.Workouts;
@@ -22,13 +22,13 @@ public class TrainersController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly Infrastructure.Persistence.AppDbContext _db;
-    private readonly EmailService _email;
+    private readonly IEmailService _email;
     private readonly ILogger<TrainersController> _logger;
 
     public TrainersController(
         UserManager<ApplicationUser> userManager,
         Infrastructure.Persistence.AppDbContext db,
-        EmailService email,
+        IEmailService email,
         ILogger<TrainersController> logger)
     {
         _userManager = userManager;

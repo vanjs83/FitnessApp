@@ -1,8 +1,10 @@
+using FitnessApp.Application.Interfaces;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace FitnessApp.Api.Services;
+namespace FitnessApp.Infrastructure.Email;
 
-public class EmailTemplateService
+public class EmailTemplateService : IEmailTemplateService
 {
     private readonly string _templatesRoot;
     private readonly ILogger<EmailTemplateService> _logger;

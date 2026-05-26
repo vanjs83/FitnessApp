@@ -1,26 +1,18 @@
 using System.Net;
 using System.Net.Mail;
+using FitnessApp.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
-namespace FitnessApp.Api.Services;
+namespace FitnessApp.Infrastructure.Email;
 
-public class SmtpSettings
-{
-    public string Host { get; set; } = "";
-    public int Port { get; set; } = 587;
-    public bool UseSsl { get; set; } = true;
-    public string Username { get; set; } = "";
-    public string Password { get; set; } = "";
-    public string FromEmail { get; set; } = "";
-    public string FromName { get; set; } = "FitnessApp";
-}
-
-public class EmailService
+public class EmailService : IEmailService
 {
     private readonly SmtpSettings _settings;
-    private readonly EmailTemplateService _templates;
+    private readonly IEmailTemplateService _templates;
     private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IConfiguration config, EmailTemplateService templates, ILogger<EmailService> logger)
+    public EmailService(IConfiguration config, IEmailTemplateService templates, ILogger<EmailService> logger)
     {
         _settings = config.GetSection("Smtp").Get<SmtpSettings>() ?? new SmtpSettings();
         _templates = templates;

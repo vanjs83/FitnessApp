@@ -1,25 +1,11 @@
-namespace FitnessApp.Api.Services;
+using FitnessApp.Application.Interfaces;
+using FitnessApp.Application.Storage;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
-public class FileUploadOptions
-{
-    public required string FolderPath { get; init; }
-    public required string UrlPrefix { get; init; }
-    public required IReadOnlyCollection<string> AllowedExtensions { get; init; }
-    public required long MaxBytes { get; init; }
-    public string FileNamePrefix { get; init; } = "";
-}
+namespace FitnessApp.Infrastructure.Storage;
 
-public class FileUploadResult
-{
-    public bool Success { get; init; }
-    public string? Url { get; init; }
-    public string? ErrorMessage { get; init; }
-
-    public static FileUploadResult Ok(string url) => new() { Success = true, Url = url };
-    public static FileUploadResult Fail(string message) => new() { Success = false, ErrorMessage = message };
-}
-
-public class FileStorageService
+public class FileStorageService : IFileStorageService
 {
     private readonly ILogger<FileStorageService> _logger;
 

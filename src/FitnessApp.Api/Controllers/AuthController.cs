@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using FitnessApp.Api.Data;
-using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.Interfaces;
+using FitnessApp.Application.Storage;
 using FitnessApp.Domain.Common;
 using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Persistence;
@@ -27,7 +27,7 @@ public class AuthController : ControllerBase
     private readonly Infrastructure.Persistence.AppDbContext _db;
     private readonly IWebHostEnvironment _env;
     private readonly StorageSettings _storage;
-    private readonly FileStorageService _files;
+    private readonly IFileStorageService _files;
 
     private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
     private const long MaxImageBytes = 5 * 1024 * 1024;
@@ -40,7 +40,7 @@ public class AuthController : ControllerBase
         Infrastructure.Persistence.AppDbContext db,
         IWebHostEnvironment env,
         IOptions<StorageSettings> storage,
-        FileStorageService files)
+        IFileStorageService files)
     {
         _userManager = userManager;
         _signInManager = signInManager;

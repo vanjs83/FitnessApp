@@ -1,4 +1,4 @@
-namespace FitnessApp.Api.Services;
+namespace FitnessApp.Application.Storage;
 
 public class StorageSettings
 {

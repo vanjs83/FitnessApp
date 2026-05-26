@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Email;
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Common;
 using FitnessApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -15,9 +15,9 @@ namespace FitnessApp.Api.Controllers;
 public class EmailController : ControllerBase
 {
     private readonly AppDbContext _db;
-    private readonly EmailService _email;
+    private readonly IEmailService _email;
 
-    public EmailController(AppDbContext db, EmailService email)
+    public EmailController(AppDbContext db, IEmailService email)
     {
         _db = db;
         _email = email;

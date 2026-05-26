@@ -2,8 +2,8 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security.Claims;
-using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Nutrition;
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Common;
 using FitnessApp.Domain.Entities;
 using FitnessApp.Infrastructure.Persistence;
@@ -22,10 +22,10 @@ public class NutritionPlansController : ControllerBase
     private const string ShareKind = "nutrition";
 
     private readonly AppDbContext _db;
-    private readonly NutritionPlanPdfService _pdf;
-    private readonly PlanShareTokenService _shareTokens;
+    private readonly INutritionPlanPdfService _pdf;
+    private readonly IPlanShareTokenService _shareTokens;
 
-    public NutritionPlansController(AppDbContext db, NutritionPlanPdfService pdf, PlanShareTokenService shareTokens)
+    public NutritionPlansController(AppDbContext db, INutritionPlanPdfService pdf, IPlanShareTokenService shareTokens)
     {
         _db = db;
         _pdf = pdf;

@@ -159,6 +159,13 @@
   "plans.delete": "🗑 Obriši plan",
   "plans.notify": "✉️ Obavijesti klijenta",
   "plans.push": "🔔 Pošalji push",
+  "profile.notifTitle": "Obavijesti",
+  "profile.receiveNotifications": "Prima obavijesti (push)",
+  "profile.notif.unsupported": "Tvoj browser ne podržava push obavijesti.",
+  "profile.notif.granted": "✓ Obavijesti uključene na ovom uređaju.",
+  "profile.notif.denied": "🔕 Obavijesti su blokirane u browseru. Promijeni dozvolu u postavkama browsera za ovaj sajt.",
+  "profile.notif.default": "Označi da uključiš push obavijesti.",
+  "profile.notif.requestFailed": "Nije moguće uključiti obavijesti.",
   "plans.edit.title": "Uredi plan",
   "plans.edit.notesLabel": "Očekivanja / napomene",
 

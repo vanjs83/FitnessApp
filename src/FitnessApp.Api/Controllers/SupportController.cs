@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using FitnessApp.Api.Services;
 using FitnessApp.Application.DTOs.Support;
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -14,12 +14,12 @@ namespace FitnessApp.Api.Controllers;
 public class SupportController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly EmailService _email;
+    private readonly IEmailService _email;
     private readonly IConfiguration _config;
 
     public SupportController(
         UserManager<ApplicationUser> userManager,
-        EmailService email,
+        IEmailService email,
         IConfiguration config)
     {
         _userManager = userManager;

@@ -1,9 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
+using FitnessApp.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
 
-namespace FitnessApp.Api.Services;
+namespace FitnessApp.Infrastructure.Sharing;
 
-public class PlanShareTokenService
+public class PlanShareTokenService : IPlanShareTokenService
 {
     private readonly byte[] _secret;
     private const int DefaultTtlHours = 24;

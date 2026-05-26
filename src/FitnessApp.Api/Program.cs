@@ -1,7 +1,7 @@
 
 using System.Text.Json.Serialization;
 using FitnessApp.Api.Data;
-using FitnessApp.Api.Services;
+using FitnessApp.Application.Storage;
 using FitnessApp.Infrastructure;
 using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Persistence;
@@ -9,10 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
-using QuestPDF.Infrastructure;
 using Serilog;
-
-QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,14 +25,6 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddSingleton<TrainingPlanPdfService>();
-builder.Services.AddSingleton<NutritionPlanPdfService>();
-builder.Services.AddSingleton<PlanShareTokenService>();
-builder.Services.AddSingleton<EmailService>();
-builder.Services.AddSingleton<EmailTemplateService>();
-builder.Services.AddSingleton<FileStorageService>();
-
-builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection("Storage"));
 
 builder.Services.AddCors(options =>
 {
