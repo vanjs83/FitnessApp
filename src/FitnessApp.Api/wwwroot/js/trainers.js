@@ -431,12 +431,18 @@ const Trainers = {
                         · ${w.exerciseCount} ${w.exerciseCount === 1 ? 'vježba' : 'vježbi'}
                     </div>
                 </div>
-                <button class="danger delete-client-workout-btn" data-id="${w.id}" data-name="${this.escape(w.name)}" title="Obriši trening">🗑 Obriši</button>
+                <span class="planned-actions">
+                    <button class="btn-delete-icon delete-client-workout-btn" data-id="${w.id}" data-name="${this.escape(w.name)}" title="Obriši trening">🗑</button>
+                    <span class="muted">→</span>
+                </span>
             </div>
         `).join('');
 
         container.querySelectorAll('.list-item').forEach(el => {
-            el.addEventListener('click', () => this.showWorkoutDetail(parseInt(el.dataset.id)));
+            el.addEventListener('click', e => {
+                if (e.target.closest('.delete-client-workout-btn')) return;
+                this.showWorkoutDetail(parseInt(el.dataset.id));
+            });
         });
 
         container.querySelectorAll('.delete-client-workout-btn').forEach(btn => {
