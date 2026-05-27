@@ -106,14 +106,17 @@ const Admin = {
                         · ${I18n.t('admin.metaFromDate')} ${this.formatDate(t.createdAt)}
                     </div>
                 </div>
-                <button class="danger small-btn" data-id="${t.id}">${I18n.t('admin.trainers.deleteBtn')}</button>
+                <span class="planned-actions">
+                    <button class="btn-delete-icon delete-trainer-btn" data-id="${t.id}" title="${I18n.t('admin.trainers.deleteBtn')}">🗑</button>
+                </span>
             </div>
         `).join('');
 
-        container.querySelectorAll('button.danger').forEach(btn => {
+        container.querySelectorAll('.delete-trainer-btn').forEach(btn => {
             btn.addEventListener('click', e => {
-                const name = e.target.closest('.list-item').querySelector('h4').textContent;
-                this.deleteTrainer(e.target.dataset.id, name);
+                e.stopPropagation();
+                const name = btn.closest('.list-item').querySelector('h4').textContent;
+                this.deleteTrainer(btn.dataset.id, name);
             });
         });
     },

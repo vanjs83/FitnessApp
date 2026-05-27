@@ -840,7 +840,7 @@ const Plans = {
                             <span class="planned-actions">
                                 <button class="move-pe-btn" data-pe-id="${pe.id}" data-direction="up" ${idx === 0 ? 'disabled' : ''} title="Pomakni gore">▲</button>
                                 <button class="move-pe-btn" data-pe-id="${pe.id}" data-direction="down" ${idx === d.exercises.length - 1 ? 'disabled' : ''} title="Pomakni dolje">▼</button>
-                                <button class="btn-delete delete-pe-btn" data-pe-id="${pe.id}" title="Obriši vježbu iz dana">🗑 Obriši</button>
+                                <button class="btn-delete delete-pe-btn" data-pe-id="${pe.id}" title="Obriši vježbu iz dana">🗑</button>
                             </span>
                         </div>
                     `).join('')}
