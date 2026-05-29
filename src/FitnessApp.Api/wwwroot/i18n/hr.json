@@ -48,6 +48,14 @@
   "nav.nutrition": "Prehrana",
   "nav.myNutrition": "Prehrana",
   "nav.exercises": "Vježbe",
+  "nav.chat": "Poruke",
+
+  "chat.title": "Poruke",
+  "chat.noConversations": "Nema dostupnih razgovora.",
+  "chat.selectConversation": "Odaberi razgovor s lijeve strane.",
+  "chat.noMessages": "Još nema poruka. Pošalji prvu!",
+  "chat.placeholder": "Napiši poruku...",
+  "chat.send": "Pošalji",
 
   "templates.title": "Predlošci planova",
   "templates.new": "+ Novi predložak",

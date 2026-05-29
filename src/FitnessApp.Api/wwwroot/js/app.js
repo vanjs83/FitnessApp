@@ -16,6 +16,7 @@ const App = {
         Settings.init();
         Stats.init();
         Profile.init();
+        Chat.init();
 
         const closeTpBtn = document.getElementById('closeTrainerProfileBtn');
         if (closeTpBtn) closeTpBtn.addEventListener('click', () => {
@@ -63,10 +64,12 @@ const App = {
         } else if (role === 'Trainer') {
             document.getElementById('trainerPanel').classList.remove('hidden');
             Trainers.load();
+            Chat.start();
         } else {
             document.getElementById('clientPanel').classList.remove('hidden');
             Workouts.load();
             this.loadTrainerBanner();
+            Chat.start();
         }
     },
 
@@ -184,7 +187,9 @@ const App = {
         document.getElementById('exercisesView').classList.toggle('hidden', view !== 'exercises');
         document.getElementById('statsView').classList.toggle('hidden', view !== 'stats');
         document.getElementById('profileView').classList.toggle('hidden', view !== 'profile');
+        document.getElementById('chatView').classList.toggle('hidden', view !== 'chat');
 
+        if (view === 'chat') Chat.load();
         if (view === 'workouts') Workouts.load();
         if (view === 'exercises') Exercises.load();
         if (view === 'stats') Stats.load();
@@ -214,7 +219,9 @@ const App = {
         const nutView = document.getElementById('nutritionView');
         if (nutView) nutView.classList.toggle('hidden', view !== 'nutrition');
         document.getElementById('profileView').classList.toggle('hidden', view !== 'profile');
+        document.getElementById('chatView').classList.toggle('hidden', view !== 'chat');
 
+        if (view === 'chat') Chat.load();
         if (view === 'clients') Trainers.load();
         if (view === 'plans') {
             Exercises.load();

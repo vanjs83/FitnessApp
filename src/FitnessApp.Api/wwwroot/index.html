@@ -83,6 +83,7 @@
                 <button class="nav-btn" data-view="myPlans" data-i18n="nav.myPlans">Moj plan</button>
                 <button class="nav-btn" data-view="myNutrition" data-i18n="nav.myNutrition">Prehrana</button>
                 <button class="nav-btn" data-view="stats" data-i18n="nav.stats">Statistika</button>
+                <button class="nav-btn" data-view="chat" data-i18n="nav.chat">Poruke<span class="nav-badge hidden" id="clientChatBadge"></span></button>
                 <button class="nav-btn" data-view="profile" data-i18n="nav.profile">Osobni podaci</button>
             </nav>
 
@@ -406,6 +407,31 @@
             </div>
         </section>
 
+        <!-- Shared chat view (klijent <-> trener) -->
+        <section id="chatView" class="hidden">
+            <h2 data-i18n="chat.title">Poruke</h2>
+            <div class="chat-layout">
+                <aside class="chat-sidebar" id="chatSidebar">
+                    <div id="chatConversations" class="chat-conversations"></div>
+                    <p id="chatNoConversations" class="muted small hidden" data-i18n="chat.noConversations">Nema dostupnih razgovora.</p>
+                </aside>
+                <div class="chat-main" id="chatMain">
+                    <div id="chatThread" class="chat-thread hidden">
+                        <div class="chat-thread-header">
+                            <button class="secondary small-btn chat-back-btn" id="chatBackBtn" data-i18n="common.back">← Nazad</button>
+                            <span id="chatPartnerName" class="chat-partner-name"></span>
+                        </div>
+                        <div id="chatMessages" class="chat-messages"></div>
+                        <form id="chatComposer" class="chat-composer">
+                            <textarea id="chatInput" rows="1" maxlength="2000" data-i18n-ph="chat.placeholder" placeholder="Napiši poruku..."></textarea>
+                            <button type="submit" id="chatSendBtn" data-i18n="chat.send">Pošalji</button>
+                        </form>
+                    </div>
+                    <p id="chatEmptyState" class="muted small chat-empty" data-i18n="chat.selectConversation">Odaberi razgovor.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Trainer panel -->
         <section id="trainerPanel" class="hidden">
             <nav class="app-nav">
@@ -413,6 +439,7 @@
                 <button class="trainer-nav-btn" data-trainer-view="plans" data-i18n="nav.plans">Trening</button>
                 <button class="trainer-nav-btn" data-trainer-view="nutrition" data-i18n="nav.nutrition">Prehrana</button>
                 <button class="trainer-nav-btn" data-trainer-view="templates" data-i18n="nav.templates">Predlošci</button>
+                <button class="trainer-nav-btn" data-trainer-view="chat" data-i18n="nav.chat">Poruke<span class="nav-badge hidden" id="trainerChatBadge"></span></button>
                 <button class="trainer-nav-btn" data-trainer-view="profile" data-i18n="nav.profile">Osobni podaci</button>
             </nav>
 
@@ -964,6 +991,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
     <script src="js/api.js"></script>
@@ -982,6 +1010,7 @@
     <script src="js/settings.js"></script>
     <script src="js/profile.js"></script>
     <script src="js/firebase-push.js"></script>
+    <script src="js/chat.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

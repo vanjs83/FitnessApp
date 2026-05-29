@@ -48,6 +48,14 @@
   "nav.nutrition": "Nutrition",
   "nav.myNutrition": "Nutrition",
   "nav.exercises": "Exercises",
+  "nav.chat": "Messages",
+
+  "chat.title": "Messages",
+  "chat.noConversations": "No conversations available.",
+  "chat.selectConversation": "Select a conversation on the left.",
+  "chat.noMessages": "No messages yet. Send the first one!",
+  "chat.placeholder": "Type a message...",
+  "chat.send": "Send",
 
   "templates.title": "Plan templates",
   "templates.new": "+ New template",

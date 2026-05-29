@@ -28,6 +28,8 @@ builder.Services.AddControllers()
 
 builder.Services.AddFluentValidationAutoValidation();
 
+builder.Services.AddSignalR();
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -124,5 +126,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<FitnessApp.Api.Hubs.ChatHub>("/hubs/chat");
 
 app.Run();
