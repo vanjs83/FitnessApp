@@ -21,16 +21,12 @@ public class ChatController : ControllerBase
     private const int HistoryLimit = 200;
 
     private readonly AppDbContext _db;
-    private readonly IPushNotificationService _push;
     private readonly IHubContext<ChatHub> _hub;
-    private readonly ILogger<ChatController> _logger;
 
-    public ChatController(AppDbContext db, IPushNotificationService push, IHubContext<ChatHub> hub, ILogger<ChatController> logger)
+    public ChatController(AppDbContext db, IHubContext<ChatHub> hub)
     {
         _db = db;
-        _push = push;
         _hub = hub;
-        _logger = logger;
     }
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -138,8 +134,6 @@ public class ChatController : ControllerBase
         // Real-time delivery to both ends (recipient sees it instantly; sender's other tabs stay in sync).
         await _hub.Clients.Users(partnerId, UserId).SendAsync("ReceiveMessage", dto, ct);
 
-        await TryNotifyAsync(partnerId, body, ct);
-
         return Ok(dto);
     }
 
@@ -164,25 +158,5 @@ public class ChatController : ControllerBase
         var partner = await _db.Users.FirstOrDefaultAsync(u => u.Id == partnerId, ct);
         if (me == null || partner == null) return false;
         return partner.TrainerId == me.Id || me.TrainerId == partner.Id;
-    }
-
-    private async Task TryNotifyAsync(string recipientId, string body, CancellationToken ct)
-    {
-        try
-        {
-            var sender = await _db.Users.FirstOrDefaultAsync(u => u.Id == UserId, ct);
-            var senderName = sender?.FullName ?? sender?.Email ?? "FitnessApp";
-            var preview = body.Length > 120 ? body[..120] + "…" : body;
-
-            await _push.SendToUserAsync(recipientId, senderName, preview, new Dictionary<string, string>
-            {
-                ["type"] = "chat",
-                ["senderId"] = UserId
-            }, ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to send chat push notification to {RecipientId}", recipientId);
-        }
     }
 }
