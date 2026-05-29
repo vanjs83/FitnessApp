@@ -27,9 +27,9 @@ header h1 { font-size: 1.4rem; }
 .lang-btn {
     background: #2a3340;
     color: #a0a8b0;
-    padding: 0.35rem 0.55rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 4px;
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -37,7 +37,7 @@ header h1 { font-size: 1.4rem; }
     line-height: 1;
 }
 .lang-btn .flag {
-    font-size: 0.85rem;
+    font-size: 1.05rem;
     line-height: 1;
     filter: saturate(1.1);
 }
@@ -163,6 +163,9 @@ button:hover:not(:disabled) { background: #3b95e0; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 button.secondary { background: #2a3340; }
 button.secondary:hover:not(:disabled) { background: #353f4d; }
+
+header #settingsBtn, header #logoutBtn { padding: 0.6rem 1rem; font-size: 0.95rem; }
+header #settingsBtn { font-size: 1.1rem; padding: 0.5rem 0.75rem; line-height: 1; }
 button.danger { background: #e03131; }
 button.danger:hover:not(:disabled) { background: #c92a2a; }
 
