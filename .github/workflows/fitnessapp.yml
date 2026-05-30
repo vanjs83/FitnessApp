@@ -1,53 +1,57 @@
-name: .NET CI Pipeline
+name: .NET CI/CD Pipeline (Build + Test + FTP Deploy)
 
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
-  build-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout koda
+      # 1. Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup .NET SDK
+      # 2. Setup .NET
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"
 
-      # 3. Restore dependencies (solution level)
+      # 3. Restore
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore FitnessApp.sln
 
-      # 4. Build solution (radi za src multi-project strukturu)
+      # 4. Build
       - name: Build solution
         run: dotnet build FitnessApp.sln --configuration Release --no-restore
 
-      # 5. Run tests
+      # 5. Test
       - name: Run tests
         run: dotnet test FitnessApp.sln --configuration Release --no-build --verbosity normal
-        
-      # 6. FTP Deploy
+
+      # 6. Publish (BITNO - ovo stvara deploy folder)
+      - name: Publish application
+        run: dotnet publish FitnessApp.sln -c Release -o publish
+
+      # 7. Check publish folder (debug)
+      - name: Verify publish output
+        run: ls -la publish
+
+      # 8. FTP Deploy to SmartASP
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: tvanjurek-001-site1.ltempurl.com/
+          local-dir: publish/
           server-dir: /
 
-      # 6. Show repo info (korisno za audit/log)
-      - name: Print repository info
+      # 9. Info log (audit-friendly)
+      - name: Print build info
         run: |
-          echo "Repository: ${{ github.repository }}"
+          echo "Repo: ${{ github.repository }}"
           echo "Branch: ${{ github.ref_name }}"
           echo "Commit: ${{ github.sha }}"
-          
-          
