@@ -40,8 +40,6 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: tvanjurek-001-site1.ltempurl.com/
-          server-dir: /
 
       # 6. Show repo info (korisno za audit/log)
       - name: Print repository info
