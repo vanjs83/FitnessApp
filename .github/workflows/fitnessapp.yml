@@ -40,7 +40,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: publish/
+          local-dir: tvanjurek-001-site1.ltempurl.com/fitnessapp
           server-dir: /
 
       # 6. Show repo info (korisno za audit/log)
