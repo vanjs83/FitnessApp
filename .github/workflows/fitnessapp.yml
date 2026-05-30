@@ -32,6 +32,16 @@ jobs:
       # 5. Run tests
       - name: Run tests
         run: dotnet test FitnessApp.sln --configuration Release --no-build --verbosity normal
+        
+      # 6. FTP Deploy
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: publish/
+          server-dir: /
 
       # 6. Show repo info (korisno za audit/log)
       - name: Print repository info
