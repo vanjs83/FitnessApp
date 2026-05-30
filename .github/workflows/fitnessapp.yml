@@ -37,8 +37,6 @@ jobs:
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
-          website-name: xxxxxx-00x-xxxx
-          server-computer-name: https://winxxxx.site4now.net:8172
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
