@@ -1,0 +1,41 @@
+name: .NET CI Pipeline
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout koda
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Setup .NET SDK
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      # 3. Restore dependencies (solution level)
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # 4. Build solution (radi za src multi-project strukturu)
+      - name: Build solution
+        run: dotnet build FitnessApp.sln --configuration Release --no-restore
+
+      # 5. Run tests
+      - name: Run tests
+        run: dotnet test FitnessApp.sln --configuration Release --no-build --verbosity normal
+
+      # 6. Show repo info (korisno za audit/log)
+      - name: Print repository info
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
