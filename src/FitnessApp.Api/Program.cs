@@ -11,4 +11,3 @@ await app.SeedDatabaseAsync();
 app.ConfigurePipeline();
 
 app.Run();
-
