@@ -1,0 +1,34 @@
+﻿name: .NET CI Pipeline
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Preuzmi kod
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Instaliraj .NET SDK
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # 3. Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # 4. Build solution
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore
+
+      # 5. Run tests
+      - name: Run unit tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
