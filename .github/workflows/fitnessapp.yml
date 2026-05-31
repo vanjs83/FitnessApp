@@ -45,7 +45,6 @@ jobs:
         run: |
           echo "Maintenance mode" > publish/app_offline.htm
 
-
       # 8. FTP Deploy to SmartASP
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
