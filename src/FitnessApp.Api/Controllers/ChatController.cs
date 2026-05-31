@@ -1,9 +1,7 @@
 using System.Security.Claims;
 using FitnessApp.Api.Hubs;
 using FitnessApp.Application.DTOs.Chat;
-using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Entities;
-using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

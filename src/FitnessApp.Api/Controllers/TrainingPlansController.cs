@@ -7,7 +7,6 @@ using FitnessApp.Application.Interfaces;
 using FitnessApp.Application.DTOs.TrainingPlans;
 using FitnessApp.Domain.Common;
 using FitnessApp.Domain.Entities;
-using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
