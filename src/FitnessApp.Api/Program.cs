@@ -9,5 +9,4 @@ var app = builder.Build();
 
 await app.SeedDatabaseAsync();
 app.ConfigurePipeline();
-
 app.Run();
