@@ -61,18 +61,13 @@ jobs:
         run: |
           echo "" > publish/app_offline.htm
       
-      - name: FTP Remove app_offline
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: publish/
-          server-dir: /fitnessapp/tvanjurek-001-site1.ltempurl.com/
-          include: |
-            app_offline.htm
+      - name: Delete app_offline.htm via FTP
+        run: |
+          curl -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
+          "ftp://${{ secrets.FTP_SERVER }}/fitnessapp/tvanjurek-001-site1.ltempurl.com/app_offline.htm" \
+          -Q "-DELE app_offline.htm"
 
-      # 9. Info log (audit-friendly)
+      # 9. Info log (audit-f riendly)
       - name: Print build info
         run: |
           echo "Repo: ${{ github.repository }}"
