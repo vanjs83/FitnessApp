@@ -1,115 +1,41 @@
-using System.Security.Claims;
 using FitnessApp.Application.DTOs.Email;
-using FitnessApp.Application.Interfaces;
+using FitnessApp.Application.Features.Email.Commands;
+using FitnessApp.Application.Features.Email.Queries;
 using FitnessApp.Domain.Common;
-using FitnessApp.Infrastructure.Persistence;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Api.Controllers;
 
-[ApiController]
 [Authorize(Roles = Roles.Trainer)]
 [Route("api/email")]
-public class EmailController : ControllerBase
+public class EmailController : ApiControllerBase
 {
-    private readonly AppDbContext _db;
-    private readonly IEmailService _email;
+    private readonly ISender _sender;
 
-    public EmailController(AppDbContext db, IEmailService email)
-    {
-        _db = db;
-        _email = email;
-    }
-
-    private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+    public EmailController(ISender sender) => _sender = sender;
 
     [HttpGet("status")]
-    public ActionResult<EmailStatusDto> GetStatus() =>
-        Ok(new EmailStatusDto { Configured = _email.IsConfigured });
+    public async Task<ActionResult<EmailStatusDto>> GetStatus()
+        => Ok(await _sender.Send(new GetEmailStatusQuery()));
 
     [HttpPost("notify-plan-ready")]
-    public async Task<IActionResult> NotifyPlanReady([FromBody] NotifyPlanReadyRequest request)
+    public async Task<IActionResult> NotifyPlanReady([FromBody] NotifyPlanReadyRequest request, CancellationToken ct)
     {
-        var (trainer, client, err) = await ResolveTrainerAndClientAsync(request.ClientId);
-        if (err != null) return err;
-
-        var lang = (request.Language ?? "hr").ToLowerInvariant();
-        var trainerName = trainer!.FullName ?? trainer.Email!;
-        var planLabel = (request.PlanType, lang) switch
-        {
-            ("nutrition", "en") => "nutrition plan",
-            ("nutrition", _) => "plan prehrane",
-            (_, "en") => "training plan",
-            _ => "plan treninga"
-        };
-        var subject = lang == "en"
-            ? $"Your new {planLabel} is ready — {request.PlanName}"
-            : $"Tvoj novi {planLabel} je spreman — {request.PlanName}";
-        var loginUrl = $"{Request.Scheme}://{Request.Host}/";
-
-        var (ok, error) = await _email.SendTemplatedAsync(
-            toEmail: client!.Email!,
-            subject: subject,
-            templateKey: "plan-ready",
-            language: lang,
-            placeholders: new Dictionary<string, string>
-            {
-                ["ClientName"] = client.FullName ?? (lang == "en" ? "athlete" : "klijente"),
-                ["TrainerName"] = trainerName,
-                ["PlanLabel"] = planLabel,
-                ["PlanName"] = request.PlanName,
-                ["LoginUrl"] = loginUrl
-            },
-            replyTo: trainer.Email,
-            replyToName: trainerName);
-
-        if (!ok) return BadRequest(new { message = $"Sending failed: {error}" });
-        return Ok(new { sent = true, to = client.Email });
+        var baseUrl = $"{Request.Scheme}://{Request.Host}/";
+        var result = await _sender.Send(new NotifyPlanReadyCommand(
+            request.ClientId, request.PlanName, request.PlanType, request.Language, baseUrl), ct);
+        if (!result.Succeeded) return MapError(result);
+        return Ok(new { sent = true, to = result.Value!.To });
     }
 
     [HttpPost("send-to-client")]
-    public async Task<IActionResult> SendToClient(SendEmailToClientRequest request)
+    public async Task<IActionResult> SendToClient(SendEmailToClientRequest request, CancellationToken ct)
     {
-        var (trainer, client, err) = await ResolveTrainerAndClientAsync(request.ClientId);
-        if (err != null) return err;
-
-        var lang = (request.Language ?? "hr").ToLowerInvariant();
-        var trainerName = trainer!.FullName ?? trainer.Email!;
-
-        var (ok, error) = await _email.SendTemplatedAsync(
-            toEmail: client!.Email!,
-            subject: request.Subject,
-            templateKey: "trainer-to-client",
-            language: lang,
-            placeholders: new Dictionary<string, string>
-            {
-                ["Body"] = request.Body,
-                ["TrainerName"] = trainerName
-            },
-            replyTo: trainer.Email,
-            replyToName: trainerName);
-
-        if (!ok) return BadRequest(new { message = $"Sending failed: {error}" });
-        return Ok(new { sent = true, to = client.Email, from = trainer.Email });
-    }
-
-    private async Task<(Infrastructure.Identity.ApplicationUser? trainer, Infrastructure.Identity.ApplicationUser? client, IActionResult? error)>
-        ResolveTrainerAndClientAsync(string clientId)
-    {
-        var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == clientId);
-        if (client == null)
-            return (null, null, NotFound(new { message = "Client not found." }));
-        if (client.TrainerId != UserId)
-            return (null, null, Forbid());
-        if (string.IsNullOrWhiteSpace(client.Email))
-            return (null, null, BadRequest(new { message = "Client has no email address." }));
-
-        var trainer = await _db.Users.FirstOrDefaultAsync(u => u.Id == UserId);
-        if (string.IsNullOrWhiteSpace(trainer?.Email))
-            return (null, null, BadRequest(new { message = "Your trainer profile has no email." }));
-
-        return (trainer, client, null);
+        var result = await _sender.Send(new SendEmailToClientCommand(
+            request.ClientId, request.Subject, request.Body, request.Language), ct);
+        if (!result.Succeeded) return MapError(result);
+        return Ok(new { sent = true, to = result.Value!.To, from = result.Value.From });
     }
 }

@@ -1,6 +1,11 @@
 using System.Text.Json.Serialization;
+using FitnessApp.Api.Middleware;
+using FitnessApp.Api.Services;
 using FitnessApp.Application;
+using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Infrastructure;
+using FitnessApp.Infrastructure.Identity;
+using FitnessApp.Infrastructure.Persistence;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
@@ -21,6 +26,14 @@ public static class ServiceCollectionExtensions
 
         services.AddApplication();
         services.AddInfrastructure(configuration);
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IAppDbContext, AppDbContextAdapter>();
+        services.AddScoped<IUserDirectory, UserDirectory>();
+
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
 
         services.AddCorsPolicy();
         services.AddSwaggerWithJwt();
