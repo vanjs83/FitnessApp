@@ -39,6 +39,13 @@ jobs:
       - name: Verify publish output
         run: ls -la publish
 
+
+      # 🔴 STOP APP (App Offline mode)
+      - name: Enable maintenance mode
+        run: |
+          echo "Maintenance mode" > publish/app_offline.htm
+
+
       # 8. FTP Deploy to SmartASP
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
@@ -50,6 +57,17 @@ jobs:
           server-dir: /fitnessapp/tvanjurek-001-site1.ltempurl.com/
           dangerous-clean-slate: true
           log-level: verbose
+
+      # 🟢 START APP (remove maintenance mode)
+      - name: Disable maintenance mode
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: empty/
+          server-dir: /
+          exclude: "**/*"
 
       # 9. Info log (audit-friendly)
       - name: Print build info
