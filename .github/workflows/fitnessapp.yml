@@ -58,16 +58,20 @@ jobs:
           dangerous-clean-slate: true
           log-level: verbose
 
-      # 🟢 START APP (remove maintenance mode)
-      - name: Disable maintenance mode
+      - name: Remove maintenance mode
+        run: |
+          echo "" > publish/app_offline.htm
+      
+      - name: FTP Remove app_offline
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: empty/
+          local-dir: publish/
           server-dir: /
-          exclude: "**/*"
+          include: |
+            app_offline.htm
 
       # 9. Info log (audit-friendly)
       - name: Print build info
