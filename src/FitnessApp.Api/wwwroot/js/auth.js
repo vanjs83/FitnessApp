@@ -38,8 +38,15 @@ const Auth = {
             });
             this.onLoginSuccess(res);
         } catch (err) {
-            errorEl.textContent = err.message;
+            errorEl.textContent = this.loginErrorMessage(err);
         }
+    },
+
+    loginErrorMessage(err) {
+        const code = err && err.data && err.data.code;
+        if (code === 'user_not_found') return I18n.t('auth.error.userNotFound');
+        if (code === 'wrong_password') return I18n.t('auth.error.wrongPassword');
+        return err.message;
     },
 
     async handleRegister(e) {

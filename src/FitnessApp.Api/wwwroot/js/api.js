@@ -25,7 +25,10 @@ const API = {
 
         const res = await fetch(this.baseUrl + path, options);
 
-        if (res.status === 401) {
+        // Auto-logout only when an existing session expires (token present).
+        // During login there is no token, so let the 401 fall through and surface
+        // the server's message instead of silently reloading the page.
+        if (res.status === 401 && this.getToken()) {
             this.clearToken();
             window.location.reload();
             return;
@@ -43,7 +46,10 @@ const API = {
                 }
             }
             if (!msg && data?.title) msg = data.title;
-            throw new Error(msg || `HTTP ${res.status}`);
+            const err = new Error(msg || `HTTP ${res.status}`);
+            err.status = res.status;
+            err.data = data;
+            throw err;
         }
 
         return data;

@@ -107,11 +107,11 @@ public class AuthController : ControllerBase
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
-            return Unauthorized(new { message = "Invalid email or password." });
+            return Unauthorized(new { message = "No account found with this email address.", code = "user_not_found" });
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
         if (!result.Succeeded)
-            return Unauthorized(new { message = "Invalid email or password." });
+            return Unauthorized(new { message = "Incorrect password.", code = "wrong_password" });
 
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? Roles.Client;
