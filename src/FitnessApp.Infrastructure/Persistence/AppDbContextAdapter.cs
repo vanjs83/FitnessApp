@@ -15,7 +15,10 @@ public class AppDbContextAdapter : IAppDbContext
     public AppDbContextAdapter(AppDbContext context) => _context = context;
 
     public DbSet<Exercise> Exercises => _context.Exercises;
+    public DbSet<TrainingPlan> TrainingPlans => _context.TrainingPlans;
+    public DbSet<TrainingDay> TrainingDays => _context.TrainingDays;
     public DbSet<PlannedExercise> PlannedExercises => _context.PlannedExercises;
+    public DbSet<PlannedExerciseCompletion> PlannedExerciseCompletions => _context.PlannedExerciseCompletions;
     public DbSet<PerformedSet> PerformedSets => _context.PerformedSets;
     public DbSet<Workout> Workouts => _context.Workouts;
     public DbSet<WorkoutExercise> WorkoutExercises => _context.WorkoutExercises;

@@ -24,6 +24,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<MealItem> MealItems => Set<MealItem>();
     public DbSet<Device> Devices => Set<Device>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<TrainerRequest> TrainerRequests => Set<TrainerRequest>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -241,6 +242,23 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             e.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.RecipientId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        builder.Entity<TrainerRequest>(e =>
+        {
+            e.Property(x => x.ClientId).IsRequired();
+            e.Property(x => x.TrainerId).IsRequired();
+            e.HasIndex(x => new { x.TrainerId, x.Status });
+            e.HasIndex(x => new { x.ClientId, x.Status });
+
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.NoAction);
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.TrainerId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
     }

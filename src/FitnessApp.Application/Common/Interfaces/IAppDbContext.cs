@@ -11,7 +11,10 @@ namespace FitnessApp.Application.Common.Interfaces;
 public interface IAppDbContext
 {
     DbSet<Exercise> Exercises { get; }
+    DbSet<TrainingPlan> TrainingPlans { get; }
+    DbSet<TrainingDay> TrainingDays { get; }
     DbSet<PlannedExercise> PlannedExercises { get; }
+    DbSet<PlannedExerciseCompletion> PlannedExerciseCompletions { get; }
     DbSet<PerformedSet> PerformedSets { get; }
     DbSet<Workout> Workouts { get; }
     DbSet<WorkoutExercise> WorkoutExercises { get; }

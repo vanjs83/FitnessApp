@@ -2,6 +2,8 @@ const Settings = {
     me: null,
     allTrainers: [],
     trainerSearch: '',
+    myRequest: null,
+    viewingTrainerId: null,
 
     init() {
         document.getElementById('settingsBtn').addEventListener('click', () => this.open());
@@ -18,6 +20,11 @@ const Settings = {
             this.trainerSearch = e.target.value.toLowerCase();
             this.renderTrainerCards();
         });
+
+        const closeTp = document.getElementById('closeTrainerProfileBtn');
+        if (closeTp) closeTp.addEventListener('click', () => this.closeTrainerProfile());
+        const tpReq = document.getElementById('trainerProfileRequestBtn');
+        if (tpReq) tpReq.addEventListener('click', () => this.sendRequest(this.viewingTrainerId));
     },
 
     async open() {
@@ -36,7 +43,7 @@ const Settings = {
             const trainerSection = document.getElementById('trainerChangeSection');
             if (this.me.role === 'Client') {
                 trainerSection.classList.remove('hidden');
-                await this.loadTrainerOptions();
+                await this.loadTrainerState();
             } else {
                 trainerSection.classList.add('hidden');
             }
@@ -45,19 +52,55 @@ const Settings = {
         }
     },
 
+    // Decides what the trainer section shows: current trainer + disconnect,
+    // a pending request + cancel, or the trainer picker (with optional rejected note).
+    async loadTrainerState() {
+        const statusEl = document.getElementById('trainerRequestStatus');
+        const pickWrap = document.getElementById('trainerPickWrap');
+        const label = document.getElementById('currentTrainerLabel');
+        document.getElementById('trainerProfilePanel').classList.add('hidden');
+        document.getElementById('trainerChangeMsg').textContent = '';
+        this.viewingTrainerId = null;
+
+        if (this.me.trainerId) {
+            label.textContent = `Trenutni trener: ${this.me.trainerName || ''}`;
+            statusEl.innerHTML = '<button class="secondary" id="disconnectTrainerBtn">Odspoji se od trenera</button>';
+            pickWrap.classList.add('hidden');
+            document.getElementById('disconnectTrainerBtn').addEventListener('click', () => this.disconnect());
+            return;
+        }
+
+        label.textContent = 'Trenutno: bez trenera';
+
+        this.myRequest = null;
+        try { this.myRequest = await API.get('/trainer-requests/mine'); } catch (err) { /* ignore */ }
+
+        if (this.myRequest && this.myRequest.status === 'Pending') {
+            statusEl.innerHTML = `
+                <div class="info-banner">
+                    Zahtjev poslan treneru <strong>${this.escape(this.myRequest.trainerName)}</strong> — čeka odobrenje.
+                    <button class="secondary small-btn" id="cancelRequestBtn">Otkaži zahtjev</button>
+                </div>`;
+            pickWrap.classList.add('hidden');
+            document.getElementById('cancelRequestBtn').addEventListener('click', () => this.cancelRequest(this.myRequest.id));
+            return;
+        }
+
+        statusEl.innerHTML = (this.myRequest && this.myRequest.status === 'Rejected')
+            ? `<p class="muted small">Prethodni zahtjev treneru ${this.escape(this.myRequest.trainerName)} je odbijen. Možeš poslati novi.</p>`
+            : '';
+
+        pickWrap.classList.remove('hidden');
+        await this.loadTrainerOptions();
+    },
+
     async loadTrainerOptions() {
         try {
             this.allTrainers = await API.get('/trainers');
-            this.updateCurrentTrainerLabel();
             this.renderTrainerCards();
         } catch (err) {
             console.warn(err);
         }
-    },
-
-    updateCurrentTrainerLabel() {
-        const label = document.getElementById('currentTrainerLabel');
-        label.textContent = this.me.trainerName ? `Trenutni trener: ${this.me.trainerName}` : 'Trenutno: bez trenera';
     },
 
     renderTrainerCards() {
@@ -68,56 +111,104 @@ const Settings = {
             (t.email || '').toLowerCase().includes(this.trainerSearch)
         );
 
-        const noneCardCurrent = !this.me.trainerId;
-        const noneCard = `
-            <div class="trainer-pick-card none-option ${noneCardCurrent ? 'current' : ''}">
+        const cards = filtered.map(t => `
+            <div class="trainer-pick-card">
+                ${Profile.avatarHtml(t.profileImageUrl, 'avatar-mini')}
                 <div class="info">
-                    <span class="name">— Bez trenera —</span>
-                    <span class="email">Treniraj samostalno</span>
+                    <span class="name">${this.escape(t.fullName || t.email)}</span>
+                    <span class="email">${this.escape(t.email)}</span>
                 </div>
-                ${noneCardCurrent
-                    ? '<span class="current-tag">✓ Trenutno</span>'
-                    : '<button class="secondary" data-trainer-id="">Odaberi</button>'}
+                <span class="planned-actions">
+                    <button class="secondary small-btn" data-profile-id="${t.id}">Profil</button>
+                    <button data-request-id="${t.id}">Pošalji zahtjev</button>
+                </span>
             </div>
-        `;
+        `).join('');
 
-        const cards = filtered.map(t => {
-            const isCurrent = this.me.trainerId === t.id;
-            return `
-                <div class="trainer-pick-card ${isCurrent ? 'current' : ''}">
-                    ${Profile.avatarHtml(t.profileImageUrl, 'avatar-mini')}
-                    <div class="info">
-                        <span class="name">${this.escape(t.fullName || t.email)}</span>
-                        <span class="email">${this.escape(t.email)}</span>
-                    </div>
-                    ${isCurrent
-                        ? '<span class="current-tag">✓ Trenutno</span>'
-                        : `<button data-trainer-id="${t.id}">Odaberi</button>`}
-                </div>
-            `;
-        }).join('');
-
-        const empty = filtered.length === 0 && this.trainerSearch
-            ? '<p class="muted small">Nema rezultata za pretragu.</p>'
+        const empty = filtered.length === 0
+            ? `<p class="muted small">${this.trainerSearch ? 'Nema rezultata za pretragu.' : 'Trenutno nema dostupnih trenera.'}</p>`
             : '';
 
-        container.innerHTML = (this.trainerSearch ? '' : noneCard) + cards + empty;
+        container.innerHTML = cards + empty;
 
-        container.querySelectorAll('button[data-trainer-id]').forEach(btn => {
-            btn.addEventListener('click', () => this.pickTrainer(btn.dataset.trainerId || null));
+        container.querySelectorAll('button[data-profile-id]').forEach(btn => {
+            btn.addEventListener('click', () => this.viewProfile(btn.dataset.profileId));
+        });
+        container.querySelectorAll('button[data-request-id]').forEach(btn => {
+            btn.addEventListener('click', () => this.sendRequest(btn.dataset.requestId));
         });
     },
 
-    async pickTrainer(trainerId) {
-        const msg = document.getElementById('trainerChangeMsg');
+    async viewProfile(trainerId) {
+        this.viewingTrainerId = trainerId;
+        const panel = document.getElementById('trainerProfilePanel');
+        const body = document.getElementById('trainerProfileBody');
+        const t = this.allTrainers.find(x => x.id === trainerId);
+        document.getElementById('trainerProfileTitle').textContent = `Profil: ${t ? (t.fullName || t.email) : ''}`;
+        document.getElementById('trainerProfileMsg').textContent = '';
+        body.innerHTML = '<p class="muted small">Učitavanje…</p>';
+        panel.classList.remove('hidden');
+        document.getElementById('trainerPickWrap').classList.add('hidden');
+        try {
+            const p = await API.get(`/trainers/${trainerId}/profile`);
+            Profile.renderReadOnly(body, p);
+        } catch (err) {
+            body.innerHTML = `<p class="muted small">${this.escape(err.message)}</p>`;
+        }
+    },
+
+    closeTrainerProfile() {
+        document.getElementById('trainerProfilePanel').classList.add('hidden');
+        this.viewingTrainerId = null;
+        if (this.me && !this.me.trainerId && !(this.myRequest && this.myRequest.status === 'Pending')) {
+            document.getElementById('trainerPickWrap').classList.remove('hidden');
+        }
+    },
+
+    async sendRequest(trainerId) {
+        if (!trainerId) return;
+        const inPanel = !document.getElementById('trainerProfilePanel').classList.contains('hidden');
+        const msg = document.getElementById(inPanel ? 'trainerProfileMsg' : 'trainerChangeMsg');
         msg.textContent = '';
         msg.style.color = '';
 
         try {
-            await API.put('/auth/trainer', { trainerId });
+            await API.post('/trainer-requests', {
+                trainerId,
+                language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
+            });
             this.me = await API.get('/auth/me');
-            this.updateCurrentTrainerLabel();
-            this.renderTrainerCards();
+            await this.loadTrainerState();
+            const s = document.getElementById('trainerChangeMsg');
+            s.style.color = '#51cf66';
+            s.textContent = 'Zahtjev poslan. Čeka odobrenje trenera.';
+        } catch (err) {
+            msg.textContent = err.message;
+        }
+    },
+
+    async cancelRequest(id) {
+        const msg = document.getElementById('trainerChangeMsg');
+        msg.textContent = '';
+        msg.style.color = '';
+        try {
+            await API.delete(`/trainer-requests/${id}`);
+            this.me = await API.get('/auth/me');
+            await this.loadTrainerState();
+        } catch (err) {
+            msg.textContent = err.message;
+        }
+    },
+
+    async disconnect() {
+        if (!confirm('Odspojiti se od trenera? Tvoji postojeći planovi ostaju, ali trener te više neće voditi.')) return;
+        const msg = document.getElementById('trainerChangeMsg');
+        msg.textContent = '';
+        msg.style.color = '';
+        try {
+            await API.put('/auth/trainer', { trainerId: null });
+            this.me = await API.get('/auth/me');
+            await this.loadTrainerState();
             if (typeof App !== 'undefined' && App.loadTrainerBanner) App.loadTrainerBanner();
 
             const myPlansView = document.getElementById('myPlansView');
@@ -127,7 +218,7 @@ const Settings = {
             }
 
             msg.style.color = '#51cf66';
-            msg.textContent = trainerId ? 'Trener postavljen.' : 'Trener uklonjen.';
+            msg.textContent = 'Odspojen od trenera.';
         } catch (err) {
             msg.textContent = err.message;
         }

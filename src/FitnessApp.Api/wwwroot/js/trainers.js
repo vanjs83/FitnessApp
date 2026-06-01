@@ -90,6 +90,64 @@ const Trainers = {
         } catch (err) {
             console.error(err);
         }
+        await this.loadRequests();
+    },
+
+    async loadRequests() {
+        const container = document.getElementById('trainerRequestsInbox');
+        if (!container) return;
+        let requests = [];
+        try {
+            requests = await API.get('/trainer-requests/incoming');
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = '';
+            return;
+        }
+
+        if (!requests.length) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const cards = requests.map(r => `
+            <div class="list-item" data-req-id="${r.id}">
+                <div class="list-item-main">
+                    ${Profile.avatarHtml(r.clientImageUrl, 'avatar-mini')}
+                    <div>
+                        <h4>${this.escape(r.clientName)}</h4>
+                        <div class="meta">${this.escape(r.clientEmail)} · ${this.formatDateTime(r.createdAt)}</div>
+                    </div>
+                </div>
+                <span class="planned-actions">
+                    <button class="accept-req-btn" data-req-id="${r.id}">Prihvati</button>
+                    <button class="secondary reject-req-btn" data-req-id="${r.id}">Odbij</button>
+                </span>
+            </div>
+        `).join('');
+
+        container.innerHTML = `
+            <div class="card-inset">
+                <h3 style="margin-top:0;">Zahtjevi za suradnju <span class="nav-badge">${requests.length}</span></h3>
+                <div class="list">${cards}</div>
+            </div>`;
+
+        container.querySelectorAll('.accept-req-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.respondToRequest(parseInt(btn.dataset.reqId), 'accept'));
+        });
+        container.querySelectorAll('.reject-req-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.respondToRequest(parseInt(btn.dataset.reqId), 'reject'));
+        });
+    },
+
+    async respondToRequest(id, action) {
+        if (action === 'reject' && !confirm('Odbiti ovaj zahtjev?')) return;
+        try {
+            await API.post(`/trainer-requests/${id}/${action}`, {});
+            await this.load();
+        } catch (err) {
+            alert(err.message);
+        }
     },
 
     renderClients() {

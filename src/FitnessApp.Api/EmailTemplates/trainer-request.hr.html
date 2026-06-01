@@ -1,0 +1,34 @@
+<!--
+  Obavijest treneru da mu je klijent poslao zahtjev za suradnju — HR
+  Placeholderi: {{TrainerName}} {{ClientName}} {{LoginUrl}}
+-->
+<!DOCTYPE html>
+<html lang="hr">
+<head><meta charset="utf-8"><title>Novi zahtjev za suradnju</title></head>
+<body style="margin:0;background:#f4f6f9;font-family:Arial,sans-serif;color:#222;">
+<div style="max-width:600px;margin:0 auto;padding:24px;">
+  <div style="border-bottom:2px solid #4dabf7;padding-bottom:12px;margin-bottom:20px;">
+    <h2 style="margin:0;color:#4dabf7;">&#128170; FitnessApp</h2>
+  </div>
+
+  <p>Pozdrav <strong>{{TrainerName}}</strong>,</p>
+  <p>
+    Klijent <strong>{{ClientName}}</strong> ti je poslao <strong>zahtjev za suradnju</strong> u FitnessApp aplikaciji.
+  </p>
+  <p>
+    Prijavi se i u kartici <em>Klijenti</em> &rarr; <em>Zahtjevi za suradnju</em> možeš zahtjev
+    <strong>prihvatiti</strong> ili <strong>odbiti</strong>.
+  </p>
+
+  <p>
+    <a href="{{LoginUrl}}" style="display:inline-block;background:#4dabf7;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">
+      Otvori FitnessApp
+    </a>
+  </p>
+
+  <div style="margin-top:30px;padding-top:16px;border-top:1px solid #eee;color:#888;font-size:13px;">
+    Obavijest je poslana preko FitnessApp platforme. Ako odgovoriš na ovaj email, odgovor ide direktno klijentu.
+  </div>
+</div>
+</body>
+</html>

@@ -63,13 +63,6 @@
                 <input type="email" id="registerEmail" data-i18n-ph="common.email" placeholder="Email" required>
                 <input type="password" id="registerPassword" data-i18n-ph="auth.passwordMin" placeholder="Lozinka (min 6)" required minlength="6">
 
-                <div id="trainerPickerWrap">
-                    <label class="muted small" data-i18n="auth.trainerPicker">Tvoj trener (opcionalno)</label>
-                    <select id="registerTrainer">
-                        <option value="" data-i18n="auth.noTrainer">— bez trenera —</option>
-                    </select>
-                </div>
-
                 <button type="submit" data-i18n="auth.registerBtn">Registriraj se</button>
                 <div class="error" id="registerError"></div>
             </form>
@@ -460,6 +453,8 @@
                     </div>
                     <div class="error" id="newClientError"></div>
                 </div>
+
+                <div id="trainerRequestsInbox"></div>
 
                 <input type="text" id="trainerClientsSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga klijenata...">
                 <div id="clientsList" class="list"></div>
@@ -895,8 +890,21 @@
             <div id="trainerChangeSection" class="card-inset hidden">
                 <h4 data-i18n="settings.trainerTitle">Trener</h4>
                 <div class="muted small" id="currentTrainerLabel"></div>
-                <input type="text" id="settingsTrainerSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga trenera...">
-                <div id="settingsTrainersList" class="trainers-pick-list"></div>
+                <div id="trainerRequestStatus"></div>
+                <div id="trainerPickWrap">
+                    <p class="muted small" data-i18n="settings.trainerPickHint">Odaberi trenera, pogledaj njegov profil i pošalji zahtjev za suradnju. Trener mora prihvatiti zahtjev.</p>
+                    <input type="text" id="settingsTrainerSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga trenera...">
+                    <div id="settingsTrainersList" class="trainers-pick-list"></div>
+                </div>
+                <div id="trainerProfilePanel" class="card-inset hidden">
+                    <div class="row" style="justify-content:space-between;align-items:center;">
+                        <h4 id="trainerProfileTitle" style="margin:0;">Profil trenera</h4>
+                        <button class="secondary small-btn" id="closeTrainerProfileBtn" data-i18n="common.close">Zatvori</button>
+                    </div>
+                    <div id="trainerProfileBody"></div>
+                    <button id="trainerProfileRequestBtn" data-i18n="settings.sendTrainerRequest">Pošalji zahtjev ovom treneru</button>
+                    <div class="error" id="trainerProfileMsg"></div>
+                </div>
                 <div id="trainerChangeMsg" class="error"></div>
             </div>
 

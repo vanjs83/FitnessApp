@@ -13,25 +13,11 @@ const Auth = {
         });
 
         this.updateRoleUI();
-        this.loadTrainersForPicker();
     },
 
     updateRoleUI() {
-        const role = document.querySelector('input[name="role"]:checked').value;
-        document.getElementById('trainerPickerWrap').classList.toggle('hidden', role !== 'Client');
-    },
-
-    async loadTrainersForPicker() {
-        try {
-            const trainers = await API.get('/trainers');
-            const select = document.getElementById('registerTrainer');
-            select.innerHTML = `<option value="">${I18n.t('auth.noTrainer')}</option>` +
-                trainers.map(t =>
-                    `<option value="${t.id}">${this.escape(t.fullName || t.email)}</option>`
-                ).join('');
-        } catch (err) {
-            console.warn(I18n.t('app.cantLoadTrainers'), err);
-        }
+        // Role selection no longer toggles a trainer picker — clients connect to a
+        // trainer later from their profile by sending a request the trainer accepts.
     },
 
     switchTab(tab) {
@@ -62,15 +48,13 @@ const Auth = {
         errorEl.textContent = '';
 
         const role = document.querySelector('input[name="role"]:checked').value;
-        const trainerId = role === 'Client' ? document.getElementById('registerTrainer').value || null : null;
 
         try {
             const res = await API.post('/auth/register', {
                 email: document.getElementById('registerEmail').value,
                 password: document.getElementById('registerPassword').value,
                 fullName: document.getElementById('registerFullName').value,
-                role,
-                trainerId
+                role
             });
             this.onLoginSuccess(res);
         } catch (err) {

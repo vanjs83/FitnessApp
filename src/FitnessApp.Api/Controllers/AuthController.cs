@@ -70,21 +70,14 @@ public class AuthController : ControllerBase
         if (existing != null)
             return BadRequest(new { message = "A user with this email already exists." });
 
-        string? trainerId = null;
-        if (request.Role == Roles.Client && !string.IsNullOrWhiteSpace(request.TrainerId))
-        {
-            var trainer = await _userManager.FindByIdAsync(request.TrainerId);
-            if (trainer == null || !await _userManager.IsInRoleAsync(trainer, Roles.Trainer))
-                return BadRequest(new { message = "Selected trainer not found." });
-            trainerId = trainer.Id;
-        }
-
+        // Clients no longer pick a trainer at registration — they send a request
+        // from their profile afterwards, which the trainer must accept.
         var user = new ApplicationUser
         {
             UserName = request.Email,
             Email = request.Email,
             FullName = request.FullName,
-            TrainerId = trainerId
+            TrainerId = null
         };
 
         var result = await _userManager.CreateAsync(user, request.Password);
