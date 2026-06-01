@@ -143,11 +143,13 @@ const App = {
                         <span class="label">${I18n.t('banner.noTrainer')}</span>
                         <span class="name">${I18n.t('banner.noTrainerHint')}</span>
                     </div>
-                    <button class="small-btn" id="changeTrainerBannerBtn">${I18n.t('common.choose')}</button>
                 `;
             }
 
-            document.getElementById('changeTrainerBannerBtn').addEventListener('click', () => Settings.open());
+            // The "change trainer" button (only shown when a trainer exists) leads to
+            // the Treneri tab, where trainer selection now lives.
+            const changeBtn = document.getElementById('changeTrainerBannerBtn');
+            if (changeBtn) changeBtn.addEventListener('click', () => this.switchClientView('trainers'));
         } catch (err) {
             console.warn(err);
         }
