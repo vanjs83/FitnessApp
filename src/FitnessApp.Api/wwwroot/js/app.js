@@ -14,6 +14,7 @@ const App = {
         EditPlanModal.init();
         Admin.init();
         Settings.init();
+        ClientTrainers.init();
         Stats.init();
         Profile.init();
         Chat.init();
@@ -188,7 +189,10 @@ const App = {
         document.getElementById('statsView').classList.toggle('hidden', view !== 'stats');
         document.getElementById('profileView').classList.toggle('hidden', view !== 'profile');
         document.getElementById('chatView').classList.toggle('hidden', view !== 'chat');
+        const trainersV = document.getElementById('trainersView');
+        if (trainersV) trainersV.classList.toggle('hidden', view !== 'trainers');
 
+        if (view === 'trainers') ClientTrainers.load();
         if (view === 'chat') Chat.load();
         if (view === 'workouts') Workouts.load();
         if (view === 'exercises') Exercises.load();

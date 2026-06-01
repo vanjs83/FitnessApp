@@ -7,17 +7,6 @@ const Auth = {
         document.getElementById('loginForm').addEventListener('submit', e => this.handleLogin(e));
         document.getElementById('registerForm').addEventListener('submit', e => this.handleRegister(e));
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
-
-        document.querySelectorAll('input[name="role"]').forEach(r => {
-            r.addEventListener('change', () => this.updateRoleUI());
-        });
-
-        this.updateRoleUI();
-    },
-
-    updateRoleUI() {
-        // Role selection no longer toggles a trainer picker — clients connect to a
-        // trainer later from their profile by sending a request the trainer accepts.
     },
 
     switchTab(tab) {
@@ -87,11 +76,5 @@ const Auth = {
 
     isLoggedIn() {
         return !!API.getToken();
-    },
-
-    escape(s) {
-        const div = document.createElement('div');
-        div.textContent = s;
-        return div.innerHTML;
     }
 };

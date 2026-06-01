@@ -369,4 +369,4 @@ src/FitnessApp.Api/firebase/*.json
 src/FitnessApp.Api/wwwroot/uploads/
 # Local Serilog output
 /logs/
-C:/logs/
+C:/logs/.apipid.txt

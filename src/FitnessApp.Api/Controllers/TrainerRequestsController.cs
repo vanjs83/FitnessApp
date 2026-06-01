@@ -33,6 +33,9 @@ public class TrainerRequestsController : ControllerBase
         _logger = logger;
     }
 
+    // Public base URL for links in emails, derived from the current request's host.
+    private string PublicBaseUrl() => $"{Request.Scheme}://{Request.Host}/";
+
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     // ===== Client side =====
@@ -103,7 +106,7 @@ public class TrainerRequestsController : ControllerBase
                 {
                     ["TrainerName"] = trainer.FullName ?? trainer.Email!,
                     ["ClientName"] = clientName,
-                    ["LoginUrl"] = $"{Request.Scheme}://{Request.Host}/"
+                    ["LoginUrl"] = PublicBaseUrl() + "index.html"
                 },
                 replyTo: client.Email,
                 replyToName: clientName);

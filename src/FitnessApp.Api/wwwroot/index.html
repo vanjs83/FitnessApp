@@ -75,10 +75,20 @@
                 <button class="nav-btn active" data-view="workouts" data-i18n="nav.workouts">Dodatni treninzi</button>
                 <button class="nav-btn" data-view="myPlans" data-i18n="nav.myPlans">Moj plan</button>
                 <button class="nav-btn" data-view="myNutrition" data-i18n="nav.myNutrition">Prehrana</button>
+                <button class="nav-btn" data-view="trainers" data-i18n="nav.trainers">Treneri</button>
                 <button class="nav-btn" data-view="stats" data-i18n="nav.stats">Statistika</button>
                 <button class="nav-btn" data-view="chat" data-i18n="nav.chat">Poruke<span class="nav-badge hidden" id="clientChatBadge"></span></button>
                 <button class="nav-btn" data-view="profile" data-i18n="nav.profile">Osobni podaci</button>
             </nav>
+
+            <div id="trainersView" class="view hidden">
+                <div class="view-header">
+                    <h2 data-i18n="trainers.browseTitle">Pronađi trenera</h2>
+                </div>
+                <div id="clientTrainerStatus"></div>
+                <input type="text" id="clientTrainersSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga trenera...">
+                <div id="clientTrainersList" class="list"></div>
+            </div>
 
             <div id="workoutsView" class="view">
                 <div class="view-header">
@@ -868,6 +878,10 @@
             <button id="closeTrainerProfileBtn" class="modal-close">×</button>
             <h2 id="trainerProfileTitle" data-i18n="trainer.profileTitle">Profil trenera</h2>
             <div id="trainerProfileBody" class="profile-readonly"></div>
+            <div id="trainerProfileModalActions" class="hidden" style="margin-top:16px;">
+                <button id="modalSendRequestBtn" data-i18n="settings.sendTrainerRequest">Pošalji zahtjev ovom treneru</button>
+                <div class="error" id="modalSendRequestMsg"></div>
+            </div>
         </div>
     </div>
 
@@ -881,31 +895,9 @@
                 <h4 data-i18n="settings.profileTitle">Profil</h4>
                 <div class="muted small" id="profileEmailLabel"></div>
                 <div class="muted small" id="profileRoleLabel"></div>
-                <div class="muted small" id="profileTrainerLabel"></div>
                 <input type="text" id="profileFullName" data-i18n-ph="common.fullName" placeholder="Ime i prezime">
                 <button id="saveProfileBtn" data-i18n="settings.saveProfile">Spremi profil</button>
                 <div id="profileMsg" class="error"></div>
-            </div>
-
-            <div id="trainerChangeSection" class="card-inset hidden">
-                <h4 data-i18n="settings.trainerTitle">Trener</h4>
-                <div class="muted small" id="currentTrainerLabel"></div>
-                <div id="trainerRequestStatus"></div>
-                <div id="trainerPickWrap">
-                    <p class="muted small" data-i18n="settings.trainerPickHint">Odaberi trenera, pogledaj njegov profil i pošalji zahtjev za suradnju. Trener mora prihvatiti zahtjev.</p>
-                    <input type="text" id="settingsTrainerSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga trenera...">
-                    <div id="settingsTrainersList" class="trainers-pick-list"></div>
-                </div>
-                <div id="stTrainerProfilePanel" class="card-inset hidden">
-                    <div class="row" style="justify-content:space-between;align-items:center;">
-                        <h4 id="stTrainerProfileTitle" style="margin:0;">Profil trenera</h4>
-                        <button class="secondary small-btn" id="stCloseTrainerProfileBtn" data-i18n="common.close">Zatvori</button>
-                    </div>
-                    <div id="stTrainerProfileBody"></div>
-                    <button id="stTrainerProfileRequestBtn" data-i18n="settings.sendTrainerRequest">Pošalji zahtjev ovom treneru</button>
-                    <div class="error" id="stTrainerProfileMsg"></div>
-                </div>
-                <div id="trainerChangeMsg" class="error"></div>
             </div>
 
             <div class="card-inset">
@@ -1016,6 +1008,7 @@
     <script src="js/admin.js"></script>
     <script src="js/stats.js"></script>
     <script src="js/settings.js"></script>
+    <script src="js/clientTrainers.js"></script>
     <script src="js/profile.js"></script>
     <script src="js/firebase-push.js"></script>
     <script src="js/chat.js"></script>
