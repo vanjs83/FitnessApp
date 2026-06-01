@@ -20,11 +20,7 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .Must(r => Roles.SelfRegisterable.Contains(r))
             .WithMessage("Role is not allowed for self-registration.");
 
-        When(x => x.Role == Roles.Client, () =>
-        {
-            RuleFor(x => x.TrainerId)
-                .NotEmpty()
-                .WithMessage("Client must select a trainer.");
-        });
+        // Clients no longer pick a trainer at registration — they send a request
+        // from their profile afterwards, which the trainer must accept.
     }
 }
