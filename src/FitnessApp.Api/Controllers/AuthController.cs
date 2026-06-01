@@ -173,6 +173,9 @@ public class AuthController : ControllerBase
         return Ok(new { fullName = user.FullName });
     }
 
+    // Clients can only DISCONNECT from their trainer here. Connecting to a trainer
+    // goes exclusively through a trainer request that the trainer must accept
+    // (see TrainerRequestsController), so a non-null trainerId is rejected.
     [HttpPut("trainer")]
     [Authorize(Roles = Roles.Client)]
     public async Task<IActionResult> ChangeTrainer(ChangeTrainerRequest request)
@@ -180,17 +183,10 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByIdAsync(UserId);
         if (user == null) return NotFound();
 
-        if (string.IsNullOrWhiteSpace(request.TrainerId))
-        {
-            user.TrainerId = null;
-        }
-        else
-        {
-            var trainer = await _userManager.FindByIdAsync(request.TrainerId);
-            if (trainer == null || !await _userManager.IsInRoleAsync(trainer, Roles.Trainer))
-                return BadRequest(new { message = "Selected trainer not found." });
-            user.TrainerId = trainer.Id;
-        }
+        if (!string.IsNullOrWhiteSpace(request.TrainerId))
+            return BadRequest(new { message = "To connect to a trainer, send a request the trainer must accept." });
+
+        user.TrainerId = null;
 
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)

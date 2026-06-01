@@ -21,9 +21,9 @@ const Settings = {
             this.renderTrainerCards();
         });
 
-        const closeTp = document.getElementById('closeTrainerProfileBtn');
+        const closeTp = document.getElementById('stCloseTrainerProfileBtn');
         if (closeTp) closeTp.addEventListener('click', () => this.closeTrainerProfile());
-        const tpReq = document.getElementById('trainerProfileRequestBtn');
+        const tpReq = document.getElementById('stTrainerProfileRequestBtn');
         if (tpReq) tpReq.addEventListener('click', () => this.sendRequest(this.viewingTrainerId));
     },
 
@@ -58,7 +58,7 @@ const Settings = {
         const statusEl = document.getElementById('trainerRequestStatus');
         const pickWrap = document.getElementById('trainerPickWrap');
         const label = document.getElementById('currentTrainerLabel');
-        document.getElementById('trainerProfilePanel').classList.add('hidden');
+        document.getElementById('stTrainerProfilePanel').classList.add('hidden');
         document.getElementById('trainerChangeMsg').textContent = '';
         this.viewingTrainerId = null;
 
@@ -141,11 +141,11 @@ const Settings = {
 
     async viewProfile(trainerId) {
         this.viewingTrainerId = trainerId;
-        const panel = document.getElementById('trainerProfilePanel');
-        const body = document.getElementById('trainerProfileBody');
+        const panel = document.getElementById('stTrainerProfilePanel');
+        const body = document.getElementById('stTrainerProfileBody');
         const t = this.allTrainers.find(x => x.id === trainerId);
-        document.getElementById('trainerProfileTitle').textContent = `Profil: ${t ? (t.fullName || t.email) : ''}`;
-        document.getElementById('trainerProfileMsg').textContent = '';
+        document.getElementById('stTrainerProfileTitle').textContent = `Profil: ${t ? (t.fullName || t.email) : ''}`;
+        document.getElementById('stTrainerProfileMsg').textContent = '';
         body.innerHTML = '<p class="muted small">Učitavanje…</p>';
         panel.classList.remove('hidden');
         document.getElementById('trainerPickWrap').classList.add('hidden');
@@ -158,7 +158,7 @@ const Settings = {
     },
 
     closeTrainerProfile() {
-        document.getElementById('trainerProfilePanel').classList.add('hidden');
+        document.getElementById('stTrainerProfilePanel').classList.add('hidden');
         this.viewingTrainerId = null;
         if (this.me && !this.me.trainerId && !(this.myRequest && this.myRequest.status === 'Pending')) {
             document.getElementById('trainerPickWrap').classList.remove('hidden');
@@ -167,8 +167,8 @@ const Settings = {
 
     async sendRequest(trainerId) {
         if (!trainerId) return;
-        const inPanel = !document.getElementById('trainerProfilePanel').classList.contains('hidden');
-        const msg = document.getElementById(inPanel ? 'trainerProfileMsg' : 'trainerChangeMsg');
+        const inPanel = !document.getElementById('stTrainerProfilePanel').classList.contains('hidden');
+        const msg = document.getElementById(inPanel ? 'stTrainerProfileMsg' : 'trainerChangeMsg');
         msg.textContent = '';
         msg.style.color = '';
 
