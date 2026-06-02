@@ -146,7 +146,7 @@ const App = {
                         <span class="label">${I18n.t('banner.yourTrainer')}</span>
                         <a href="#" class="name trainer-link" id="trainerProfileLink">${this.escape(me.trainerName)}</a>
                     </div>
-                    <button class="secondary small-btn" id="changeTrainerBannerBtn">${I18n.t('common.change')}</button>
+                    <button class="secondary small-btn" id="bannerDisconnectBtn">${I18n.t('common.disconnect')}</button>
                 `;
                 document.getElementById('trainerProfileLink').addEventListener('click', e => {
                     e.preventDefault();
@@ -162,10 +162,10 @@ const App = {
                 `;
             }
 
-            // The "change trainer" button (only shown when a trainer exists) leads to
-            // the Treneri tab, where trainer selection now lives.
-            const changeBtn = document.getElementById('changeTrainerBannerBtn');
-            if (changeBtn) changeBtn.addEventListener('click', () => this.switchClientView('trainers'));
+            // The disconnect button (only shown when a trainer exists) reuses the
+            // same disconnect flow as the Treneri tab.
+            const disconnectBtn = document.getElementById('bannerDisconnectBtn');
+            if (disconnectBtn) disconnectBtn.addEventListener('click', () => ClientTrainers.disconnect());
         } catch (err) {
             console.warn(err);
         }
