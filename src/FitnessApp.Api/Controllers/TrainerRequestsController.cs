@@ -206,8 +206,9 @@ public class TrainerRequestsController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
-        entity.Status = TrainerRequestStatus.Accepted;
-        entity.RespondedAt = DateTime.UtcNow;
+        // Request fulfilled: the connection now lives on ApplicationUser.TrainerId,
+        // so the request row is no longer needed and is removed.
+        _db.TrainerRequests.Remove(entity);
         await _db.SaveChangesAsync();
 
         return Ok(new { clientId = client.Id });
@@ -223,8 +224,8 @@ public class TrainerRequestsController : ControllerBase
         if (entity.Status != TrainerRequestStatus.Pending)
             return BadRequest(new { message = "Request is no longer pending." });
 
-        entity.Status = TrainerRequestStatus.Rejected;
-        entity.RespondedAt = DateTime.UtcNow;
+        // Rejected requests are removed rather than kept as history.
+        _db.TrainerRequests.Remove(entity);
         await _db.SaveChangesAsync();
         return NoContent();
     }
