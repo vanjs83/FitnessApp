@@ -1,3 +1,4 @@
+using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Infrastructure.Persistence;
@@ -41,6 +42,14 @@ public class FirebasePushNotificationService : IPushNotificationService
 
     private async Task SendInternalAsync(string token, string title, string body, IDictionary<string, string>? data, CancellationToken ct)
     {
+        // Firebase isn't initialised (missing/invalid credentials file at startup) —
+        // skip gracefully instead of throwing on FirebaseMessaging.DefaultInstance.
+        if (FirebaseApp.DefaultInstance is null)
+        {
+            _logger.LogWarning("Firebase nije inicijaliziran (DefaultInstance je null) — push se preskače. Provjeri credentials fajl/putanju.");
+            return;
+        }
+
         var message = new Message
         {
             Token = token,

@@ -87,17 +87,34 @@ public static class DependencyInjection
 
         services.Configure<FirebaseSettings>(configuration.GetSection("Firebase"));
         var firebase = configuration.GetSection("Firebase").Get<FirebaseSettings>();
-        if (firebase is not null && !string.IsNullOrWhiteSpace(firebase.CredentialsPath))
+        if (firebase is not null && FirebaseApp.DefaultInstance is null)
         {
-            var path = Path.IsPathRooted(firebase.CredentialsPath)
-                ? firebase.CredentialsPath
-                : Path.Combine(AppContext.BaseDirectory, "firebase", firebase.CredentialsPath);
+            GoogleCredential? credential = null;
 
-            if (File.Exists(path) && FirebaseApp.DefaultInstance is null)
+            // 1) Inline JSON via config/env var (Firebase:CredentialsJson) — no file on disk.
+            //    Best for prod: set the whole service-account JSON as a secret/env var.
+            if (!string.IsNullOrWhiteSpace(firebase.CredentialsJson))
+            {
+                credential = GoogleCredential.FromJson(firebase.CredentialsJson);
+            }
+            // 2) File path (Firebase:CredentialsPath). Absolute path is used as-is;
+            //    a relative path is resolved against the app folder (AppContext.BaseDirectory)
+            //    exactly as written — no hidden subfolder is added.
+            else if (!string.IsNullOrWhiteSpace(firebase.CredentialsPath))
+            {
+                var path = Path.IsPathRooted(firebase.CredentialsPath)
+                    ? firebase.CredentialsPath
+                    : Path.Combine(AppContext.BaseDirectory, firebase.CredentialsPath);
+
+                if (File.Exists(path))
+                    credential = GoogleCredential.FromFile(path);
+            }
+
+            if (credential is not null)
             {
                 FirebaseApp.Create(new AppOptions
                 {
-                    Credential = GoogleCredential.FromFile(path),
+                    Credential = credential,
                     ProjectId = firebase.ProjectId
                 });
             }
