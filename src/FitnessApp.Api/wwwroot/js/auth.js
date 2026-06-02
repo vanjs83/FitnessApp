@@ -34,7 +34,8 @@ const Auth = {
         });
 
         const locale = (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr';
-        const common = { theme: 'filled_blue', size: 'large', shape: 'pill', width: 300, locale };
+        // Rectangular + fixed width so both buttons match each other and the app's own buttons.
+        const common = { theme: 'filled_blue', size: 'large', shape: 'rectangular', width: 336, locale };
         const loginEl = document.getElementById('googleLoginBtn');
         const regEl = document.getElementById('googleRegisterBtn');
         if (loginEl) google.accounts.id.renderButton(loginEl, { ...common, text: 'signin_with' });

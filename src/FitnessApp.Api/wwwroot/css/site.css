@@ -152,7 +152,8 @@ main {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     gap: 0.6rem;
-    margin: 0.25rem 0;
+    /* Pull up to absorb the empty error div + form gap above, tightening the space before ILI. */
+    margin: -0.65rem 0 0;
 }
 .auth-or::before, .auth-or::after {
     content: "";
