@@ -27,7 +27,7 @@ public class FirebasePushNotificationService : IPushNotificationService
 
         if (tokens.Count == 0)
         {
-            _logger.LogInformation("Korisnik {UserId} nema aktivnih device tokena.", userId);
+            _logger.LogInformation("User {UserId} has no active device tokens.", userId);
             return;
         }
 
@@ -46,7 +46,7 @@ public class FirebasePushNotificationService : IPushNotificationService
         // skip gracefully instead of throwing on FirebaseMessaging.DefaultInstance.
         if (FirebaseApp.DefaultInstance is null)
         {
-            _logger.LogWarning("Firebase nije inicijaliziran (DefaultInstance je null) — push se preskače. Provjeri credentials fajl/putanju.");
+            _logger.LogWarning("Firebase is not initialized (DefaultInstance is null) — skipping push. Check the credentials file/path.");
             return;
         }
 
@@ -64,7 +64,7 @@ public class FirebasePushNotificationService : IPushNotificationService
         catch (FirebaseMessagingException ex) when (
             ex.MessagingErrorCode is MessagingErrorCode.Unregistered or MessagingErrorCode.InvalidArgument)
         {
-            _logger.LogWarning("Deaktiviram nevažeći FCM token: {Code}", ex.MessagingErrorCode);
+            _logger.LogWarning("Deactivating invalid FCM token: {Code}", ex.MessagingErrorCode);
             var entity = await _db.Devices.FirstOrDefaultAsync(t => t.Token == token, ct);
             if (entity is not null)
             {
@@ -74,7 +74,7 @@ public class FirebasePushNotificationService : IPushNotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Slanje push notifikacije nije uspjelo.");
+            _logger.LogError(ex, "Failed to send push notification.");
         }
     }
 }

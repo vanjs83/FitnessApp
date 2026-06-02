@@ -40,12 +40,24 @@ jobs:
         run: ls -la publish
 
 
-      # 🔴 STOP APP (App Offline mode)
-      - name: Enable maintenance mode
-        run: |
-          echo "Maintenance mode" > publish/app_offline.htm
+      # 🔴 STEP 1: Take the app OFFLINE first (separate upload).
+      # Uploading app_offline.htm makes the ASP.NET Core Module stop the app,
+      # which releases the lock on FitnessApp.Api.dll so it can be overwritten.
+      - name: Create maintenance file
+        run: echo "Deploying, back shortly..." > app_offline.htm
 
-      # 8. FTP Deploy to SmartASP
+      - name: Take app offline (upload app_offline.htm first)
+        run: |
+          curl -sS --fail -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
+            -T app_offline.htm \
+            "ftp://${{ secrets.FTP_SERVER }}/fitnessapp/tvanjurek-001-site1.ltempurl.com/app_offline.htm"
+
+      - name: Wait for the app to shut down
+        run: sleep 12
+
+      # 🟢 STEP 2: Incremental FTP deploy (NO clean-slate).
+      # The DLL is now unlocked (app is offline), so it overwrites fine, while
+      # untracked server files (firebase/, wwwroot/uploads/, logs/) are LEFT INTACT.
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
@@ -54,18 +66,16 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: publish/
           server-dir: /fitnessapp/tvanjurek-001-site1.ltempurl.com/
-          dangerous-clean-slate: true
           log-level: verbose
+          exclude: |
+            **/app_offline.htm
 
-      - name: Remove maintenance mode
+      # 🔵 STEP 3: Bring the app back ONLINE (remove app_offline.htm).
+      - name: Bring app online (delete app_offline.htm)
         run: |
-          echo "" > publish/app_offline.htm
-      
-      - name: Delete app_offline.htm via FTP
-        run: |
-          curl -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
-          "ftp://${{ secrets.FTP_SERVER }}/fitnessapp/tvanjurek-001-site1.ltempurl.com/app_offline.htm" \
-          -Q "-DELE app_offline.htm"
+          curl -sS -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
+            "ftp://${{ secrets.FTP_SERVER }}/fitnessapp/tvanjurek-001-site1.ltempurl.com/" \
+            -Q "-DELE app_offline.htm"
 
       # 9. Info log (audit-f riendly)
       - name: Print build info
