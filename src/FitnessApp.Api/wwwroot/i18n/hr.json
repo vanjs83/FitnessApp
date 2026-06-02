@@ -30,6 +30,7 @@
   "auth.login": "Prijava",
   "auth.register": "Registracija",
   "auth.loginBtn": "Prijavi se",
+  "auth.or": "ili",
   "auth.registerBtn": "Registriraj se",
   "auth.passwordMin": "Lozinka (min 6)",
   "auth.role.client": "👤 Klijent",

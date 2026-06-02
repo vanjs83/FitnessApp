@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FitnessApp</title>
     <link rel="stylesheet" href="css/site.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <header>
@@ -42,6 +43,8 @@
                 <input type="password" id="loginPassword" data-i18n-ph="common.password" placeholder="Lozinka" required>
                 <button type="submit" data-i18n="auth.loginBtn">Prijavi se</button>
                 <div class="error" id="loginError"></div>
+                <div class="auth-or" data-i18n="auth.or">ili</div>
+                <div id="googleLoginBtn" class="google-btn-wrap"></div>
             </form>
 
             <form id="registerForm" class="auth-form hidden">
@@ -66,6 +69,8 @@
 
                 <button type="submit" data-i18n="auth.registerBtn">Registriraj se</button>
                 <div class="error" id="registerError"></div>
+                <div class="auth-or" data-i18n="auth.or">ili</div>
+                <div id="googleRegisterBtn" class="google-btn-wrap"></div>
             </form>
         </section>
 

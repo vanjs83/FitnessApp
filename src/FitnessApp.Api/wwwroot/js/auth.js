@@ -7,6 +7,59 @@ const Auth = {
         document.getElementById('loginForm').addEventListener('submit', e => this.handleLogin(e));
         document.getElementById('registerForm').addEventListener('submit', e => this.handleRegister(e));
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+
+        this.initGoogle();
+    },
+
+    // Sets up "Sign in / up with Google" buttons. No-op when the feature is not
+    // configured on the server (empty Google:ClientId) so basic login still works.
+    async initGoogle() {
+        let clientId = '';
+        try {
+            const cfg = await API.get('/auth/google-config');
+            clientId = cfg && cfg.clientId;
+        } catch (e) { /* feature unavailable */ }
+        if (!clientId) return;
+
+        // The GSI script loads async — wait briefly for it to be ready.
+        const start = Date.now();
+        while (!(window.google && google.accounts && google.accounts.id)) {
+            if (Date.now() - start > 5000) return;
+            await new Promise(r => setTimeout(r, 100));
+        }
+
+        google.accounts.id.initialize({
+            client_id: clientId,
+            callback: resp => this.handleGoogleCredential(resp)
+        });
+
+        const locale = (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr';
+        const common = { theme: 'filled_blue', size: 'large', shape: 'pill', width: 300, locale };
+        const loginEl = document.getElementById('googleLoginBtn');
+        const regEl = document.getElementById('googleRegisterBtn');
+        if (loginEl) google.accounts.id.renderButton(loginEl, { ...common, text: 'signin_with' });
+        if (regEl) google.accounts.id.renderButton(regEl, { ...common, text: 'signup_with' });
+    },
+
+    // Shared callback for both buttons. The active tab decides whether we send a
+    // role: only the Register tab carries the Client/Trainer choice for new accounts.
+    async handleGoogleCredential(response) {
+        const isRegister = !document.getElementById('registerForm').classList.contains('hidden');
+        const errorEl = document.getElementById(isRegister ? 'registerError' : 'loginError');
+        if (errorEl) errorEl.textContent = '';
+
+        const body = { credential: response.credential };
+        if (isRegister) {
+            const checked = document.querySelector('input[name="role"]:checked');
+            body.role = checked ? checked.value : null;
+        }
+
+        try {
+            const res = await API.post('/auth/google', body);
+            this.onLoginSuccess(res);
+        } catch (err) {
+            if (errorEl) errorEl.textContent = err.message;
+        }
     },
 
     switchTab(tab) {

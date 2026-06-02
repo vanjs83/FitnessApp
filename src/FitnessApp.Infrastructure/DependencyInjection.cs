@@ -44,6 +44,7 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+        services.Configure<GoogleAuthSettings>(configuration.GetSection("Google"));
         services.AddSingleton<ITokenService, TokenService>();
 
         var jwt = configuration.GetSection("Jwt").Get<JwtSettings>()

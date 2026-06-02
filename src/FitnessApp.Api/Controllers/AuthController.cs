@@ -4,7 +4,9 @@ using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Application.Storage;
 using FitnessApp.Domain.Common;
+using FitnessApp.Infrastructure.Auth;
 using FitnessApp.Infrastructure.Identity;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +27,7 @@ public class AuthController : ControllerBase
     private readonly IWebHostEnvironment _env;
     private readonly StorageSettings _storage;
     private readonly IFileStorageService _files;
+    private readonly GoogleAuthSettings _googleAuth;
 
     private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
     private const long MaxImageBytes = 5 * 1024 * 1024;
@@ -37,7 +40,8 @@ public class AuthController : ControllerBase
         Infrastructure.Persistence.AppDbContext db,
         IWebHostEnvironment env,
         IOptions<StorageSettings> storage,
-        IFileStorageService files)
+        IFileStorageService files,
+        IOptions<GoogleAuthSettings> googleAuth)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -47,6 +51,7 @@ public class AuthController : ControllerBase
         _env = env;
         _storage = storage.Value;
         _files = files;
+        _googleAuth = googleAuth.Value;
     }
 
     private FileUploadOptions ProfileImageOptions(string userId) => new()
@@ -91,15 +96,7 @@ public class AuthController : ControllerBase
             await DbSeeder.SeedDefaultExercisesForTrainerAsync(_db, user.Id);
         }
 
-        var (token, expiresAt) = _tokenService.CreateToken(user.Id, user.Email!, request.Role);
-        return Ok(new AuthResponse
-        {
-            Token = token,
-            ExpiresAt = expiresAt,
-            Email = user.Email!,
-            FullName = user.FullName,
-            Role = request.Role
-        });
+        return Ok(Issue(user, request.Role));
     }
 
     [HttpPost("login")]
@@ -116,15 +113,93 @@ public class AuthController : ControllerBase
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? Roles.Client;
 
+        return Ok(Issue(user, role));
+    }
+
+    // ===== Google Sign-In =====
+
+    // Public Google client ID so the SPA can initialise Google Identity Services
+    // without hard-coding it in the frontend. Empty when the feature is unconfigured.
+    [HttpGet("google-config")]
+    public ActionResult<object> GoogleConfig() => Ok(new { clientId = _googleAuth.ClientId });
+
+    // One endpoint covers both registration and login: if the verified Google email
+    // already maps to a user we log them in; otherwise we create the account.
+    // The desired role is honoured only when creating a new account (Register tab).
+    [HttpPost("google")]
+    public async Task<ActionResult<AuthResponse>> GoogleLogin(GoogleLoginRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(_googleAuth.ClientId))
+            return BadRequest(new { message = "Google sign-in is not configured." });
+        if (string.IsNullOrWhiteSpace(request.Credential))
+            return BadRequest(new { message = "Missing Google credential." });
+
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                request.Credential,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { _googleAuth.ClientId }
+                });
+        }
+        catch (InvalidJwtException)
+        {
+            return Unauthorized(new { message = "Invalid Google token." });
+        }
+
+        if (!payload.EmailVerified || string.IsNullOrWhiteSpace(payload.Email))
+            return Unauthorized(new { message = "Google account email is not verified." });
+
+        var user = await _userManager.FindByEmailAsync(payload.Email);
+
+        // Existing account: log in with the role already stored, ignoring the request.
+        if (user != null)
+        {
+            var existingRoles = await _userManager.GetRolesAsync(user);
+            return Ok(Issue(user, existingRoles.FirstOrDefault() ?? Roles.Client));
+        }
+
+        // New account: honour the requested role (Register tab), default to Client.
+        var role = Roles.SelfRegisterable.Contains(request.Role) ? request.Role! : Roles.Client;
+
+        user = new ApplicationUser
+        {
+            UserName = payload.Email,
+            Email = payload.Email,
+            FullName = string.IsNullOrWhiteSpace(payload.Name) ? null : payload.Name,
+            EmailConfirmed = true,
+            TrainerId = null
+        };
+
+        // No password: this account signs in exclusively via Google until/unless
+        // the user sets a password later.
+        var result = await _userManager.CreateAsync(user);
+        if (!result.Succeeded)
+            return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+
+        await _userManager.AddToRoleAsync(user, role);
+
+        if (role == Roles.Trainer)
+            await DbSeeder.SeedDefaultExercisesForTrainerAsync(_db, user.Id);
+
+        return Ok(Issue(user, role));
+    }
+
+    // Builds the app's own JWT + response for any successful auth path
+    // (password register/login or Google sign-in).
+    private AuthResponse Issue(ApplicationUser user, string role)
+    {
         var (token, expiresAt) = _tokenService.CreateToken(user.Id, user.Email!, role);
-        return Ok(new AuthResponse
+        return new AuthResponse
         {
             Token = token,
             ExpiresAt = expiresAt,
             Email = user.Email!,
             FullName = user.FullName,
             Role = role
-        });
+        };
     }
 
     [HttpGet("me")]

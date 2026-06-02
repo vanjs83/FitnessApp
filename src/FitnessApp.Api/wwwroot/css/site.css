@@ -143,6 +143,28 @@ main {
 }
 .auth-form h2 { margin-bottom: 0.5rem; }
 
+.auth-or {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #6b7480;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    gap: 0.6rem;
+    margin: 0.25rem 0;
+}
+.auth-or::before, .auth-or::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #2a3340;
+}
+.google-btn-wrap { display: flex; justify-content: center; min-height: 40px; }
+/* When Google is not configured the button never renders — hide the divider too. */
+.google-btn-wrap:empty { display: none; }
+.auth-or:has(+ .google-btn-wrap:empty) { display: none; }
+
 input, textarea, select {
     background: #0f1419;
     border: 1px solid #2a3340;
