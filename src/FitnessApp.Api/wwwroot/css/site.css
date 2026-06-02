@@ -22,23 +22,6 @@ header h1 { font-size: 1.4rem; }
 #userInfo { display: flex; align-items: center; gap: 1rem; }
 #userEmail { color: #a0a8b0; font-size: 0.9rem; }
 
-.header-trainer {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: #1c3a5e;
-    color: #74c0fc;
-    padding: 0.35rem 0.7rem;
-    border-radius: 14px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s;
-    max-width: 220px;
-}
-.header-trainer:hover { background: #214b78; }
-.header-trainer .ht-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
 .header-right { display: flex; align-items: center; gap: 1rem; }
 .lang-switch { display: flex; gap: 4px; }
 .lang-btn {

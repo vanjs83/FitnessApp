@@ -11,6 +11,20 @@ const Settings = {
         document.getElementById('changePasswordBtn').addEventListener('click', () => this.changePassword());
         const supportBtn = document.getElementById('sendSupportBtn');
         if (supportBtn) supportBtn.addEventListener('click', () => this.sendSupport());
+        const delBtn = document.getElementById('deleteAccountBtn');
+        if (delBtn) delBtn.addEventListener('click', () => this.deleteAccount());
+    },
+
+    async deleteAccount() {
+        const msg = document.getElementById('deleteAccountMsg');
+        msg.textContent = '';
+        if (!confirm(I18n.t('settings.deactivateAccountConfirm'))) return;
+        try {
+            await API.delete('/auth/me');
+            Auth.logout(); // clears token and reloads back to the login screen
+        } catch (err) {
+            msg.textContent = err.message;
+        }
     },
 
     async open() {

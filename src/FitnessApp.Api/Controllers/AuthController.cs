@@ -284,6 +284,34 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Password changed successfully." });
     }
 
+    // Self-service account deletion. Uses the same soft-delete approach as the admin
+    // (IsActive=false): the global query filter then hides the account everywhere,
+    // which also avoids the Restrict/NoAction FK constraints a hard delete would hit.
+    [HttpDelete("me")]
+    [Authorize]
+    public async Task<IActionResult> DeleteMyAccount()
+    {
+        var user = await _userManager.FindByIdAsync(UserId);
+        if (user == null) return NotFound();
+
+        if (await _userManager.IsInRoleAsync(user, Roles.SuperAdmin))
+            return BadRequest(new { message = "The administrator account cannot be deleted." });
+
+        // If a trainer leaves, detach their clients so they aren't stuck pointing
+        // at a trainer that no longer exists (mirrors AdminController.DeleteTrainer).
+        if (await _userManager.IsInRoleAsync(user, Roles.Trainer))
+        {
+            var clients = await _db.Users.Where(u => u.TrainerId == user.Id).ToListAsync();
+            foreach (var c in clients)
+                c.TrainerId = null;
+        }
+
+        user.IsActive = false;
+        await _db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     [HttpGet("personal-profile")]
     [Authorize]
     public async Task<ActionResult<PersonalProfileDto>> GetPersonalProfile()

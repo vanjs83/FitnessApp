@@ -34,7 +34,7 @@ const ClientTrainers = {
             el.innerHTML = `
                 <div class="info-banner">
                     Tvoj trener: <strong>${this.esc(this.me.trainerName || '')}</strong>
-                    <button class="secondary small-btn" id="clientDisconnectBtn">Odspoji se</button>
+                    <button class="secondary small-btn" id="clientDisconnectBtn">Prekini suradnju</button>
                 </div>`;
             const btn = document.getElementById('clientDisconnectBtn');
             if (btn) btn.addEventListener('click', () => this.disconnect());
@@ -108,7 +108,7 @@ const ClientTrainers = {
     },
 
     async disconnect() {
-        if (!confirm('Odspojiti se od trenera? Tvoji postojeći planovi ostaju, ali trener te više neće voditi.')) return;
+        if (!confirm('Prekinuti suradnju s trenerom? Tvoji postojeći planovi ostaju, ali trener te više neće voditi.')) return;
         try {
             await API.put('/auth/trainer', { trainerId: null });
             await this.load();

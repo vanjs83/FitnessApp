@@ -22,7 +22,6 @@
                 </div>
                 <span id="userRole" class="badge"></span>
                 <span id="userEmail"></span>
-                <span id="headerTrainer" class="header-trainer hidden"></span>
                 <button id="settingsBtn" class="secondary" data-i18n-title="common.settings" title="Postavke">⚙️</button>
                 <button id="logoutBtn" class="secondary" data-i18n="common.logout">Odjava</button>
             </div>
@@ -921,6 +920,13 @@
                 <textarea id="supportBody" rows="5" data-i18n-ph="support.bodyPh" placeholder="Opiši problem ili pitanje..."></textarea>
                 <button id="sendSupportBtn" data-i18n="support.send">Pošalji podršci</button>
                 <div id="supportMsg" class="error"></div>
+            </div>
+
+            <div class="card-inset danger-zone">
+                <h4 data-i18n="settings.dangerTitle">Opasna zona</h4>
+                <p class="muted small" data-i18n="settings.deactivateAccountHint">Deaktivacijom se odjavljuješ i više se ne možeš prijaviti. Račun se kasnije trajno briše.</p>
+                <button id="deleteAccountBtn" class="danger" data-i18n="settings.deactivateAccount">Deaktiviraj račun</button>
+                <div id="deleteAccountMsg" class="error"></div>
             </div>
         </div>
     </div>

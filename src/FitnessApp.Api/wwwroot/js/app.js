@@ -116,25 +116,9 @@ const App = {
         }
     },
 
-    // Small chip in the top-right header showing the client's trainer.
-    updateHeaderTrainer(me) {
-        const chip = document.getElementById('headerTrainer');
-        if (!chip) return;
-        if (me && me.trainerName) {
-            chip.innerHTML = `🏋️ <span class="ht-name">${this.escape(me.trainerName)}</span>`;
-            chip.title = `${I18n.t('banner.yourTrainer')}: ${me.trainerName}`;
-            chip.classList.remove('hidden');
-            chip.onclick = () => this.openTrainerProfile(me.trainerId, me.trainerName);
-        } else {
-            chip.classList.add('hidden');
-            chip.onclick = null;
-        }
-    },
-
     async loadTrainerBanner() {
         try {
             const me = await API.get('/auth/me');
-            this.updateHeaderTrainer(me);
             const banner = document.getElementById('clientTrainerBanner');
             banner.classList.remove('hidden');
 
