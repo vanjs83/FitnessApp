@@ -54,7 +54,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: publish/
           server-dir: /fitnessapp/tvanjurek-001-site1.ltempurl.com/
-          dangerous-clean-slate: true
           log-level: verbose
 
       - name: Remove maintenance mode
