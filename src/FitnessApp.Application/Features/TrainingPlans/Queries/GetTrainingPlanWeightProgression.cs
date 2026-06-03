@@ -70,6 +70,7 @@ public class GetTrainingPlanWeightProgressionQueryHandler
             {
                 ps.PlannedExerciseId,
                 ps.PerformedAt,
+                ps.SetNumber,
                 ps.ActualReps,
                 ps.ActualWeightKg
             })
@@ -80,21 +81,23 @@ public class GetTrainingPlanWeightProgressionQueryHandler
             .ToDictionary(x => x.pid, x => x.ExerciseId);
 
         var pointsByExercise = rawSets
-            .GroupBy(s => new { ExerciseId = plannedIdToExerciseId[s.PlannedExerciseId], Date = s.PerformedAt.Date })
-            .Select(g => new
+            .Select(s => new
             {
-                g.Key.ExerciseId,
+                ExerciseId = plannedIdToExerciseId[s.PlannedExerciseId],
                 Point = new ExerciseProgressPointDto
                 {
-                    Date = g.Key.Date,
-                    MaxWeight = g.Max(s => s.ActualWeightKg),
-                    TotalReps = g.Sum(s => s.ActualReps),
-                    TotalVolume = g.Sum(s => s.ActualWeightKg * s.ActualReps),
-                    SetCount = g.Count()
+                    Date = s.PerformedAt,
+                    SetNumber = s.SetNumber,
+                    MaxWeight = s.ActualWeightKg,
+                    TotalReps = s.ActualReps,
+                    TotalVolume = s.ActualWeightKg * s.ActualReps,
+                    SetCount = 1
                 }
             })
             .GroupBy(x => x.ExerciseId)
-            .ToDictionary(g => g.Key, g => g.Select(x => x.Point).OrderBy(p => p.Date).ToList());
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.Point).OrderBy(p => p.Date).ThenBy(p => p.SetNumber).ToList());
 
         var result = planned.Select(p => new PlanExerciseProgressionDto
         {

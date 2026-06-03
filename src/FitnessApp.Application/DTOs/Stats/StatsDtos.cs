@@ -3,6 +3,7 @@ namespace FitnessApp.Application.DTOs.Stats;
 public class ExerciseProgressPointDto
 {
     public DateTime Date { get; set; }
+    public int SetNumber { get; set; }
     public decimal MaxWeight { get; set; }
     public int TotalReps { get; set; }
     public decimal TotalVolume { get; set; }

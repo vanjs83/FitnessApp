@@ -217,7 +217,15 @@ const Plans = {
             return;
         }
 
-        const labels = item.points.map(d => new Date(d.date).toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: '2-digit' }));
+        const dateCounts = {};
+        item.points.forEach(d => {
+            const key = new Date(d.date).toDateString();
+            dateCounts[key] = (dateCounts[key] || 0) + 1;
+        });
+        const labels = item.points.map(d => {
+            const dateStr = new Date(d.date).toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            return dateCounts[new Date(d.date).toDateString()] > 1 ? `${dateStr} · S${d.setNumber}` : dateStr;
+        });
         const maxWeights = item.points.map(d => d.maxWeight);
         const target = Number(item.targetWeightKg);
         const targetLine = item.points.map(() => target);
@@ -230,7 +238,7 @@ const Plans = {
                 labels,
                 datasets: [
                     {
-                        label: 'Stvarni max (kg)',
+                        label: 'Težina (kg)',
                         data: maxWeights,
                         borderColor: '#4dabf7',
                         backgroundColor: 'rgba(77,171,247,0.15)',
@@ -266,12 +274,12 @@ const Plans = {
         const last = item.points[item.points.length - 1].maxWeight;
         const first = item.points[0].maxWeight;
         const delta = (last - first).toFixed(1);
-        const sessions = item.points.length;
+        const setCount = item.points.length;
         const targetDelta = (last - target).toFixed(1);
         if (summary) {
             summary.innerHTML =
-                `${sessions} ${sessions === 1 ? 'sesija' : 'sesija'} · ` +
-                `Trenutni max: <strong>${last} kg</strong> · ` +
+                `${setCount} ${setCount === 1 ? 'serija' : 'serija'} · ` +
+                `Zadnja težina: <strong>${last} kg</strong> · ` +
                 `Δ od početka: <strong>${delta >= 0 ? '+' : ''}${delta} kg</strong> · ` +
                 `Target: ${target} kg (${targetDelta >= 0 ? '+' : ''}${targetDelta} kg vs target)`;
         }
