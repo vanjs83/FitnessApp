@@ -155,8 +155,8 @@ const Plans = {
                                 `).join('')}
                                 <div class="add-set-form" data-pe-id="${pe.id}">
                                     <input type="number" class="set-num-input" placeholder="#" min="1" value="${(pe.recentPerformedSets || []).length + 1}">
-                                    <input type="number" class="weight-input" placeholder="kg" step="0.5" min="0" value="${pe.targetWeightKg}">
-                                    <input type="number" class="reps-input" placeholder="rep" min="1" value="${pe.targetReps}">
+                                    <input type="number" class="weight-input" placeholder="kg" step="0.5" min="0">
+                                    <input type="number" class="reps-input" placeholder="rep" min="1">
                                     <button class="add-set-btn">+ Bilježi</button>
                                 </div>
                             </div>

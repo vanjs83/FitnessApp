@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using FitnessApp.Api.Data;
 using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Application.Storage;
@@ -91,11 +90,6 @@ public class AuthController : ControllerBase
 
         await _userManager.AddToRoleAsync(user, request.Role);
 
-        if (request.Role == Roles.Trainer)
-        {
-            await DbSeeder.SeedDefaultExercisesForTrainerAsync(_db, user.Id);
-        }
-
         return Ok(Issue(user, request.Role));
     }
 
@@ -180,9 +174,6 @@ public class AuthController : ControllerBase
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
         await _userManager.AddToRoleAsync(user, role);
-
-        if (role == Roles.Trainer)
-            await DbSeeder.SeedDefaultExercisesForTrainerAsync(_db, user.Id);
 
         return Ok(Issue(user, role));
     }

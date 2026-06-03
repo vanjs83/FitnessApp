@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using FitnessApp.Api.Data;
 using FitnessApp.Application.DTOs.Admin;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Application.DTOs.Email;
@@ -79,7 +78,6 @@ public class AdminController : ControllerBase
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
         await _userManager.AddToRoleAsync(user, Roles.Trainer);
-        await DbSeeder.SeedDefaultExercisesForTrainerAsync(_db, user.Id);
 
         return Ok(new TrainerAdminDto
         {
