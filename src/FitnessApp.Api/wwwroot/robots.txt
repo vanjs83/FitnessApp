@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /index.html
+Disallow: /api/
+Disallow: /uploads/
+
+Sitemap: https://fitness-application.com/sitemap.xml
