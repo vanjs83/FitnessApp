@@ -23,8 +23,8 @@ header h1 { font-size: 1.4rem; }
     text-decoration: none;
     font-weight: 800;
     letter-spacing: -0.025em;
-    cursor: pointer;
 }
+.brand-logo[href] { cursor: pointer; }
 .brand-logo .dot {
     background: linear-gradient(135deg, #4dabf7 0%, #fc74b1 100%);
     -webkit-background-clip: text;

@@ -1,5 +1,6 @@
 using System.Text;
 using FirebaseAdmin;
+using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Application.Storage;
 using FitnessApp.Infrastructure.Auth;
@@ -29,6 +30,7 @@ public static class DependencyInjection
 
         services.AddDbContext<Persistence.AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+        services.AddScoped<IAppDbContext, AppDbContextAdapter>();
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -84,6 +86,7 @@ public static class DependencyInjection
             });
 
         services.AddAuthorization();
+        services.AddScoped<IUserDirectory, UserDirectory>();
 
         services.Configure<FirebaseSettings>(configuration.GetSection("Firebase"));
         var firebase = configuration.GetSection("Firebase").Get<FirebaseSettings>();

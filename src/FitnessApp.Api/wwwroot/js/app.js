@@ -49,6 +49,10 @@ const App = {
         document.getElementById('userInfo').classList.remove('hidden');
         document.getElementById('userEmail').textContent = email;
 
+        // Logged in: logo no longer links to the landing page (it would just bounce back here).
+        const brand = document.querySelector('.brand-logo');
+        if (brand) brand.removeAttribute('href');
+
         const roleBadge = document.getElementById('userRole');
         roleBadge.textContent = this.roleLabel(role);
         roleBadge.className = 'badge ' + (role === 'SuperAdmin' ? 'admin' : role === 'Trainer' ? 'global' : '');
