@@ -42,7 +42,7 @@
                 <input type="password" id="loginPassword" data-i18n-ph="common.password" placeholder="Lozinka" required>
                 <button type="submit" data-i18n="auth.loginBtn">Prijavi se</button>
                 <div class="error" id="loginError"></div>
-                <div class="auth-or" data-i18n="auth.or">ili</div>
+                <a href="#" id="forgotPasswordLink" class="auth-link" data-i18n="auth.forgotPassword">Zaboravljena lozinka?</a>
                 <div id="googleLoginBtn" class="google-btn-wrap"></div>
             </form>
 
@@ -70,6 +70,26 @@
                 <div class="error" id="registerError"></div>
                 <div class="auth-or" data-i18n="auth.or">ili</div>
                 <div id="googleRegisterBtn" class="google-btn-wrap"></div>
+            </form>
+
+            <!-- Forgot password: request a reset link by email -->
+            <form id="forgotPasswordForm" class="auth-form hidden">
+                <h2 data-i18n="auth.forgotTitle">Reset lozinke</h2>
+                <p class="muted small" data-i18n="auth.forgotHint">Unesi svoj email i poslat ćemo ti link za postavljanje nove lozinke.</p>
+                <input type="email" id="forgotEmail" data-i18n-ph="common.email" placeholder="Email" required>
+                <button type="submit" data-i18n="auth.forgotBtn">Pošalji link</button>
+                <div class="auth-msg" id="forgotMsg"></div>
+                <a href="#" id="backToLoginLink" class="auth-link" data-i18n="auth.backToLogin">← Natrag na prijavu</a>
+            </form>
+
+            <!-- Reset password: set a new password using the token from the email link -->
+            <form id="resetPasswordForm" class="auth-form hidden">
+                <h2 data-i18n="auth.resetTitle">Postavi novu lozinku</h2>
+                <input type="password" id="resetPassword" data-i18n-ph="auth.passwordMin" placeholder="Nova lozinka (min 6)" required minlength="6">
+                <input type="password" id="resetPasswordConfirm" data-i18n-ph="auth.passwordConfirm" placeholder="Ponovi lozinku" required minlength="6">
+                <button type="submit" data-i18n="auth.resetBtn">Spremi lozinku</button>
+                <div class="auth-msg" id="resetMsg"></div>
+                <a href="#" id="resetBackToLoginLink" class="auth-link" data-i18n="auth.backToLogin">← Natrag na prijavu</a>
             </form>
         </section>
 

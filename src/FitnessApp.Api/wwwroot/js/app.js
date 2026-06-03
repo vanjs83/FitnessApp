@@ -36,7 +36,9 @@ const App = {
             btn.addEventListener('click', () => this.switchTrainerView(btn.dataset.trainerView));
         });
 
-        if (Auth.isLoggedIn()) {
+        // A reset link (?reset=...) takes priority over an existing session, so a logged-in
+        // user who follows the email link still lands on the "set new password" form.
+        if (Auth.isLoggedIn() && !Auth._resetToken) {
             this.showApp(localStorage.getItem('userEmail') || '', localStorage.getItem('userRole') || 'Client');
             if (typeof FirebasePush !== 'undefined') {
                 FirebasePush.autoRegisterIfGranted();

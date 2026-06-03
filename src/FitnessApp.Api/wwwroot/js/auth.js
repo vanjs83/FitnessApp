@@ -8,7 +8,48 @@ const Auth = {
         document.getElementById('registerForm').addEventListener('submit', e => this.handleRegister(e));
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
 
+        // Forgot / reset password flow.
+        document.getElementById('forgotPasswordLink').addEventListener('click', e => { e.preventDefault(); this.showAuthForm('forgot'); });
+        document.getElementById('backToLoginLink').addEventListener('click', e => { e.preventDefault(); this.showAuthForm('login'); });
+        document.getElementById('resetBackToLoginLink').addEventListener('click', e => { e.preventDefault(); this.clearResetQuery(); this.showAuthForm('login'); });
+        document.getElementById('forgotPasswordForm').addEventListener('submit', e => this.handleForgot(e));
+        document.getElementById('resetPasswordForm').addEventListener('submit', e => this.handleReset(e));
+
+        // A reset link from the email lands here as /?reset=TOKEN&email=...
+        this.detectResetLink();
+
         this.initGoogle();
+    },
+
+    // Shows exactly one auth form. The login/register tabs are only relevant for those
+    // two; the forgot/reset forms hide them so the screen stays focused.
+    showAuthForm(which) {
+        const tabs = document.querySelector('#authSection .tabs');
+        if (tabs) tabs.classList.toggle('hidden', which === 'forgot' || which === 'reset');
+        document.getElementById('loginForm').classList.toggle('hidden', which !== 'login');
+        document.getElementById('registerForm').classList.toggle('hidden', which !== 'register');
+        document.getElementById('forgotPasswordForm').classList.toggle('hidden', which !== 'forgot');
+        document.getElementById('resetPasswordForm').classList.toggle('hidden', which !== 'reset');
+        if (which === 'login' || which === 'register') {
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === which));
+        }
+    },
+
+    detectResetLink() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('reset');
+        const email = params.get('email');
+        if (token && email) {
+            this._resetToken = token;
+            this._resetEmail = email;
+            this.showAuthForm('reset');
+        }
+    },
+
+    clearResetQuery() {
+        this._resetToken = null;
+        this._resetEmail = null;
+        history.replaceState(null, '', window.location.pathname);
     },
 
     // Sets up "Sign in / up with Google" buttons. No-op when the feature is not
@@ -64,9 +105,7 @@ const Auth = {
     },
 
     switchTab(tab) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-        document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
-        document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+        this.showAuthForm(tab);
     },
 
     async handleLogin(e) {
@@ -109,6 +148,66 @@ const Auth = {
             this.onLoginSuccess(res);
         } catch (err) {
             errorEl.textContent = err.message;
+        }
+    },
+
+    async handleForgot(e) {
+        e.preventDefault();
+        const msgEl = document.getElementById('forgotMsg');
+        msgEl.style.color = '';
+        msgEl.textContent = '';
+
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+            await API.post('/auth/forgot-password', {
+                email: document.getElementById('forgotEmail').value.trim(),
+                language: I18n.lang
+            });
+            // Always a generic success — the server never reveals whether the email exists.
+            msgEl.style.color = '#52c452';
+            msgEl.textContent = I18n.t('auth.forgotSent');
+        } catch (err) {
+            msgEl.style.color = '#d9534f';
+            msgEl.textContent = err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    },
+
+    async handleReset(e) {
+        e.preventDefault();
+        const msgEl = document.getElementById('resetMsg');
+        msgEl.style.color = '';
+        msgEl.textContent = '';
+
+        const pw = document.getElementById('resetPassword').value;
+        const confirm = document.getElementById('resetPasswordConfirm').value;
+        if (pw !== confirm) {
+            msgEl.style.color = '#d9534f';
+            msgEl.textContent = I18n.t('auth.resetMismatch');
+            return;
+        }
+
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+            await API.post('/auth/reset-password', {
+                email: this._resetEmail,
+                token: this._resetToken,
+                newPassword: pw,
+                language: I18n.lang
+            });
+            this.clearResetQuery();
+            msgEl.style.color = '#52c452';
+            msgEl.textContent = I18n.t('auth.resetDone');
+            e.target.reset();
+            setTimeout(() => this.showAuthForm('login'), 1500);
+        } catch (err) {
+            msgEl.style.color = '#d9534f';
+            msgEl.textContent = err.message;
+        } finally {
+            btn.disabled = false;
         }
     },
 

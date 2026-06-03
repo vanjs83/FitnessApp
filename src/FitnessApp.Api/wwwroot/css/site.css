@@ -149,6 +149,21 @@ main {
 .google-btn-wrap:empty { display: none; }
 .auth-or:has(+ .google-btn-wrap:empty) { display: none; }
 
+.auth-link {
+    align-self: flex-start;
+    color: #4dabf7;
+    font-size: 0.85rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+.auth-link:hover { text-decoration: underline; }
+
+.auth-msg {
+    font-size: 0.9rem;
+    min-height: 1.1em;
+    white-space: pre-wrap;
+}
+
 input, textarea, select {
     background: #0f1419;
     border: 1px solid #2a3340;

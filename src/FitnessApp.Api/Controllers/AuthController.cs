@@ -27,6 +27,8 @@ public class AuthController : ControllerBase
     private readonly StorageSettings _storage;
     private readonly IFileStorageService _files;
     private readonly GoogleAuthSettings _googleAuth;
+    private readonly IEmailService _email;
+    private readonly ILogger<AuthController> _logger;
 
     private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
     private const long MaxImageBytes = 5 * 1024 * 1024;
@@ -40,7 +42,9 @@ public class AuthController : ControllerBase
         IWebHostEnvironment env,
         IOptions<StorageSettings> storage,
         IFileStorageService files,
-        IOptions<GoogleAuthSettings> googleAuth)
+        IOptions<GoogleAuthSettings> googleAuth,
+        IEmailService email,
+        ILogger<AuthController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -51,6 +55,8 @@ public class AuthController : ControllerBase
         _storage = storage.Value;
         _files = files;
         _googleAuth = googleAuth.Value;
+        _email = email;
+        _logger = logger;
     }
 
     private FileUploadOptions ProfileImageOptions(string userId) => new()
@@ -273,6 +279,78 @@ public class AuthController : ControllerBase
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
         return Ok(new { message = "Password changed successfully." });
+    }
+
+    // Step 1 of the forgot-password flow. Always returns 200 with the same body so an
+    // attacker can't probe which emails have accounts. The reset email is sent only when
+    // a matching account exists AND it has a password (Google-only accounts are skipped).
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        var generic = Ok(new { message = "If an account exists for this email, a reset link has been sent." });
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+            return generic;
+
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user == null || !await _userManager.HasPasswordAsync(user))
+            return generic;
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        // Reset link points back at the SPA (served from wwwroot); auth.js reads the
+        // query params on load and shows the "set new password" form.
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var resetUrl = $"{baseUrl}/?reset={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email!)}";
+
+        var (ok, error) = await _email.SendTemplatedAsync(
+            toEmail: user.Email!,
+            subject: "FitnessApp – reset lozinke",
+            templateKey: "password-reset",
+            language: request.Language,
+            placeholders: new Dictionary<string, string>
+            {
+                ["Name"] = user.FullName ?? user.Email!,
+                ["ResetUrl"] = resetUrl
+            });
+
+        if (!ok)
+            _logger.LogError("Failed to send password-reset email to {Email}: {Error}", user.Email, error);
+
+        return generic;
+    }
+
+    // Step 2: consume the token and set the new password. A generic error is returned for
+    // both "user not found" and "invalid/expired token" so neither can be distinguished.
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Token))
+            return BadRequest(new { message = "The reset link is invalid or has expired." });
+
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user == null)
+            return BadRequest(new { message = "The reset link is invalid or has expired." });
+
+        var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+
+        // Confirmation mail is best-effort — a delivery failure must not fail the reset.
+        var (ok, error) = await _email.SendTemplatedAsync(
+            toEmail: user.Email!,
+            subject: "FitnessApp – lozinka promijenjena",
+            templateKey: "password-changed",
+            language: request.Language,
+            placeholders: new Dictionary<string, string>
+            {
+                ["Name"] = user.FullName ?? user.Email!
+            });
+
+        if (!ok)
+            _logger.LogWarning("Password reset succeeded but confirmation email failed for {Email}: {Error}", user.Email, error);
+
+        return Ok(new { message = "Password has been reset." });
     }
 
     // Self-service account deletion. Uses the same soft-delete approach as the admin
