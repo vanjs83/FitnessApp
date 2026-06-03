@@ -41,3 +41,25 @@ public class EmailFailureDto
     public string Email { get; set; } = string.Empty;
     public string Error { get; set; } = string.Empty;
 }
+
+// Generic admin → users messaging (email or push) to any mix of trainers/clients.
+public class SendMessageToUsersRequest
+{
+    public List<string> UserIds { get; set; } = new();
+    public string Subject { get; set; } = string.Empty; // email subject / push title
+    public string Body { get; set; } = string.Empty;
+    public string? Language { get; set; }
+}
+
+public class MessageSendResultDto
+{
+    public List<string> Sent { get; set; } = new();
+    public List<MessageFailureDto> Failed { get; set; } = new();
+}
+
+public class MessageFailureDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Recipient { get; set; } = string.Empty; // email or name
+    public string Error { get; set; } = string.Empty;
+}

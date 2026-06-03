@@ -1,12 +1,11 @@
 const Admin = {
     trainers: [],
     clients: [],
-    workouts: [],
     trainerSearch: '',
     clientSearch: '',
-    workoutSearch: '',
-    mailTrainerSearch: '',
-    mailSelectedIds: new Set(),
+    recipients: [],
+    msgSearch: '',
+    msgSelectedIds: new Set(),
     mailConfigured: null,
 
     init() {
@@ -28,19 +27,18 @@ const Admin = {
             this.clientSearch = e.target.value.toLowerCase();
             this.renderClients();
         });
-        document.getElementById('adminWorkoutsSearch').addEventListener('input', e => {
-            this.workoutSearch = e.target.value.toLowerCase();
-            this.renderWorkouts();
-        });
 
-        document.getElementById('adminMailTrainerSearch').addEventListener('input', e => {
-            this.mailTrainerSearch = e.target.value.toLowerCase();
-            this.renderMailTrainers();
+        document.getElementById('adminMsgSearch').addEventListener('input', e => {
+            this.msgSearch = e.target.value.toLowerCase();
+            this.renderRecipients();
         });
-        document.getElementById('adminMailSelectAll').addEventListener('click', () => this.mailSelectAll(true));
-        document.getElementById('adminMailSelectNone').addEventListener('click', () => this.mailSelectAll(false));
-        document.getElementById('adminMailSendBtn').addEventListener('click', () => this.sendMail());
-        document.getElementById('adminMailResetBtn').addEventListener('click', () => this.resetMailForm());
+        document.getElementById('adminMsgSelectAll').addEventListener('click', () => this.msgSelectFiltered(true));
+        document.getElementById('adminMsgSelectNone').addEventListener('click', () => this.msgSelectFiltered(false));
+        document.getElementById('adminMsgSelectNoTrainer').addEventListener('click', () => this.msgSelectClientsWithoutTrainer());
+        document.getElementById('adminEmailSendBtn').addEventListener('click', () => this.sendEmail());
+        document.getElementById('adminEmailResetBtn').addEventListener('click', () => this.resetEmail());
+        document.getElementById('adminPushSendBtn').addEventListener('click', () => this.sendPush());
+        document.getElementById('adminPushResetBtn').addEventListener('click', () => this.resetPush());
     },
 
     async load() {
@@ -51,12 +49,10 @@ const Admin = {
         document.querySelectorAll('.admin-tab').forEach(t => t.classList.toggle('active', t.dataset.adminTab === tab));
         document.getElementById('adminTrainersTab').classList.toggle('hidden', tab !== 'trainers');
         document.getElementById('adminClientsTab').classList.toggle('hidden', tab !== 'clients');
-        document.getElementById('adminWorkoutsTab').classList.toggle('hidden', tab !== 'workouts');
         document.getElementById('adminMailTab').classList.toggle('hidden', tab !== 'mail');
 
         if (tab === 'trainers') this.loadTrainers();
         if (tab === 'clients') this.loadClients();
-        if (tab === 'workouts') this.loadWorkouts();
         if (tab === 'mail') this.loadMail();
     },
 
@@ -67,7 +63,6 @@ const Admin = {
                 <div class="stat-card"><div class="stat-value">${s.trainersCount}</div><div class="stat-label">${I18n.t('admin.stats.trainers')}</div></div>
                 <div class="stat-card"><div class="stat-value">${s.clientsCount}</div><div class="stat-label">${I18n.t('admin.stats.clients')}</div></div>
                 <div class="stat-card"><div class="stat-value">${s.clientsWithoutTrainer}</div><div class="stat-label">${I18n.t('admin.stats.clientsNoTrainer')}</div></div>
-                <div class="stat-card"><div class="stat-value">${s.workoutsCount}</div><div class="stat-label">${I18n.t('admin.stats.workouts')}</div></div>
                 <div class="stat-card"><div class="stat-value">${s.exercisesCount}</div><div class="stat-label">${I18n.t('admin.stats.exerciseLabel')}</div></div>
             `;
         } catch (err) {
@@ -159,45 +154,6 @@ const Admin = {
         `).join('');
     },
 
-    async loadWorkouts() {
-        try {
-            this.workouts = await API.get('/admin/workouts');
-            this.renderWorkouts();
-        } catch (err) {
-            console.error(err);
-        }
-    },
-
-    renderWorkouts() {
-        const container = document.getElementById('adminWorkoutsList');
-        const filtered = this.workouts.filter(w =>
-            !this.workoutSearch ||
-            (w.name || '').toLowerCase().includes(this.workoutSearch) ||
-            (w.clientName || '').toLowerCase().includes(this.workoutSearch) ||
-            (w.trainerName || '').toLowerCase().includes(this.workoutSearch)
-        );
-
-        if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${I18n.t(this.workouts.length === 0 ? 'admin.empty.workouts' : 'admin.empty.search')}</p>`;
-            return;
-        }
-
-        container.innerHTML = filtered.map(w => `
-            <div class="list-item">
-                <div>
-                    <h4>${this.escape(w.name)}</h4>
-                    <div class="meta">
-                        ${I18n.t('admin.metaClientLabel')} ${this.escape(w.clientName)}
-                        ${w.trainerName ? '· ' + I18n.t('admin.metaTrainerLabel') + ' ' + this.escape(w.trainerName) : ''}
-                        · ${this.formatDate(w.performedAt)}
-                        ${w.durationMinutes ? '· ' + w.durationMinutes + ' min' : ''}
-                        · ${w.exerciseCount} ${I18n.t(w.exerciseCount === 1 ? 'admin.workouts.exerciseUnit.one' : 'admin.workouts.exerciseUnit.many')}
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    },
-
     async saveTrainer() {
         const errorEl = document.getElementById('adminTrainerError');
         errorEl.textContent = '';
@@ -252,93 +208,122 @@ const Admin = {
             statusEl.textContent = '';
             statusEl.style.color = '';
         } else {
-            statusEl.textContent = I18n.t('admin.smtp.notConfigured');
+            statusEl.textContent = I18n.t('admin.smtp.notConfigured') + ' (push svejedno radi)';
             statusEl.style.color = '#d9534f';
         }
 
         if (this.trainers.length === 0) await this.loadTrainers();
-        this.renderMailTrainers();
+        if (this.clients.length === 0) await this.loadClients();
+        this.buildRecipients();
+        this.renderRecipients();
     },
 
-    renderMailTrainers() {
-        const container = document.getElementById('adminMailTrainersList');
-        const filtered = this.trainers.filter(t =>
-            !this.mailTrainerSearch ||
-            (t.fullName || '').toLowerCase().includes(this.mailTrainerSearch) ||
-            (t.email || '').toLowerCase().includes(this.mailTrainerSearch)
+    // Trainers + clients combined into one selectable recipient list.
+    buildRecipients() {
+        const fromTrainers = this.trainers.map(t => ({
+            id: t.id, name: t.fullName || t.email, email: t.email, role: 'Trainer', hasTrainer: true
+        }));
+        const fromClients = this.clients.map(c => ({
+            id: c.id, name: c.fullName || c.email, email: c.email, role: 'Client', hasTrainer: !!c.trainerName
+        }));
+        this.recipients = [...fromTrainers, ...fromClients];
+    },
+
+    filteredRecipients() {
+        const q = this.msgSearch;
+        return this.recipients.filter(r =>
+            !q ||
+            (r.name || '').toLowerCase().includes(q) ||
+            (r.email || '').toLowerCase().includes(q) ||
+            (r.role === 'Trainer' ? 'trener' : 'klijent').includes(q)
         );
+    },
+
+    renderRecipients() {
+        const container = document.getElementById('adminMsgRecipientsList');
+        const filtered = this.filteredRecipients();
 
         if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${I18n.t(this.trainers.length === 0 ? 'admin.empty.trainers' : 'admin.empty.searchShort')}</p>`;
+            container.innerHTML = `<p class="muted">${this.recipients.length === 0 ? 'Nema korisnika.' : 'Nema rezultata.'}</p>`;
+            this.updateSelectedCount();
             return;
         }
 
-        container.innerHTML = filtered.map(t => {
-            const checked = this.mailSelectedIds.has(t.id) ? 'checked' : '';
+        container.innerHTML = filtered.map(r => {
+            const checked = this.msgSelectedIds.has(r.id);
+            const roleLabel = r.role === 'Trainer' ? 'Trener' : 'Klijent';
+            const noTrainer = r.role === 'Client' && !r.hasTrainer ? ' · <span class="recipient-flag">bez trenera</span>' : '';
             return `
-                <label class="list-item" style="cursor:pointer;">
-                    <input type="checkbox" class="admin-mail-trainer-cb" value="${this.escape(t.id)}" ${checked} style="margin-right:0.6rem;">
-                    <div>
-                        <h4 style="margin:0;">${this.escape(t.fullName || t.email)}</h4>
-                        <div class="meta">${this.escape(t.email)}</div>
-                    </div>
+                <label class="recipient-item${checked ? ' selected' : ''}">
+                    <input type="checkbox" class="msg-recipient-cb" value="${this.escape(r.id)}" ${checked ? 'checked' : ''}>
+                    <span class="recipient-info">
+                        <span class="recipient-name">${this.escape(r.name)}</span>
+                        <span class="recipient-meta">${this.escape(r.email)} · <span class="recipient-role">${roleLabel}</span>${noTrainer}</span>
+                    </span>
                 </label>
             `;
         }).join('');
 
-        container.querySelectorAll('.admin-mail-trainer-cb').forEach(cb => {
+        container.querySelectorAll('.msg-recipient-cb').forEach(cb => {
             cb.addEventListener('change', e => {
-                if (e.target.checked) this.mailSelectedIds.add(e.target.value);
-                else this.mailSelectedIds.delete(e.target.value);
+                if (e.target.checked) this.msgSelectedIds.add(e.target.value);
+                else this.msgSelectedIds.delete(e.target.value);
+                e.target.closest('.recipient-item').classList.toggle('selected', e.target.checked);
+                this.updateSelectedCount();
             });
         });
+        this.updateSelectedCount();
     },
 
-    mailSelectAll(all) {
-        const filtered = this.trainers.filter(t =>
-            !this.mailTrainerSearch ||
-            (t.fullName || '').toLowerCase().includes(this.mailTrainerSearch) ||
-            (t.email || '').toLowerCase().includes(this.mailTrainerSearch)
-        );
-        if (all) filtered.forEach(t => this.mailSelectedIds.add(t.id));
-        else filtered.forEach(t => this.mailSelectedIds.delete(t.id));
-        this.renderMailTrainers();
+    updateSelectedCount() {
+        const el = document.getElementById('adminMsgSelectedCount');
+        if (el) el.textContent = `Odabrano: ${this.msgSelectedIds.size}`;
     },
 
-    async sendMail() {
-        const msgEl = document.getElementById('adminMailMsg');
+    msgSelectFiltered(all) {
+        this.filteredRecipients().forEach(r => {
+            if (all) this.msgSelectedIds.add(r.id);
+            else this.msgSelectedIds.delete(r.id);
+        });
+        this.renderRecipients();
+    },
+
+    msgSelectClientsWithoutTrainer() {
+        this.recipients
+            .filter(r => r.role === 'Client' && !r.hasTrainer)
+            .forEach(r => this.msgSelectedIds.add(r.id));
+        this.renderRecipients();
+    },
+
+    // Shared sender for both email and push panels.
+    async _sendMessage({ url, subjectId, bodyId, btnId, msgId, subjectLabel }) {
+        const msgEl = document.getElementById(msgId);
         msgEl.style.color = '';
+        msgEl.style.whiteSpace = 'pre-wrap';
         msgEl.textContent = '';
 
-        const trainerIds = Array.from(this.mailSelectedIds);
-        const subject = document.getElementById('adminMailSubject').value.trim();
-        const body = document.getElementById('adminMailBody').value.trim();
+        const userIds = Array.from(this.msgSelectedIds);
+        const subject = document.getElementById(subjectId).value.trim();
+        const body = document.getElementById(bodyId).value.trim();
 
-        if (trainerIds.length === 0) { msgEl.textContent = I18n.t('admin.mail.pickTrainer'); return; }
-        if (!subject) { msgEl.textContent = I18n.t('admin.mail.subjectRequired'); return; }
-        if (!body) { msgEl.textContent = I18n.t('admin.mail.bodyRequired'); return; }
+        if (userIds.length === 0) { msgEl.textContent = 'Odaberi barem jednog primatelja.'; return; }
+        if (!subject) { msgEl.textContent = `Unesi ${subjectLabel}.`; return; }
+        if (!body) { msgEl.textContent = 'Unesi poruku.'; return; }
 
-        const btn = document.getElementById('adminMailSendBtn');
+        const btn = document.getElementById(btnId);
         btn.disabled = true;
         try {
             const lang = (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr';
-            const result = await API.post('/admin/email/send-to-trainers', {
-                trainerIds, subject, body, language: lang
-            });
-            const sentCount = (result.sent || []).length;
-            const failedCount = (result.failed || []).length;
-            if (failedCount === 0) {
+            const result = await API.post(url, { userIds, subject, body, language: lang });
+            const sent = (result.sent || []).length;
+            const failed = result.failed || [];
+            if (failed.length === 0) {
                 msgEl.style.color = '#52c452';
-                msgEl.textContent = I18n.tf('admin.mail.sentOk', {
-                    count: sentCount,
-                    unit: I18n.t(sentCount === 1 ? 'admin.mail.recipientUnit.one' : 'admin.mail.recipientUnit.many')
-                });
-                this.resetMailForm(false);
+                msgEl.textContent = `Poslano: ${sent}.`;
             } else {
                 msgEl.style.color = '#d9534f';
-                const failures = result.failed.map(f => `${f.email || f.trainerId}: ${f.error}`).join('\n');
-                msgEl.style.whiteSpace = 'pre-wrap';
-                msgEl.textContent = I18n.tf('admin.mail.sentMixed', { sent: sentCount, failed: failedCount }) + '\n' + failures;
+                const lines = failed.map(f => `${f.recipient || f.userId}: ${f.error}`).join('\n');
+                msgEl.textContent = `Poslano: ${sent}, palo: ${failed.length}.\n${lines}`;
             }
         } catch (err) {
             msgEl.style.color = '#d9534f';
@@ -348,16 +333,32 @@ const Admin = {
         }
     },
 
-    resetMailForm(clearMessage = true) {
-        document.getElementById('adminMailSubject').value = '';
-        document.getElementById('adminMailBody').value = '';
-        this.mailSelectedIds.clear();
-        this.renderMailTrainers();
-        if (clearMessage) {
-            const msgEl = document.getElementById('adminMailMsg');
-            msgEl.textContent = '';
-            msgEl.style.color = '';
-        }
+    sendEmail() {
+        return this._sendMessage({
+            url: '/admin/email/send-to-users',
+            subjectId: 'adminEmailSubject', bodyId: 'adminEmailBody',
+            btnId: 'adminEmailSendBtn', msgId: 'adminEmailMsg', subjectLabel: 'predmet'
+        });
+    },
+
+    sendPush() {
+        return this._sendMessage({
+            url: '/admin/push/send',
+            subjectId: 'adminPushTitle', bodyId: 'adminPushBody',
+            btnId: 'adminPushSendBtn', msgId: 'adminPushMsg', subjectLabel: 'naslov'
+        });
+    },
+
+    resetEmail() {
+        document.getElementById('adminEmailSubject').value = '';
+        document.getElementById('adminEmailBody').value = '';
+        const m = document.getElementById('adminEmailMsg'); m.textContent = ''; m.style.color = '';
+    },
+
+    resetPush() {
+        document.getElementById('adminPushTitle').value = '';
+        document.getElementById('adminPushBody').value = '';
+        const m = document.getElementById('adminPushMsg'); m.textContent = ''; m.style.color = '';
     },
 
     formatDate(s) {

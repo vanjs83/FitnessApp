@@ -19,15 +19,18 @@ public class AdminController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly Infrastructure.Persistence.AppDbContext _db;
     private readonly IEmailService _email;
+    private readonly IPushNotificationService _push;
 
     public AdminController(
         UserManager<ApplicationUser> userManager,
         Infrastructure.Persistence.AppDbContext db,
-        IEmailService email)
+        IEmailService email,
+        IPushNotificationService push)
     {
         _userManager = userManager;
         _db = db;
         _email = email;
+        _push = push;
     }
 
     private string AdminId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -210,7 +213,7 @@ public class AdminController : ControllerBase
         if (admin == null || string.IsNullOrWhiteSpace(admin.Email))
             return BadRequest(new { message = "Administrator profil nema email." });
 
-        var adminName = admin.FullName ?? admin.Email!;
+        var senderName = "FitnessApp";
         var lang = (request.Language ?? "hr").ToLowerInvariant();
 
         var trainers = await _userManager.GetUsersInRoleAsync(Roles.Trainer);
@@ -250,12 +253,12 @@ public class AdminController : ControllerBase
                 placeholders: new Dictionary<string, string>
                 {
                     ["TrainerName"] = trainer.FullName ?? trainer.Email!,
-                    ["AdminName"] = adminName,
+                    ["AdminName"] = senderName,
                     ["Subject"] = request.Subject,
                     ["Body"] = request.Body
                 },
                 replyTo: admin.Email,
-                replyToName: adminName);
+                replyToName: senderName);
 
             if (ok)
                 result.Sent.Add(trainer.Email!);
@@ -266,6 +269,82 @@ public class AdminController : ControllerBase
                     Email = trainer.Email!,
                     Error = error ?? "Slanje neuspjelo."
                 });
+        }
+
+        return Ok(result);
+    }
+
+    // Plain email to any users (trainers and/or clients), e.g. nudging clients without a trainer.
+    [HttpPost("email/send-to-users")]
+    public async Task<ActionResult<MessageSendResultDto>> SendEmailToUsers(SendMessageToUsersRequest request)
+    {
+        if (!_email.IsConfigured)
+            return BadRequest(new { message = "Email nije konfiguriran." });
+
+        var admin = await _userManager.FindByIdAsync(AdminId);
+        var adminName = admin?.FullName ?? admin?.Email ?? "Admin";
+        var result = new MessageSendResultDto();
+
+        foreach (var userId in request.UserIds.Distinct())
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                result.Failed.Add(new MessageFailureDto { UserId = userId, Error = "Korisnik nije pronađen." });
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                result.Failed.Add(new MessageFailureDto { UserId = userId, Recipient = user.FullName ?? "", Error = "Korisnik nema email adresu." });
+                continue;
+            }
+
+            try
+            {
+                await _email.SendAsync(user.Email!, request.Subject, request.Body, replyTo: admin?.Email, replyToName: adminName);
+                result.Sent.Add(user.Email!);
+            }
+            catch (Exception ex)
+            {
+                result.Failed.Add(new MessageFailureDto { UserId = userId, Recipient = user.Email!, Error = ex.Message });
+            }
+        }
+
+        return Ok(result);
+    }
+
+    // Push notification to any users (trainers and/or clients).
+    [HttpPost("push/send")]
+    public async Task<ActionResult<MessageSendResultDto>> SendPushToUsers(SendMessageToUsersRequest request)
+    {
+        var result = new MessageSendResultDto();
+
+        foreach (var userId in request.UserIds.Distinct())
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                result.Failed.Add(new MessageFailureDto { UserId = userId, Error = "Korisnik nije pronađen." });
+                continue;
+            }
+
+            var recipient = user.FullName ?? user.Email ?? userId;
+            var hasDevice = await _db.Devices.AnyAsync(d => d.UserId == userId && d.IsActive);
+            if (!hasDevice)
+            {
+                result.Failed.Add(new MessageFailureDto { UserId = userId, Recipient = recipient, Error = "Nema registriran uređaj za push." });
+                continue;
+            }
+
+            try
+            {
+                await _push.SendToUserAsync(userId, request.Subject, request.Body);
+                result.Sent.Add(recipient);
+            }
+            catch (Exception ex)
+            {
+                result.Failed.Add(new MessageFailureDto { UserId = userId, Recipient = recipient, Error = ex.Message });
+            }
         }
 
         return Ok(result);
