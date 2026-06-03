@@ -45,6 +45,11 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
+        // Default lifespan of tokens from the default provider is 1 day; the only one we
+        // actually generate is the password-reset token, so 2h is plenty and safer.
+        services.Configure<DataProtectionTokenProviderOptions>(options =>
+            options.TokenLifespan = TimeSpan.FromHours(2));
+
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.Configure<GoogleAuthSettings>(configuration.GetSection("Google"));
         services.AddSingleton<ITokenService, TokenService>();
