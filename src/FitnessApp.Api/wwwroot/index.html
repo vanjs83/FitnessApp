@@ -9,7 +9,7 @@
 </head>
 <body>
     <header>
-        <h1>💪 <span data-i18n="app.title">FitnessApp</span></h1>
+        <h1><a href="/landing.html" class="brand-logo" title="FitnessApp">💪 Fitness<span class="dot">App</span></a></h1>
         <div class="header-right">
             <div class="lang-switch">
                 <button class="lang-btn" data-lang="hr" title="Hrvatski"><span class="flag">🇭🇷</span></button>
@@ -1001,6 +1001,12 @@
             <div id="qrShareMsg" class="error"></div>
         </div>
     </div>
+
+    <footer class="site-footer">
+        <p>© <span id="year"></span> FitnessApp · Sva prava pridržana</p>
+        <p style="margin-top:0.5rem">Pitanja? <a href="mailto:tihomir.vanjurek@gmail.com">tihomir.vanjurek@gmail.com</a></p>
+    </footer>
+    <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
