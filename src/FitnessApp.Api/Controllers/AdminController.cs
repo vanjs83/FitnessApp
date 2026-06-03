@@ -20,17 +20,20 @@ public class AdminController : ControllerBase
     private readonly Infrastructure.Persistence.AppDbContext _db;
     private readonly IEmailService _email;
     private readonly IPushNotificationService _push;
+    private readonly ILogger<AdminController> _logger;
 
     public AdminController(
         UserManager<ApplicationUser> userManager,
         Infrastructure.Persistence.AppDbContext db,
         IEmailService email,
-        IPushNotificationService push)
+        IPushNotificationService push,
+        ILogger<AdminController> logger)
     {
         _userManager = userManager;
         _db = db;
         _email = email;
         _push = push;
+        _logger = logger;
     }
 
     private string AdminId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -291,11 +294,13 @@ public class AdminController : ControllerBase
             if (user == null)
             {
                 result.Failed.Add(new MessageFailureDto { UserId = userId, Error = "Korisnik nije pronađen." });
+                _logger.LogWarning("User {UserId} not found, skipping.", userId);
                 continue;
             }
             if (string.IsNullOrWhiteSpace(user.Email))
             {
                 result.Failed.Add(new MessageFailureDto { UserId = userId, Recipient = user.FullName ?? "", Error = "Korisnik nema email adresu." });
+               _logger.LogWarning("User {UserId} does not have an email address, skipping.", userId);
                 continue;
             }
 
@@ -325,16 +330,12 @@ public class AdminController : ControllerBase
             if (user == null)
             {
                 result.Failed.Add(new MessageFailureDto { UserId = userId, Error = "Korisnik nije pronađen." });
+                _logger.LogWarning("User {UserId} not found, skipping push notification.", userId);
                 continue;
             }
 
             var recipient = user.FullName ?? user.Email ?? userId;
             var hasDevice = await _db.Devices.AnyAsync(d => d.UserId == userId && d.IsActive);
-            if (!hasDevice)
-            {
-                result.Failed.Add(new MessageFailureDto { UserId = userId, Recipient = recipient, Error = "Nema registriran uređaj za push." });
-                continue;
-            }
 
             try
             {
@@ -344,6 +345,7 @@ public class AdminController : ControllerBase
             catch (Exception ex)
             {
                 result.Failed.Add(new MessageFailureDto { UserId = userId, Recipient = recipient, Error = ex.Message });
+                _logger.LogError(ex, "Failed to send push notification to user {UserId} ({Recipient}). Has device: {HasDevice}", userId, recipient, hasDevice);
             }
         }
 
