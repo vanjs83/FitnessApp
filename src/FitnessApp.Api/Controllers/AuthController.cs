@@ -298,10 +298,11 @@ public class AuthController : ControllerBase
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-        // Reset link points back at the SPA (served from wwwroot); auth.js reads the
-        // query params on load and shows the "set new password" form.
+        // Reset link must target index.html explicitly: "/" serves landing.html (the
+        // marketing page) as the default document, which has none of the auth logic.
+        // auth.js reads the query params on load and shows the "set new password" form.
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        var resetUrl = $"{baseUrl}/?reset={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email!)}";
+        var resetUrl = $"{baseUrl}/index.html?reset={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email!)}";
 
         var (ok, error) = await _email.SendTemplatedAsync(
             toEmail: user.Email!,
