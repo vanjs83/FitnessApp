@@ -92,7 +92,14 @@ main {
     max-width: 800px;
     margin: 0 auto;
     padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
 }
+
+/* profileView i chatView su dijeljene sekcije izvan panela i u DOM-u stoje
+   prije #trainerPanel. Bez ovoga bi se kod trenera nav-traka (zaglavlje)
+   renderirala ispod njihovog sadržaja. order:1 ih gura iza nav-trake oba panela. */
+#profileView, #chatView { order: 1; }
 
 .hidden { display: none !important; }
 
