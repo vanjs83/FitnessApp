@@ -551,7 +551,8 @@ const Plans = {
             await API.post('/email/notify-plan-ready', {
                 clientId: this.currentPlan.clientId,
                 planName: this.currentPlan.name,
-                planType: 'training'
+                planType: 'training',
+                language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
             });
             alert('✓ Email poslan klijentu.');
         } catch (err) { alert(err.message); }

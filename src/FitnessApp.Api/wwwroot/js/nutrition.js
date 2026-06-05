@@ -105,7 +105,8 @@ const Nutrition = {
             await API.post('/email/notify-plan-ready', {
                 clientId: this.current.clientId,
                 planName: this.current.name,
-                planType: 'nutrition'
+                planType: 'nutrition',
+                language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
             });
             alert('✓ Email poslan klijentu.');
         } catch (err) { alert(err.message); }

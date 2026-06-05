@@ -716,7 +716,8 @@ const Trainers = {
         if (!body) { msg.textContent = 'Poruka je obavezna.'; return; }
         try {
             await API.post('/email/send-to-client', {
-                clientId: this.currentClient.id, subject, body
+                clientId: this.currentClient.id, subject, body,
+                language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
             });
             msg.style.color = '#52c452';
             msg.textContent = '✓ Email poslan!';
