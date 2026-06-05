@@ -1004,19 +1004,31 @@ const Plans = {
         const muscle = document.getElementById('quickExerciseMuscle').value.trim();
         const type = document.getElementById('quickExerciseType').value;
         const description = document.getElementById('quickExerciseDescription').value.trim();
+        const videoUrl = document.getElementById('quickExerciseVideoUrl').value.trim();
+        const fileInput = document.getElementById('quickExerciseVideoFile');
+        const videoFile = fileInput && fileInput.files && fileInput.files[0];
         if (!name) { alert('Unesi naziv vježbe.'); return; }
 
         try {
-            await API.post('/exercises', {
+            const created = await API.post('/exercises', {
                 name,
                 muscleGroup: muscle || null,
                 type,
-                videoUrl: null,
+                videoUrl: videoFile ? null : (videoUrl || null),
                 description: description || null
             });
+            if (videoFile && created && created.id) {
+                try {
+                    await Exercises.uploadVideo(created.id, videoFile);
+                } catch (uploadErr) {
+                    alert(I18n.t('exercises.videoUploadFailed') + ' ' + uploadErr.message);
+                }
+            }
             document.getElementById('quickExerciseName').value = '';
             document.getElementById('quickExerciseMuscle').value = '';
             document.getElementById('quickExerciseDescription').value = '';
+            document.getElementById('quickExerciseVideoUrl').value = '';
+            if (fileInput) fileInput.value = '';
             await Exercises.load();
             await this.showPlanDetail(this.currentPlan.id);
         } catch (err) {

@@ -265,6 +265,19 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 #planDetail .row { flex-wrap: wrap; }
 #planDetail .row > button { flex: 0 0 auto; align-self: center; }
 
+/* Plan detail: kompaktnije forme (Dodaj dan / brzo dodaj vježbu) */
+#planDetail .card-inset h4 { font-size: 0.95rem; }
+#planDetail .card-inset input,
+#planDetail .card-inset select,
+#planDetail .card-inset textarea {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.85rem;
+}
+#planDetail .card-inset button {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.82rem;
+}
+
 .list { display: flex; flex-direction: column; gap: 0.6rem; }
 
 .list-item {

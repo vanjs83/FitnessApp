@@ -11,9 +11,9 @@ namespace FitnessApp.Api.Controllers;
 [Route("api/notifications")]
 public class NotificationsController : ApiControllerBase
 {
-    private readonly ISender _sender;
+    private readonly IMediator _sender;
 
-    public NotificationsController(ISender sender) => _sender = sender;
+    public NotificationsController(IMediator sender) => _sender = sender;
 
     [HttpPost("notify-client-plan")]
     public async Task<ActionResult<NotifyResultDto>> NotifyClientPlan(NotifyClientPlanRequest request, CancellationToken ct)
