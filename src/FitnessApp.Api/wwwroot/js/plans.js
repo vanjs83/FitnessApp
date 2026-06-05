@@ -1003,7 +1003,6 @@ const Plans = {
         const name = document.getElementById('quickExerciseName').value.trim();
         const muscle = document.getElementById('quickExerciseMuscle').value.trim();
         const type = document.getElementById('quickExerciseType').value;
-        const videoUrl = document.getElementById('quickExerciseVideoUrl').value.trim();
         const description = document.getElementById('quickExerciseDescription').value.trim();
         if (!name) { alert('Unesi naziv vježbe.'); return; }
 
@@ -1012,12 +1011,11 @@ const Plans = {
                 name,
                 muscleGroup: muscle || null,
                 type,
-                videoUrl: videoUrl || null,
+                videoUrl: null,
                 description: description || null
             });
             document.getElementById('quickExerciseName').value = '';
             document.getElementById('quickExerciseMuscle').value = '';
-            document.getElementById('quickExerciseVideoUrl').value = '';
             document.getElementById('quickExerciseDescription').value = '';
             await Exercises.load();
             await this.showPlanDetail(this.currentPlan.id);

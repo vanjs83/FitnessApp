@@ -150,7 +150,7 @@
   "exercises.noVideo": "Video nije dodan.",
   "exercises.descTitle": "Opis",
   "exercises.editTitle": "Uredi vježbu",
-  "exercises.videoFile.full": "ili učitaj video (mp4, mov, webm, m4v, avi, mkv, 3gp — do 100 MB):",
+  "exercises.videoFile.full": "Učitaj video (mp4, mov, webm, m4v, avi, mkv, 3gp — do 100 MB):",
   "exercises.videoFile.short": "ili učitaj video (do 100 MB):",
 
   "exercises.type.strength": "Snaga",

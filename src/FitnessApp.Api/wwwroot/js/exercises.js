@@ -95,7 +95,7 @@ const Exercises = {
                 name,
                 muscleGroup: document.getElementById('exerciseMuscleGroup').value || null,
                 description: document.getElementById('exerciseDescription').value || null,
-                videoUrl: videoFile ? null : (document.getElementById('exerciseVideoUrl').value || null),
+                videoUrl: null,
                 type: document.getElementById('exerciseType').value
             });
             if (videoFile && created && created.id) {
@@ -116,7 +116,6 @@ const Exercises = {
         document.getElementById('exerciseName').value = '';
         document.getElementById('exerciseMuscleGroup').value = '';
         document.getElementById('exerciseDescription').value = '';
-        document.getElementById('exerciseVideoUrl').value = '';
         const fileInput = document.getElementById('exerciseVideoFile');
         if (fileInput) fileInput.value = '';
         document.getElementById('exerciseType').value = 'Strength';

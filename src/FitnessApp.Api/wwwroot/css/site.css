@@ -261,6 +261,10 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 .row { display: flex; gap: 0.5rem; }
 .row > * { flex: 1; }
 
+/* Plan detail: buttoni se ne rastežu (veličina po tekstu) i red se lomi u više linija */
+#planDetail .row { flex-wrap: wrap; }
+#planDetail .row > button { flex: 0 0 auto; align-self: center; }
+
 .list { display: flex; flex-direction: column; gap: 0.6rem; }
 
 .list-item {

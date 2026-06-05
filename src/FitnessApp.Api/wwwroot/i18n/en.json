@@ -150,7 +150,7 @@
   "exercises.noVideo": "No video added.",
   "exercises.descTitle": "Description",
   "exercises.editTitle": "Edit exercise",
-  "exercises.videoFile.full": "or upload video (mp4, mov, webm, m4v, avi, mkv, 3gp — up to 100 MB):",
+  "exercises.videoFile.full": "Upload video (mp4, mov, webm, m4v, avi, mkv, 3gp — up to 100 MB):",
   "exercises.videoFile.short": "or upload video (up to 100 MB):",
 
   "exercises.type.strength": "Strength",
