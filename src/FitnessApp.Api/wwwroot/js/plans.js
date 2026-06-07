@@ -733,7 +733,7 @@ const Plans = {
                     <div class="exercise-subgroup-header">${this.escape(mg.muscleGroup || '— bez mišićne grupe —')}</div>
                     ${mg.items.map(e => `
                         <div class="planned-row">
-                            <span class="planned-name exercise-link" data-exercise-id="${e.id}" title="Uredi vježbu (opis, YouTube link)">${this.escape(e.name)}${e.videoUrl ? ' <span class="badge video">▶</span>' : ''}</span>
+                            <span class="planned-name exercise-link" data-exercise-id="${e.id}" title="Uredi vježbu (opis, YouTube link)">${Exercises.thumbHtml(e, 'exercise-thumb exercise-thumb-sm')}<span>${this.escape(e.name)}${e.videoUrl ? ' <span class="badge video">▶</span>' : ''}</span></span>
                             <span class="planned-actions">
                                 <button class="btn-delete delete-ex-btn" data-ex-id="${e.id}" title="Obriši vježbu iz kataloga">🗑 Obriši</button>
                             </span>

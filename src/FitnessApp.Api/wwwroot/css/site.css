@@ -987,6 +987,10 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 .exercise-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .exercise-thumb-empty { font-size: 1.2rem; opacity: 0.6; }
 
+/* Smaller thumb for dense rows (plan editor "My exercises" list) */
+.exercise-thumb-sm { width: 34px; height: 26px; border-radius: 4px; font-size: 0.95rem; }
+.planned-name.exercise-link { display: inline-flex; align-items: center; gap: 0.5rem; }
+
 /* Exercise image in detail modal */
 .exercise-image-wrap { margin-bottom: 0.75rem; }
 .exercise-image-wrap img {

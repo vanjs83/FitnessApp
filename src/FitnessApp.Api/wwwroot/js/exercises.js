@@ -167,12 +167,13 @@ const Exercises = {
         return typeof url === 'string' && url.startsWith('/uploads/exercises/');
     },
 
-    // Thumbnail rectangle for the list. Shows the image or a neutral placeholder.
-    thumbHtml(e) {
+    // Thumbnail rectangle for a list. Shows the image or a neutral placeholder.
+    // sizeClass lets callers use a smaller variant in dense rows (e.g. plan editor).
+    thumbHtml(e, sizeClass = 'exercise-thumb') {
         if (e.imageUrl) {
-            return `<span class="exercise-thumb"><img src="${this.escape(e.imageUrl)}" alt="" loading="lazy"></span>`;
+            return `<span class="${sizeClass}"><img src="${this.escape(e.imageUrl)}" alt="" loading="lazy"></span>`;
         }
-        return `<span class="exercise-thumb exercise-thumb-empty">🏋️</span>`;
+        return `<span class="${sizeClass} exercise-thumb-empty">🏋️</span>`;
     },
 
     async uploadImage(exerciseId, file) {
