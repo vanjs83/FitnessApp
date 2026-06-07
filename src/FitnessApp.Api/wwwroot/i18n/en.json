@@ -153,6 +153,8 @@
   "exercises.editTitle": "Edit exercise",
   "exercises.videoFile.full": "Upload video (mp4, mov, webm, m4v, avi, mkv, 3gp — up to 100 MB):",
   "exercises.videoFile.short": "or upload video (up to 100 MB):",
+  "exercises.imageFile.full": "Upload image (jpg, png, webp — up to 5 MB):",
+  "exercises.imageFile.short": "or upload an image (up to 5 MB):",
 
   "exercises.type.strength": "Strength",
   "exercises.type.hiit": "HIIT",
@@ -481,6 +483,8 @@
   "exercises.videoUploadFailed": "Exercise created, but video upload failed:",
   "exercises.videoLoadedLabel": "✓ Video loaded",
   "exercises.removeVideoConfirm": "Remove uploaded video?",
+  "exercises.imageUploadFailed": "Image upload failed:",
+  "exercises.removeImageConfirm": "Remove exercise image?",
 
   "admin.stats.trainers": "Trainers",
   "admin.stats.clients": "Clients",

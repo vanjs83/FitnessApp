@@ -67,6 +67,7 @@ const Exercises = {
 
         container.innerHTML = filtered.map(e => `
             <div class="list-item exercise-item" data-id="${e.id}">
+                ${this.thumbHtml(e)}
                 <div>
                     <h4>${this.escape(e.name)}</h4>
                     <div class="meta">
@@ -89,6 +90,8 @@ const Exercises = {
 
         const fileInput = document.getElementById('exerciseVideoFile');
         const videoFile = fileInput && fileInput.files && fileInput.files[0];
+        const imageInput = document.getElementById('exerciseImageFile');
+        const imageFile = imageInput && imageInput.files && imageInput.files[0];
 
         try {
             const created = await API.post('/exercises', {
@@ -105,6 +108,13 @@ const Exercises = {
                     alert(I18n.t('exercises.videoUploadFailed') + ' ' + uploadErr.message);
                 }
             }
+            if (imageFile && created && created.id) {
+                try {
+                    await this.uploadImage(created.id, imageFile);
+                } catch (uploadErr) {
+                    alert(I18n.t('exercises.imageUploadFailed') + ' ' + uploadErr.message);
+                }
+            }
             this.resetForm();
             await this.load();
         } catch (err) {
@@ -118,6 +128,8 @@ const Exercises = {
         document.getElementById('exerciseDescription').value = '';
         const fileInput = document.getElementById('exerciseVideoFile');
         if (fileInput) fileInput.value = '';
+        const imageInput = document.getElementById('exerciseImageFile');
+        if (imageInput) imageInput.value = '';
         document.getElementById('exerciseType').value = 'Strength';
         document.getElementById('newExerciseForm').classList.add('hidden');
     },
@@ -155,6 +167,43 @@ const Exercises = {
         return typeof url === 'string' && url.startsWith('/uploads/exercises/');
     },
 
+    // Thumbnail rectangle for the list. Shows the image or a neutral placeholder.
+    thumbHtml(e) {
+        if (e.imageUrl) {
+            return `<span class="exercise-thumb"><img src="${this.escape(e.imageUrl)}" alt="" loading="lazy"></span>`;
+        }
+        return `<span class="exercise-thumb exercise-thumb-empty">🏋️</span>`;
+    },
+
+    async uploadImage(exerciseId, file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch(`/api/exercises/${exerciseId}/image`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: fd
+        });
+        if (!res.ok) {
+            let msg = 'Upload failed.';
+            try { const j = await res.json(); if (j && j.message) msg = j.message; } catch {}
+            throw new Error(msg);
+        }
+        return await res.json();
+    },
+
+    async deleteImage(exerciseId) {
+        const res = await fetch(`/api/exercises/${exerciseId}/image`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!res.ok) {
+            let msg = 'Delete failed.';
+            try { const j = await res.json(); if (j && j.message) msg = j.message; } catch {}
+            throw new Error(msg);
+        }
+        return await res.json();
+    },
+
     showDetail(id) {
         const e = this.list.find(x => x.id === id);
         if (!e) return;
@@ -173,6 +222,20 @@ const Exercises = {
         if (e.muscleGroup) metaParts.push(e.muscleGroup);
         metaParts.push(ExerciseTypeLabels[e.type] || e.type);
         document.getElementById('exerciseDetailMeta').textContent = metaParts.join(' · ');
+
+        const imageWrap = document.getElementById('exerciseDetailImageWrap');
+        if (imageWrap) {
+            imageWrap.innerHTML = '';
+            if (e.imageUrl) {
+                const img = document.createElement('img');
+                img.src = e.imageUrl;
+                img.alt = e.name || '';
+                imageWrap.appendChild(img);
+                imageWrap.classList.remove('hidden');
+            } else {
+                imageWrap.classList.add('hidden');
+            }
+        }
 
         const videoWrap = document.getElementById('exerciseDetailVideoWrap');
         const noVideo = document.getElementById('exerciseDetailNoVideo');
@@ -228,6 +291,9 @@ const Exercises = {
         const fileInput = document.getElementById('editExerciseVideoFile');
         if (fileInput) fileInput.value = '';
         this.renderEditVideoCurrent(e);
+        const imageInput = document.getElementById('editExerciseImageFile');
+        if (imageInput) imageInput.value = '';
+        this.renderEditImageCurrent(e);
         document.getElementById('editExerciseDescription').value = e.description || '';
         document.getElementById('exerciseEditMsg').textContent = '';
         document.getElementById('exerciseDetailView').classList.add('hidden');
@@ -263,6 +329,36 @@ const Exercises = {
         slot.appendChild(removeBtn);
     },
 
+    renderEditImageCurrent(e) {
+        const slot = document.getElementById('editExerciseImageCurrent');
+        if (!slot) return;
+        slot.innerHTML = '';
+        if (!e.imageUrl) return;
+        const thumb = document.createElement('img');
+        thumb.src = e.imageUrl;
+        thumb.alt = '';
+        thumb.className = 'exercise-edit-thumb';
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'secondary';
+        removeBtn.textContent = I18n.t('profile.avatarRemove');
+        removeBtn.addEventListener('click', async () => {
+            if (!confirm(I18n.t('exercises.removeImageConfirm'))) return;
+            try {
+                const updated = await this.deleteImage(e.id);
+                this.current = updated;
+                const idx = this.list.findIndex(x => x.id === updated.id);
+                if (idx >= 0) this.list[idx] = updated;
+                this.renderEditImageCurrent(updated);
+                this.render();
+            } catch (err) {
+                document.getElementById('exerciseEditMsg').textContent = err.message;
+            }
+        });
+        slot.appendChild(thumb);
+        slot.appendChild(removeBtn);
+    },
+
     cancelEdit() {
         document.getElementById('exerciseEditView').classList.add('hidden');
         document.getElementById('exerciseDetailView').classList.remove('hidden');
@@ -279,6 +375,8 @@ const Exercises = {
 
         const fileInput = document.getElementById('editExerciseVideoFile');
         const videoFile = fileInput && fileInput.files && fileInput.files[0];
+        const imageInput = document.getElementById('editExerciseImageFile');
+        const imageFile = imageInput && imageInput.files && imageInput.files[0];
         const ytLink = document.getElementById('editExerciseVideoUrl').value.trim();
         const keepLocal = this.isLocalVideo(e.videoUrl) && !videoFile && !ytLink;
 
@@ -295,6 +393,14 @@ const Exercises = {
                     updated = await this.uploadVideo(e.id, videoFile);
                 } catch (uploadErr) {
                     document.getElementById('exerciseEditMsg').textContent = 'Upload videa nije uspio: ' + uploadErr.message;
+                    return;
+                }
+            }
+            if (imageFile) {
+                try {
+                    updated = await this.uploadImage(e.id, imageFile);
+                } catch (uploadErr) {
+                    document.getElementById('exerciseEditMsg').textContent = I18n.t('exercises.imageUploadFailed') + ' ' + uploadErr.message;
                     return;
                 }
             }

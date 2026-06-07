@@ -67,6 +67,7 @@ public static class WebApplicationExtensions
         {
             (storage.ProfileImagesPath, storage.ProfileImagesUrl),
             (storage.ExerciseVideosPath, storage.ExerciseVideosUrl),
+            (storage.ExerciseImagesPath, storage.ExerciseImagesUrl),
             (storage.ProgressImagesPath, storage.ProgressImagesUrl)
         })
         {

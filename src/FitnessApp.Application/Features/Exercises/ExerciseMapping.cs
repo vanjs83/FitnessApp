@@ -13,6 +13,7 @@ internal static class ExerciseMapping
         Name = e.Name,
         Description = e.Description,
         VideoUrl = e.VideoUrl,
+        ImageUrl = e.ImageUrl,
         MuscleGroup = e.MuscleGroup,
         Type = e.Type,
         CanEdit = e.CreatedByUserId == currentUserId
@@ -24,6 +25,7 @@ internal static class ExerciseMapping
         Name = e.Name,
         Description = e.Description,
         VideoUrl = e.VideoUrl,
+        ImageUrl = e.ImageUrl,
         MuscleGroup = e.MuscleGroup,
         Type = e.Type,
         CanEdit = e.CreatedByUserId == currentUserId

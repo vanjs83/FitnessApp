@@ -48,4 +48,13 @@ public class ExercisesController : ApiControllerBase
     [HttpDelete("{id:int}/video")]
     public async Task<ActionResult<ExerciseDto>> DeleteVideo(int id)
         => HandleResult(await _sender.Send(new DeleteExerciseVideoCommand(id)));
+
+    [HttpPost("{id:int}/image")]
+    [RequestSizeLimit(UploadExerciseImageCommandHandler.MaxImageBytes + 1024)]
+    public async Task<ActionResult<ExerciseDto>> UploadImage(int id, IFormFile file)
+        => HandleResult(await _sender.Send(new UploadExerciseImageCommand(id, file)));
+
+    [HttpDelete("{id:int}/image")]
+    public async Task<ActionResult<ExerciseDto>> DeleteImage(int id)
+        => HandleResult(await _sender.Send(new DeleteExerciseImageCommand(id)));
 }

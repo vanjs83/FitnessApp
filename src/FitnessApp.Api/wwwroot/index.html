@@ -175,6 +175,8 @@
                     </select>
                     <label class="muted small" style="margin-top:6px;" data-i18n="exercises.videoFile.full">Učitaj video (mp4, mov, webm, m4v, avi, mkv, 3gp — do 100 MB):</label>
                     <input type="file" id="exerciseVideoFile" accept="video/*,.mp4,.mov,.webm,.m4v,.avi,.mkv,.3gp">
+                    <label class="muted small" style="margin-top:6px;" data-i18n="exercises.imageFile.full">Učitaj sliku (jpg, png, webp — do 5 MB):</label>
+                    <input type="file" id="exerciseImageFile" accept="image/*,.jpg,.jpeg,.png,.webp">
                     <textarea id="exerciseDescription" data-i18n-ph="exercises.descPh" placeholder="Opis..."></textarea>
                     <div class="row">
                         <button id="saveExerciseBtn" data-i18n="common.save">Spremi</button>
@@ -904,6 +906,7 @@
                 <h2 id="exerciseDetailName"></h2>
                 <div id="exerciseDetailMeta" class="muted small"></div>
 
+                <div id="exerciseDetailImageWrap" class="exercise-image-wrap hidden"></div>
                 <div id="exerciseDetailVideoWrap" class="video-wrap hidden"></div>
                 <p id="exerciseDetailNoVideo" class="muted small hidden" data-i18n="exercises.noVideo">Video nije dodan.</p>
 
@@ -933,6 +936,9 @@
                 <label class="muted small" style="margin-top:6px;" data-i18n="exercises.videoFile.short">ili učitaj video (do 100 MB):</label>
                 <input type="file" id="editExerciseVideoFile" accept="video/*,.mp4,.mov,.webm,.m4v,.avi,.mkv,.3gp">
                 <div class="row" id="editExerciseVideoCurrent" style="margin-top:4px;"></div>
+                <label class="muted small" style="margin-top:6px;" data-i18n="exercises.imageFile.short">ili učitaj sliku (do 5 MB):</label>
+                <input type="file" id="editExerciseImageFile" accept="image/*,.jpg,.jpeg,.png,.webp">
+                <div class="row" id="editExerciseImageCurrent" style="margin-top:4px;"></div>
                 <textarea id="editExerciseDescription" data-i18n-ph="exercises.descPh" placeholder="Opis..."></textarea>
                 <div class="row">
                     <button id="saveExerciseEditBtn" data-i18n="common.save">Spremi</button>

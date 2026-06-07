@@ -153,6 +153,8 @@
   "exercises.editTitle": "Uredi vježbu",
   "exercises.videoFile.full": "Učitaj video (mp4, mov, webm, m4v, avi, mkv, 3gp — do 100 MB):",
   "exercises.videoFile.short": "ili učitaj video (do 100 MB):",
+  "exercises.imageFile.full": "Učitaj sliku (jpg, png, webp — do 5 MB):",
+  "exercises.imageFile.short": "ili učitaj sliku (do 5 MB):",
 
   "exercises.type.strength": "Snaga",
   "exercises.type.hiit": "HIIT",
@@ -481,6 +483,8 @@
   "exercises.videoUploadFailed": "Vježba kreirana, ali upload videa nije uspio:",
   "exercises.videoLoadedLabel": "✓ Učitan video",
   "exercises.removeVideoConfirm": "Ukloniti učitani video?",
+  "exercises.imageUploadFailed": "Upload slike nije uspio:",
+  "exercises.removeImageConfirm": "Ukloniti sliku vježbe?",
 
   "admin.stats.trainers": "Treneri",
   "admin.stats.clients": "Klijenti",
