@@ -66,7 +66,8 @@ public static class WebApplicationExtensions
         foreach (var (rawPath, urlPrefix) in new[]
         {
             (storage.ProfileImagesPath, storage.ProfileImagesUrl),
-            (storage.ExerciseVideosPath, storage.ExerciseVideosUrl)
+            (storage.ExerciseVideosPath, storage.ExerciseVideosUrl),
+            (storage.ProgressImagesPath, storage.ProgressImagesUrl)
         })
         {
             if (string.IsNullOrWhiteSpace(rawPath) || string.IsNullOrWhiteSpace(urlPrefix)) continue;

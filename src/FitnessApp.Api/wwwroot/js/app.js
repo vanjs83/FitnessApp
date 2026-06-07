@@ -17,6 +17,7 @@ const App = {
         ClientTrainers.init();
         Stats.init();
         Profile.init();
+        Progress.init();
         Chat.init();
 
         const closeTpBtn = document.getElementById('closeTrainerProfileBtn');
@@ -191,6 +192,8 @@ const App = {
         if (myNut) myNut.classList.toggle('hidden', view !== 'myNutrition');
         document.getElementById('exercisesView').classList.toggle('hidden', view !== 'exercises');
         document.getElementById('statsView').classList.toggle('hidden', view !== 'stats');
+        const progressV = document.getElementById('progressView');
+        if (progressV) progressV.classList.toggle('hidden', view !== 'progress');
         document.getElementById('profileView').classList.toggle('hidden', view !== 'profile');
         document.getElementById('chatView').classList.toggle('hidden', view !== 'chat');
         const trainersV = document.getElementById('trainersView');
@@ -201,6 +204,7 @@ const App = {
         if (view === 'workouts') Workouts.load();
         if (view === 'exercises') Exercises.load();
         if (view === 'stats') Stats.load();
+        if (view === 'progress') Progress.load();
         if (view === 'profile') Profile.load();
         if (view === 'myPlans') {
             Plans.showMyPlansList();

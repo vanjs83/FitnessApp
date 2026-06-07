@@ -105,6 +105,7 @@
                 <button class="nav-btn" data-view="myNutrition" data-i18n="nav.myNutrition">Prehrana</button>
                 <button class="nav-btn" data-view="trainers" data-i18n="nav.trainers">Treneri</button>
                 <button class="nav-btn" data-view="stats" data-i18n="nav.stats">Statistika</button>
+                <button class="nav-btn" data-view="progress" data-i18n="nav.progress">Napredak</button>
                 <button class="nav-btn" data-view="chat" data-i18n="nav.chat">Poruke<span class="nav-badge hidden" id="clientChatBadge"></span></button>
                 <button class="nav-btn" data-view="profile" data-i18n="nav.profile">Osobni podaci</button>
             </nav>
@@ -243,6 +244,31 @@
                     <div class="chart-wrap"><canvas id="statsPlanChart"></canvas></div>
                     <div id="statsPlanSummary" class="muted small"></div>
                 </div>
+            </div>
+
+            <div id="progressView" class="view hidden">
+                <h2 data-i18n="progress.title">Napredak (slike)</h2>
+
+                <div class="card">
+                    <h4 data-i18n="progress.addTitle">Dodaj sliku</h4>
+                    <label class="muted small" data-i18n="progress.pose">Poza</label>
+                    <select id="progressPose">
+                        <option value="Front" data-i18n="progress.pose.front">Sprijeda</option>
+                        <option value="Back" data-i18n="progress.pose.back">Straga</option>
+                        <option value="Side" data-i18n="progress.pose.side">Bočno</option>
+                    </select>
+                    <label class="muted small" data-i18n="progress.takenOn">Datum</label>
+                    <input type="date" id="progressTakenOn">
+                    <label class="muted small" data-i18n="progress.note">Napomena (opcionalno)</label>
+                    <input type="text" id="progressNote" data-i18n-ph="progress.notePh" placeholder="npr. nakon 4 tjedna">
+                    <div class="row">
+                        <button id="progressUploadBtn" data-i18n="progress.upload">📷 Odaberi i učitaj sliku</button>
+                    </div>
+                    <input type="file" id="progressFile" accept="image/*" class="hidden">
+                    <div id="progressUploadMsg" class="muted small"></div>
+                </div>
+
+                <div id="progressGallery"></div>
             </div>
 
         </section>
@@ -582,6 +608,11 @@
                     <select id="trainerStatsPlanExerciseSelect"></select>
                     <div class="chart-wrap"><canvas id="trainerStatsPlanChart"></canvas></div>
                     <div id="trainerStatsPlanSummary" class="muted small"></div>
+                </div>
+
+                <div class="card">
+                    <h4 data-i18n="progress.clientTitle">Slike napretka</h4>
+                    <div id="trainerProgressGallery"></div>
                 </div>
             </div>
 
@@ -1057,6 +1088,7 @@
     <script src="js/settings.js"></script>
     <script src="js/clientTrainers.js"></script>
     <script src="js/profile.js"></script>
+    <script src="js/progress.js"></script>
     <script src="js/firebase-push.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/app.js"></script>

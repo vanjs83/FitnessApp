@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.Interfaces;
+using FitnessApp.Application.DTOs.Progress;
 using FitnessApp.Application.DTOs.Stats;
 using FitnessApp.Application.DTOs.Trainers;
 using FitnessApp.Application.DTOs.Workouts;
@@ -193,6 +194,32 @@ public class TrainersController : ControllerBase
             .ToListAsync();
 
         return Ok(data);
+    }
+
+    [HttpGet("me/clients/{clientId}/progress")]
+    [Authorize(Roles = Roles.Trainer)]
+    public async Task<ActionResult<IEnumerable<ProgressPhotoDto>>> GetClientProgress(string clientId)
+    {
+        var client = await _db.Users.FirstOrDefaultAsync(u => u.Id == clientId);
+        if (client == null) return NotFound(new { message = "Client not found." });
+        if (client.TrainerId != UserId) return Forbid();
+
+        var photos = await _db.ProgressPhotos
+            .Where(p => p.ClientId == clientId)
+            .OrderByDescending(p => p.TakenOn)
+            .ThenByDescending(p => p.CreatedAt)
+            .Select(p => new ProgressPhotoDto
+            {
+                Id = p.Id,
+                ImageUrl = p.ImagePath,
+                Pose = p.Pose,
+                TakenOn = p.TakenOn,
+                Note = p.Note,
+                CreatedAt = p.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(photos);
     }
 
     [HttpGet("me/clients/{clientId}/stats/exercise-progress/{exerciseId:int}")]

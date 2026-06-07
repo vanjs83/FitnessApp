@@ -25,6 +25,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Device> Devices => Set<Device>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<TrainerRequest> TrainerRequests => Set<TrainerRequest>();
+    public DbSet<ProgressPhoto> ProgressPhotos => Set<ProgressPhoto>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -260,6 +261,19 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(x => x.TrainerId)
                 .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        builder.Entity<ProgressPhoto>(e =>
+        {
+            e.Property(x => x.ClientId).IsRequired();
+            e.Property(x => x.ImagePath).IsRequired().HasMaxLength(400);
+            e.Property(x => x.Note).HasMaxLength(500);
+            e.HasIndex(x => new { x.ClientId, x.Pose, x.TakenOn });
+
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
