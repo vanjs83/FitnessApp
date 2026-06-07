@@ -30,7 +30,7 @@ public static class DependencyInjection
 
         services.AddDbContext<Persistence.AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-        services.AddScoped<IAppDbContext, AppDbContextAdapter>();
+        services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<Persistence.AppDbContext>());
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -92,6 +92,10 @@ public static class DependencyInjection
 
         services.AddAuthorization();
         services.AddScoped<IUserDirectory, UserDirectory>();
+        services.AddScoped<IIdentityAdminService, IdentityAdminService>();
+        services.AddScoped<IUserRelationshipService, UserRelationshipService>();
+        services.AddScoped<IUserProfileService, UserProfileService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         services.Configure<FirebaseSettings>(configuration.GetSection("Firebase"));
         var firebase = configuration.GetSection("Firebase").Get<FirebaseSettings>();

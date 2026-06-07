@@ -24,6 +24,9 @@ public interface IAppDbContext
     DbSet<Meal> Meals { get; }
     DbSet<MealItem> MealItems { get; }
     DbSet<Device> Devices { get; }
+    DbSet<ProgressPhoto> ProgressPhotos { get; }
+    DbSet<ChatMessage> ChatMessages { get; }
+    DbSet<TrainerRequest> TrainerRequests { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
