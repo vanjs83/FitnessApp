@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FitnessApp.Application.DTOs.Auth;
+using FitnessApp.Application.DTOs.Trainers;
 using Xunit;
 
 namespace FitnessApp.IntegrationTests;
@@ -60,5 +61,28 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
 
         var me = await client.GetFromJsonAsync<MeResponse>("/api/auth/me", JsonOptions);
         return (client, me!.Id, email);
+    }
+
+    /// <summary>
+    /// Registers a client and a trainer, then runs the real request→accept flow so the
+    /// client ends up assigned to the trainer. Returns both authenticated clients and ids.
+    /// </summary>
+    protected async Task<(HttpClient Client, string ClientId, HttpClient Trainer, string TrainerId)> CreateLinkedClientAndTrainerAsync()
+    {
+        var (client, clientId, _) = await RegisterUserAsync("Client");
+        var (trainer, trainerId, _) = await RegisterUserAsync("Trainer");
+
+        var send = await client.PostAsJsonAsync("/api/trainer-requests",
+            new CreateTrainerRequestRequest { TrainerId = trainerId });
+        send.EnsureSuccessStatusCode();
+
+        var incoming = await trainer.GetFromJsonAsync<List<IncomingTrainerRequestDto>>(
+            "/api/trainer-requests/incoming", JsonOptions);
+        var requestId = incoming!.Single().Id;
+
+        var accept = await trainer.PostAsync($"/api/trainer-requests/{requestId}/accept", null);
+        accept.EnsureSuccessStatusCode();
+
+        return (client, clientId, trainer, trainerId);
     }
 }
