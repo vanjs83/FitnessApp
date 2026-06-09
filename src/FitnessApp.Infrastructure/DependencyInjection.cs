@@ -135,6 +135,7 @@ public static class DependencyInjection
         services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
 
         services.Configure<StorageSettings>(configuration.GetSection("Storage"));
+        services.Configure<DonationSettings>(configuration.GetSection("Donations"));
         services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
         services.AddSingleton<IEmailService, EmailService>();
         services.AddSingleton<IFileStorageService, FileStorageService>();
