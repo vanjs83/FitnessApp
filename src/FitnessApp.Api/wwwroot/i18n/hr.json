@@ -10,6 +10,7 @@
   "common.logout": "Odjava",
   "common.settings": "Postavke",
   "common.donate": "☕ Doniraj",
+  "common.donateTooltip": "Doniraj za razvoj aplikacije",
   "common.email": "Email",
   "common.password": "Lozinka",
   "common.fullName": "Ime i prezime",

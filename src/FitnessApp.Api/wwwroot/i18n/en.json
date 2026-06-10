@@ -10,6 +10,7 @@
   "common.logout": "Log out",
   "common.settings": "Settings",
   "common.donate": "☕ Donate",
+  "common.donateTooltip": "Donate to support development",
   "common.email": "Email",
   "common.password": "Password",
   "common.fullName": "Full name",
