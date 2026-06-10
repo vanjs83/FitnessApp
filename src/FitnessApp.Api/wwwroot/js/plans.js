@@ -123,10 +123,8 @@ const Plans = {
                 days.innerHTML = '<p class="muted">Plan nema definirane dane.</p>';
                 return;
             }
-            const hasVideo = (exId) => {
-                const ex = Exercises.list.find(x => x.id === exId);
-                return ex && ex.videoUrl;
-            };
+            const exOf = (exId) => Exercises.list.find(x => x.id === exId) || {};
+            const hasVideo = (exId) => !!exOf(exId).videoUrl;
             days.innerHTML = plan.days.map(d => `
                 <div class="exercise-block">
                     <h4>${this.dayNames[d.dayOfWeek]} — ${this.escape(d.label)}</h4>
@@ -134,7 +132,7 @@ const Plans = {
                         ? '<p class="muted small">Bez vježbi.</p>'
                         : d.exercises.map(pe => `
                             <div class="planned-row ${pe.isCompletedToday ? 'completed' : ''}">
-                                <span class="planned-name exercise-link" data-exercise-id="${pe.exerciseId}" title="Prikaži video / detalje vježbe"><strong>${this.escape(pe.exerciseName)}</strong>${hasVideo(pe.exerciseId) ? ' <span class="badge video">▶</span>' : ''}</span>
+                                <span class="planned-name exercise-link" data-exercise-id="${pe.exerciseId}" title="Prikaži video / detalje vježbe">${Exercises.thumbHtml(exOf(pe.exerciseId), 'exercise-thumb exercise-thumb-sm')}<strong>${this.escape(pe.exerciseName)}</strong>${hasVideo(pe.exerciseId) ? ' <span class="badge video">▶</span>' : ''}</span>
                                 <span class="planned-target">${this.planTargetLabel(pe)}</span>
                                 ${pe.restSeconds ? `<span class="planned-rest">${pe.restSeconds}s</span>` : ''}
                                 <span class="planned-actions">
