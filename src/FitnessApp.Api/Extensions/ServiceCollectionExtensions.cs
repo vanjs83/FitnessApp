@@ -28,7 +28,7 @@ public static class ServiceCollectionExtensions
                 options.CacheProfiles.Add("Reference",
                     new CacheProfile { Location = ResponseCacheLocation.Client, Duration = 300, VaryByHeader = "Authorization" });
                 options.CacheProfiles.Add("UserData",
-                    new CacheProfile { Location = ResponseCacheLocation.Client, Duration = 60, VaryByHeader = "Authorization" });
+                    new CacheProfile { Location = ResponseCacheLocation.Client, Duration = 300, VaryByHeader = "Authorization" });
                 options.CacheProfiles.Add("Volatile",
                     new CacheProfile { Location = ResponseCacheLocation.Client, Duration = 15, VaryByHeader = "Authorization" });
                 options.CacheProfiles.Add("PublicShare",
