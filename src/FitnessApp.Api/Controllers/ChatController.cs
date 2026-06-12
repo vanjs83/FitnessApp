@@ -16,10 +16,12 @@ public class ChatController : ApiControllerBase
     public ChatController(ISender sender) => _sender = sender;
 
     [HttpGet("conversations")]
+    [ResponseCache(CacheProfileName = "Volatile")]
     public async Task<ActionResult<IReadOnlyList<ConversationDto>>> GetConversations()
         => Ok(await _sender.Send(new GetConversationsQuery()));
 
     [HttpGet("with/{partnerId}")]
+    [ResponseCache(CacheProfileName = "Volatile")]
     public async Task<ActionResult<IReadOnlyList<ChatMessageDto>>> GetMessages(string partnerId, [FromQuery] int? afterId)
         => HandleResult(await _sender.Send(new GetMessagesQuery(partnerId, afterId)));
 

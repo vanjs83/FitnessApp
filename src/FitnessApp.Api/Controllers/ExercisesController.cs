@@ -16,10 +16,12 @@ public class ExercisesController : ApiControllerBase
     public ExercisesController(ISender sender) => _sender = sender;
 
     [HttpGet]
+    [ResponseCache(CacheProfileName = "Reference")]
     public async Task<ActionResult<IReadOnlyList<ExerciseDto>>> GetAll()
         => Ok(await _sender.Send(new GetExercisesQuery()));
 
     [HttpGet("{id:int}")]
+    [ResponseCache(CacheProfileName = "Reference")]
     public async Task<ActionResult<ExerciseDto>> GetById(int id)
         => HandleResult(await _sender.Send(new GetExerciseByIdQuery(id)));
 

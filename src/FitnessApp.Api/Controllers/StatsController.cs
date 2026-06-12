@@ -15,10 +15,12 @@ public class StatsController : ApiControllerBase
     public StatsController(ISender sender) => _sender = sender;
 
     [HttpGet("exercise-progress/{exerciseId:int}")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<ExerciseProgressPointDto>>> GetExerciseProgress(int exerciseId)
         => Ok(await _sender.Send(new GetExerciseProgressQuery(exerciseId)));
 
     [HttpGet("my-exercises")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<TrainedExerciseDto>>> GetTrainedExercises()
         => Ok(await _sender.Send(new GetTrainedExercisesQuery()));
 }

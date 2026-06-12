@@ -19,6 +19,7 @@ public class AdminController : ApiControllerBase
     public AdminController(ISender sender) => _sender = sender;
 
     [HttpGet("trainers")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<TrainerAdminDto>>> GetTrainers()
         => Ok(await _sender.Send(new GetTrainersQuery()));
 
@@ -27,14 +28,17 @@ public class AdminController : ApiControllerBase
         => HandleResult(await _sender.Send(new CreateTrainerCommand(request.Email, request.FullName, request.Password)));
 
     [HttpGet("clients")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<ClientAdminDto>>> GetClients()
         => Ok(await _sender.Send(new GetClientsQuery()));
 
     [HttpGet("plans")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<PlanAdminDto>>> GetPlans()
         => Ok(await _sender.Send(new GetPlansQuery()));
 
     [HttpGet("stats")]
+    [ResponseCache(CacheProfileName = "Volatile")]
     public async Task<ActionResult<AdminStatsDto>> GetStats()
         => Ok(await _sender.Send(new GetAdminStatsQuery()));
 
@@ -43,6 +47,7 @@ public class AdminController : ApiControllerBase
         => HandleResult(await _sender.Send(new DeleteTrainerCommand(id)));
 
     [HttpGet("email/status")]
+    [ResponseCache(CacheProfileName = "Volatile")]
     public async Task<ActionResult<EmailStatusDto>> GetEmailStatus()
         => Ok(await _sender.Send(new GetEmailStatusQuery()));
 

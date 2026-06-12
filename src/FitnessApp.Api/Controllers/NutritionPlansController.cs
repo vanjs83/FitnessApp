@@ -23,14 +23,17 @@ public class NutritionPlansController : ApiControllerBase
 
     [HttpGet("mine")]
     [Authorize(Roles = Roles.Trainer)]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<NutritionPlanListItemDto>>> GetMyPlans()
         => Ok(await _sender.Send(new GetMyNutritionPlansQuery()));
 
     [HttpGet("client/{clientId}")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<NutritionPlanListItemDto>>> GetForClient(string clientId)
         => HandleResult(await _sender.Send(new GetNutritionPlansForClientQuery(clientId)));
 
     [HttpGet("{id:int}")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<NutritionPlanDetailDto>> GetById(int id)
         => HandleResult(await _sender.Send(new GetNutritionPlanByIdQuery(id)));
 
@@ -70,6 +73,7 @@ public class NutritionPlansController : ApiControllerBase
 
     [HttpGet("templates")]
     [Authorize(Roles = Roles.Trainer)]
+    [ResponseCache(CacheProfileName = "Reference")]
     public async Task<ActionResult<IReadOnlyList<NutritionTemplateListItemDto>>> GetTemplates()
         => Ok(await _sender.Send(new GetNutritionTemplatesQuery()));
 
@@ -135,6 +139,7 @@ public class NutritionPlansController : ApiControllerBase
     // ===== PDF / sharing =====
 
     [HttpGet("{id:int}/pdf")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<IActionResult> DownloadPdf(int id)
     {
         var result = await _sender.Send(new GetNutritionPlanPdfQuery(id));
@@ -165,6 +170,7 @@ public class NutritionPlansController : ApiControllerBase
 
     [HttpGet("share/{token}/pdf")]
     [AllowAnonymous]
+    [ResponseCache(CacheProfileName = "PublicShare")]
     public async Task<IActionResult> DownloadSharedPdf(string token)
     {
         var result = await _sender.Send(new GetSharedNutritionPlanPdfQuery(token));

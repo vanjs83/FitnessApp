@@ -16,6 +16,7 @@ public class SupportController : ApiControllerBase
     public SupportController(ISender sender) => _sender = sender;
 
     [HttpGet("status")]
+    [ResponseCache(CacheProfileName = "Volatile")]
     public async Task<ActionResult<SupportStatusDto>> GetStatus()
         => Ok(await _sender.Send(new GetSupportStatusQuery()));
 

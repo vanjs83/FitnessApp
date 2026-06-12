@@ -27,6 +27,7 @@ public class TrainerRequestsController : ApiControllerBase
 
     [HttpGet("mine")]
     [Authorize(Roles = Roles.Client)]
+    [ResponseCache(CacheProfileName = "Volatile")]
     public async Task<ActionResult<MyTrainerRequestDto?>> GetMine()
         => Ok(await _sender.Send(new GetMyTrainerRequestQuery()));
 
@@ -39,6 +40,7 @@ public class TrainerRequestsController : ApiControllerBase
 
     [HttpGet("incoming")]
     [Authorize(Roles = Roles.Trainer)]
+    [ResponseCache(CacheProfileName = "Volatile")]
     public async Task<ActionResult<IReadOnlyList<IncomingTrainerRequestDto>>> GetIncoming()
         => Ok(await _sender.Send(new GetIncomingTrainerRequestsQuery()));
 

@@ -36,6 +36,7 @@ public class AuthController : ApiControllerBase
     }
 
     [HttpGet("google-config")]
+    [ResponseCache(CacheProfileName = "Reference")]
     public async Task<ActionResult<object>> GoogleConfig()
         => Ok(new { clientId = await _sender.Send(new GetGoogleConfigQuery()) });
 
@@ -51,6 +52,7 @@ public class AuthController : ApiControllerBase
 
     [HttpGet("me")]
     [Authorize]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<MeResponse>> Me()
     {
         var me = await _sender.Send(new GetMeQuery());
@@ -102,6 +104,7 @@ public class AuthController : ApiControllerBase
 
     [HttpGet("personal-profile")]
     [Authorize]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<PersonalProfileDto>> GetPersonalProfile()
     {
         var profile = await _sender.Send(new GetPersonalProfileQuery());

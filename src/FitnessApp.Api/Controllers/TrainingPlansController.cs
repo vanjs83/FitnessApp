@@ -24,14 +24,17 @@ public class TrainingPlansController : ApiControllerBase
 
     [HttpGet("mine")]
     [Authorize(Roles = Roles.Trainer)]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<TrainingPlanListItemDto>>> GetMyPlans()
         => Ok(await _sender.Send(new GetMyTrainingPlansQuery()));
 
     [HttpGet("client/{clientId}")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<TrainingPlanListItemDto>>> GetForClient(string clientId)
         => HandleResult(await _sender.Send(new GetTrainingPlansForClientQuery(clientId)));
 
     [HttpGet("{id:int}")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<TrainingPlanDetailDto>> GetById(int id)
         => HandleResult(await _sender.Send(new GetTrainingPlanByIdQuery(id)));
 
@@ -73,6 +76,7 @@ public class TrainingPlansController : ApiControllerBase
 
     [HttpGet("templates")]
     [Authorize(Roles = Roles.Trainer)]
+    [ResponseCache(CacheProfileName = "Reference")]
     public async Task<ActionResult<IReadOnlyList<TrainingPlanTemplateListItemDto>>> GetMyTemplates()
         => Ok(await _sender.Send(new GetTrainingTemplatesQuery()));
 
@@ -144,6 +148,7 @@ public class TrainingPlansController : ApiControllerBase
     // ===== Performed sets =====
 
     [HttpGet("exercises/{plannedExerciseId:int}/performed-sets")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<PerformedSetDto>>> GetPerformedSets(int plannedExerciseId)
         => HandleResult(await _sender.Send(new GetPerformedSetsQuery(plannedExerciseId)));
 
@@ -161,12 +166,14 @@ public class TrainingPlansController : ApiControllerBase
     // ===== Progression =====
 
     [HttpGet("{id:int}/weight-progression")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<PlanExerciseProgressionDto>>> GetWeightProgression(int id)
         => HandleResult(await _sender.Send(new GetTrainingPlanWeightProgressionQuery(id)));
 
     // ===== PDF / sharing =====
 
     [HttpGet("{id:int}/pdf")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<IActionResult> DownloadPdf(int id)
     {
         var result = await _sender.Send(new GetTrainingPlanPdfQuery(id));
@@ -197,6 +204,7 @@ public class TrainingPlansController : ApiControllerBase
 
     [HttpGet("share/{token}/pdf")]
     [AllowAnonymous]
+    [ResponseCache(CacheProfileName = "PublicShare")]
     public async Task<IActionResult> DownloadSharedPdf(string token)
     {
         var result = await _sender.Send(new GetSharedTrainingPlanPdfQuery(token));

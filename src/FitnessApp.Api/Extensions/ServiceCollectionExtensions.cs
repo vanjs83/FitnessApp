@@ -4,6 +4,7 @@ using FitnessApp.Api.Services;
 using FitnessApp.Application;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
@@ -13,7 +14,26 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddControllers()
+        services.AddControllers(options =>
+            {
+                // Client-side cache profiles referenced by [ResponseCache(CacheProfileName = ...)]
+                // on GET endpoints. These only emit Cache-Control headers (no server-side cache);
+                // durations are tuned per data volatility and kept in one place.
+                //   Reference  – rarely changes (exercise/template/trainer reference data)
+                //   UserData   – user-bound lists/details that change occasionally
+                //   Volatile   – frequently changing (chat, requests, live status counters)
+                //   PublicShare– anonymous share links, cacheable by any (shared) cache
+                // VaryByHeader = "Authorization" keys the cache on the JWT so one user's cached
+                // response is never reused for another.
+                options.CacheProfiles.Add("Reference",
+                    new CacheProfile { Location = ResponseCacheLocation.Client, Duration = 300, VaryByHeader = "Authorization" });
+                options.CacheProfiles.Add("UserData",
+                    new CacheProfile { Location = ResponseCacheLocation.Client, Duration = 60, VaryByHeader = "Authorization" });
+                options.CacheProfiles.Add("Volatile",
+                    new CacheProfile { Location = ResponseCacheLocation.Client, Duration = 15, VaryByHeader = "Authorization" });
+                options.CacheProfiles.Add("PublicShare",
+                    new CacheProfile { Location = ResponseCacheLocation.Any, Duration = 300 });
+            })
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

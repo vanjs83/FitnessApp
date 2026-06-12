@@ -18,6 +18,7 @@ public class WorkoutsController : ApiControllerBase
     public WorkoutsController(ISender sender) => _sender = sender;
 
     [HttpGet]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<WorkoutListItemDto>>> GetMyWorkouts()
         => Ok(await _sender.Send(new GetMyWorkoutsQuery()));
 
@@ -27,6 +28,7 @@ public class WorkoutsController : ApiControllerBase
             request.Name, request.PerformedAt, request.DurationMinutes, request.Notes)));
 
     [HttpGet("{workoutId:int}")]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<WorkoutDetailDto>> GetById(int workoutId)
         => HandleResult(await _sender.Send(new GetWorkoutByIdQuery(workoutId)));
 

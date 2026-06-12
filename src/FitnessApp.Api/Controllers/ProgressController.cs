@@ -19,6 +19,7 @@ public class ProgressController : ApiControllerBase
     public ProgressController(ISender sender) => _sender = sender;
 
     [HttpGet]
+    [ResponseCache(CacheProfileName = "UserData")]
     public async Task<ActionResult<IReadOnlyList<ProgressPhotoDto>>> GetMine()
         => Ok(await _sender.Send(new GetMyProgressPhotosQuery()));
 

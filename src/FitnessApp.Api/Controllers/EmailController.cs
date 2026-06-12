@@ -17,6 +17,7 @@ public class EmailController : ApiControllerBase
     public EmailController(ISender sender) => _sender = sender;
 
     [HttpGet("status")]
+    [ResponseCache(CacheProfileName = "Volatile")]
     public async Task<ActionResult<EmailStatusDto>> GetStatus()
         => Ok(await _sender.Send(new GetEmailStatusQuery()));
 
