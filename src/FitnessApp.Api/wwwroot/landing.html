@@ -227,6 +227,17 @@
             object-position: top center;
             display: block;
         }
+        /* Trailer — vrti se preko slika ako fajl postoji */
+        .carousel-video {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .carousel.trailer-playing .carousel-video { opacity: 1; }
         .carousel-arrow {
             position: absolute; top: 50%;
             transform: translateY(-50%);
@@ -494,6 +505,9 @@
                     <div class="carousel-slide"><img src="landing/hero/5.jpg" alt="Funkcionalni trening" onerror="this.parentElement.style.display='none'"></div>
                     <div class="carousel-slide"><img src="landing/hero/6.jpg" alt="Sportska prehrana i progres" onerror="this.parentElement.style.display='none'"></div>
                 </div>
+                <video class="carousel-video" id="heroTrailer" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+                    <source src="landing/trailer/trailer.mp4" type="video/mp4">
+                </video>
                 <button type="button" class="carousel-arrow prev" id="heroPrev" aria-label="Prethodna slika">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
@@ -738,13 +752,30 @@
             if (prevBtn) prevBtn.addEventListener('click', function () { show(idx - 1); restart(); });
             if (nextBtn) nextBtn.addEventListener('click', function () { show(idx + 1); restart(); });
 
-            root.addEventListener('mouseenter', stop);
-            root.addEventListener('mouseleave', start);
+            // Trailer — ako fajl postoji, vrti video preko slika i zaustavi rotaciju
+            var trailer = document.getElementById('heroTrailer');
+            var trailerActive = false;
+            if (trailer) {
+                trailer.addEventListener('playing', function () {
+                    trailerActive = true;
+                    root.classList.add('trailer-playing');
+                    stop();
+                });
+                trailer.addEventListener('error', function () {
+                    trailerActive = false;
+                    root.classList.remove('trailer-playing');
+                }, true);
+            }
+
+            root.addEventListener('mouseenter', function () { if (!trailerActive) stop(); });
+            root.addEventListener('mouseleave', function () { if (!trailerActive) start(); });
             document.addEventListener('visibilitychange', function () {
-                if (document.hidden) stop(); else start();
+                if (document.hidden) { stop(); if (trailer) trailer.pause(); }
+                else if (trailerActive) { trailer.play(); }
+                else start();
             });
 
-            start();
+            if (!trailerActive) start();
         })();
 
         // Reveal-on-scroll animacija

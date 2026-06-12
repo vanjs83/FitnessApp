@@ -1,4 +1,5 @@
 using FitnessApp.Api.Extensions;
+using System.Drawing.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,3 +18,4 @@ app.Run();
 
 // Exposes the implicit Program class so WebApplicationFactory<Program> can boot the host in tests.
 public partial class Program;
+

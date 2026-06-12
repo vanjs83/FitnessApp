@@ -27,9 +27,7 @@ public class FileStorageService : IFileStorageService
 
         Directory.CreateDirectory(options.FolderPath);
 
-        var fileName = string.IsNullOrEmpty(options.FileNamePrefix)
-            ? $"{Guid.NewGuid():N}{ext}"
-            : $"{options.FileNamePrefix}_{Guid.NewGuid():N}{ext}";
+        var fileName = $"{Guid.NewGuid():N}{ext}";
 
         var fullPath = Path.Combine(options.FolderPath, fileName);
         await using (var stream = File.Create(fullPath))

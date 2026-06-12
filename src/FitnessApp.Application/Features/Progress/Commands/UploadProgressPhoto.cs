@@ -51,8 +51,7 @@ public class UploadProgressPhotoCommandHandler : IRequestHandler<UploadProgressP
             FolderPath = _storage.ResolveProgressImagesPath(_env.ContentRootPath),
             UrlPrefix = _storage.ProgressImagesUrl,
             AllowedExtensions = AllowedImageExtensions,
-            MaxBytes = MaxImageBytes,
-            FileNamePrefix = userId
+            MaxBytes = MaxImageBytes
         };
 
         var saved = await _files.SaveAsync(request.File, options);

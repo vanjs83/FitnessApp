@@ -50,8 +50,7 @@ public class UploadExerciseVideoCommandHandler : IRequestHandler<UploadExerciseV
             FolderPath = _storage.ResolveExerciseVideosPath(_env.ContentRootPath),
             UrlPrefix = _storage.ExerciseVideosUrl,
             AllowedExtensions = AllowedVideoExtensions,
-            MaxBytes = MaxVideoBytes,
-            FileNamePrefix = e.Id.ToString()
+            MaxBytes = MaxVideoBytes
         };
 
         var result = await _files.SaveAsync(request.File, options);

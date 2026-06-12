@@ -50,8 +50,7 @@ public class UploadExerciseImageCommandHandler : IRequestHandler<UploadExerciseI
             FolderPath = _storage.ResolveExerciseImagesPath(_env.ContentRootPath),
             UrlPrefix = _storage.ExerciseImagesUrl,
             AllowedExtensions = AllowedImageExtensions,
-            MaxBytes = MaxImageBytes,
-            FileNamePrefix = e.Id.ToString()
+            MaxBytes = MaxImageBytes
         };
 
         var result = await _files.SaveAsync(request.File, options);

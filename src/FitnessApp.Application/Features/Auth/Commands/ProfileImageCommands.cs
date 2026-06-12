@@ -14,13 +14,12 @@ public static class ProfileImageUpload
     public const long MaxImageBytes = 5 * 1024 * 1024;
     public static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
 
-    public static FileUploadOptions Options(StorageSettings storage, string contentRoot, string userId) => new()
+    public static FileUploadOptions Options(StorageSettings storage, string contentRoot) => new()
     {
         FolderPath = storage.ResolveProfileImagesPath(contentRoot),
         UrlPrefix = storage.ProfileImagesUrl,
         AllowedExtensions = AllowedImageExtensions,
-        MaxBytes = MaxImageBytes,
-        FileNamePrefix = userId
+        MaxBytes = MaxImageBytes
     };
 }
 
@@ -50,7 +49,7 @@ public class UploadProfileImageCommandHandler : IRequestHandler<UploadProfileIma
     public async Task<Result<string>> Handle(UploadProfileImageCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId;
-        var options = ProfileImageUpload.Options(_storage, _env.ContentRootPath, userId);
+        var options = ProfileImageUpload.Options(_storage, _env.ContentRootPath);
 
         var saved = await _files.SaveAsync(request.File, options);
         if (!saved.Success)
@@ -96,7 +95,7 @@ public class DeleteProfileImageCommandHandler : IRequestHandler<DeleteProfileIma
     public async Task<Result> Handle(DeleteProfileImageCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId;
-        var options = ProfileImageUpload.Options(_storage, _env.ContentRootPath, userId);
+        var options = ProfileImageUpload.Options(_storage, _env.ContentRootPath);
 
         var current = await _auth.GetProfileImagePathAsync(userId, cancellationToken);
         _files.DeleteByUrl(current, options.FolderPath, options.UrlPrefix);
