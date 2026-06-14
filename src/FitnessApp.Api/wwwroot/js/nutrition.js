@@ -1,18 +1,18 @@
-﻿const Nutrition = {
+const Nutrition = {
     plans: [],
     templates: [],
     current: null,
     currentTab: 'plans',
     dayNames: {
         Sunday: 'Nedjelja', Monday: 'Ponedjeljak', Tuesday: 'Utorak',
-        Wednesday: 'Srijeda', Thursday: 'ÄŚetvrtak', Friday: 'Petak', Saturday: 'Subota',
+        Wednesday: 'Srijeda', Thursday: 'Četvrtak', Friday: 'Petak', Saturday: 'Subota',
         0: 'Nedjelja', 1: 'Ponedjeljak', 2: 'Utorak',
-        3: 'Srijeda', 4: 'ÄŚetvrtak', 5: 'Petak', 6: 'Subota'
+        3: 'Srijeda', 4: 'Četvrtak', 5: 'Petak', 6: 'Subota'
     },
     mealTypeLabels: {
-        Breakfast: 'DoruÄŤak', Snack1: 'UĹľina 1', Lunch: 'RuÄŤak',
-        Snack2: 'UĹľina 2', Dinner: 'VeÄŤera', LateSnack: 'Kasna uĹľina', Other: 'Ostalo',
-        0: 'DoruÄŤak', 1: 'UĹľina 1', 2: 'RuÄŤak', 3: 'UĹľina 2', 4: 'VeÄŤera', 5: 'Kasna uĹľina', 99: 'Ostalo'
+        Breakfast: 'Doručak', Snack1: 'Užina 1', Lunch: 'Ručak',
+        Snack2: 'Užina 2', Dinner: 'Večera', LateSnack: 'Kasna užina', Other: 'Ostalo',
+        0: 'Doručak', 1: 'Užina 1', 2: 'Ručak', 3: 'Užina 2', 4: 'Večera', 5: 'Kasna užina', 99: 'Ostalo'
     },
     mealTypeOptions: ['Breakfast', 'Snack1', 'Lunch', 'Snack2', 'Dinner', 'LateSnack', 'Other'],
 
@@ -54,7 +54,7 @@
 
     async deleteCurrent() {
         if (!this.current) return;
-        const label = this.current.isTemplate ? 'predloĹľak' : 'plan prehrane';
+        const label = this.current.isTemplate ? 'predložak' : 'plan prehrane';
         if (!confirm(`Obrisati ${label} "${this.current.name}"?`)) return;
         try {
             await API.delete(`/nutrition-plans/${this.current.id}`);
@@ -65,9 +65,9 @@
     async editCurrent() {
         if (!this.current) return;
         if (this.current.isTemplate) {
-            // template â€” just name + notes via modal too
+            // template — just name + notes via modal too
             EditPlanModal.open({
-                title: 'Uredi predloĹľak prehrane',
+                title: 'Uredi predložak prehrane',
                 notesLabel: 'Napomene / opis',
                 plan: { ...this.current, startDate: '', endDate: '', price: 0, currency: 'EUR' },
                 onSave: async (data) => {
@@ -108,7 +108,7 @@
                 planType: 'nutrition',
                 language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
             });
-            alert('âś“ Email poslan klijentu.');
+            alert('✓ Email poslan klijentu.');
         } catch (err) { alert(err.message); }
     },
 
@@ -122,9 +122,9 @@
                 planType: 'nutrition'
             });
             if (res && res.activeTokens === 0) {
-                alert('âš  Klijent nema registriran ureÄ‘aj za push notifikacije.');
+                alert('⚠ Klijent nema registriran uređaj za push notifikacije.');
             } else {
-                alert('âś“ Push poslan klijentu.');
+                alert('✓ Push poslan klijentu.');
             }
         } catch (err) { alert(err.message); }
     },
@@ -150,7 +150,7 @@
     renderPlans() {
         const container = document.getElementById('nutritionPlansList');
         if (!this.plans.length) {
-            container.innerHTML = '<p class="muted">JoĹˇ nemaĹˇ planova prehrane. Klikni "+ Novi plan prehrane".</p>';
+            container.innerHTML = '<p class="muted">Još nemaš planova prehrane. Klikni "+ Novi plan prehrane".</p>';
             return;
         }
         container.innerHTML = this.plans.map(p => `
@@ -159,15 +159,15 @@
                     <h4>${this.escape(p.name)}</h4>
                     <div class="meta">
                         ${this.escape(p.clientName)}
-                        Â· ${this.formatDate(p.startDate)} â†’ ${this.formatDate(p.endDate)}
-                        Â· ${p.dayCount} ${p.dayCount === 1 ? 'dan' : 'dana'}
-                        Â· ${this.formatPrice(p)}
-                        Â· <span class="${this.paymentBadgeClass(p.paymentStatus)}">${this.paymentStatusLabel(p.paymentStatus)}</span>
+                        · ${this.formatDate(p.startDate)} → ${this.formatDate(p.endDate)}
+                        · ${p.dayCount} ${p.dayCount === 1 ? 'dan' : 'dana'}
+                        · ${this.formatPrice(p)}
+                        · <span class="${this.paymentBadgeClass(p.paymentStatus)}">${this.paymentStatusLabel(p.paymentStatus)}</span>
                     </div>
                 </div>
                 <span class="planned-actions">
-                    <button class="btn-delete-icon delete-nut-btn" data-id="${p.id}" data-name="${this.escape(p.name)}" title="ObriĹˇi">đź—‘</button>
-                    <span class="muted">â†’</span>
+                    <button class="btn-delete-icon delete-nut-btn" data-id="${p.id}" data-name="${this.escape(p.name)}" title="Obriši">🗑</button>
+                    <span class="muted">→</span>
                 </span>
             </div>
         `).join('');
@@ -193,8 +193,8 @@
 
     paymentStatusLabel(status) {
         if (status === 'Approved') return 'Odobreno';
-        if (status === 'PaymentClaimed') return 'Klijent je platio â€” ÄŤeka odobrenje';
-        return 'ÄŚeka plaÄ‡anje';
+        if (status === 'PaymentClaimed') return 'Klijent je platio — čeka odobrenje';
+        return 'Čeka plaćanje';
     },
     paymentBadgeClass(status) {
         if (status === 'Approved') return 'badge approved';
@@ -211,19 +211,19 @@
         const box = document.getElementById('nutritionDetailPayment');
         if (!box) return;
         if (parseFloat(plan.price || 0) === 0) {
-            box.innerHTML = `<span class="muted small">Besplatan plan â€” odmah dostupan klijentu.</span>`;
+            box.innerHTML = `<span class="muted small">Besplatan plan — odmah dostupan klijentu.</span>`;
             return;
         }
         const statusLabel = this.paymentStatusLabel(plan.paymentStatus);
         const cls = this.paymentBadgeClass(plan.paymentStatus);
         let action = '';
         if (plan.paymentStatus === 'Approved') {
-            action = `<button id="revokeNutApprovalBtn" class="secondary" data-plan-id="${plan.id}">đź”’ ZakljuÄŤaj nazad</button>`;
+            action = `<button id="revokeNutApprovalBtn" class="secondary" data-plan-id="${plan.id}">🔒 Zaključaj nazad</button>`;
         } else {
             action = `<button id="approveNutPaymentBtn" data-plan-id="${plan.id}">Odobri plan</button>`;
         }
         box.innerHTML = `
-            <div><strong>Cijena:</strong> ${this.formatPrice(plan)} Â· <span class="${cls}">${statusLabel}</span></div>
+            <div><strong>Cijena:</strong> ${this.formatPrice(plan)} · <span class="${cls}">${statusLabel}</span></div>
             ${action}
         `;
         const approveBtn = document.getElementById('approveNutPaymentBtn');
@@ -239,7 +239,7 @@
         } catch (err) { alert(err.message); }
     },
     async revokeApproval(id) {
-        if (!confirm('ZakljuÄŤati plan nazad? Klijent ga viĹˇe neÄ‡e vidjeti dok ponovo ne odobriĹˇ.')) return;
+        if (!confirm('Zaključati plan nazad? Klijent ga više neće vidjeti dok ponovo ne odobriš.')) return;
         try {
             await API.post(`/nutrition-plans/${id}/revoke-approval`, {});
             await this.showDetail(id);
@@ -250,7 +250,7 @@
         if (!Trainers.clients || !Trainers.clients.length) await Trainers.load();
         const select = document.getElementById('nutritionPlanClientSelect');
         if (!Trainers.clients.length) {
-            select.innerHTML = '<option value="">â€” nema klijenata â€”</option>';
+            select.innerHTML = '<option value="">— nema klijenata —</option>';
         } else {
             select.innerHTML = Trainers.clients.map(c =>
                 `<option value="${c.id}">${this.escape(c.fullName || c.email)}</option>`
@@ -261,11 +261,11 @@
         const tplSel = document.getElementById('nutritionPlanTemplateSelect');
         try {
             const templates = await API.get('/nutrition-plans/templates');
-            tplSel.innerHTML = '<option value="">â€” bez predloĹˇka (prazan plan) â€”</option>' +
+            tplSel.innerHTML = '<option value="">— bez predloška (prazan plan) —</option>' +
                 templates.map(t => `<option value="${t.id}">${this.escape(t.name)} (${t.dayCount} ${t.dayCount === 1 ? 'dan' : 'dana'})</option>`).join('');
         } catch (err) {
             console.error(err);
-            tplSel.innerHTML = '<option value="">â€” bez predloĹˇka â€”</option>';
+            tplSel.innerHTML = '<option value="">— bez predloška —</option>';
         }
 
         document.getElementById('newNutritionPlanForm').classList.remove('hidden');
@@ -335,10 +335,10 @@
             document.getElementById('nutritionDetailName').textContent = this.current.name;
             const metaEl = document.getElementById('nutritionDetailMeta');
             if (this.current.isTemplate) {
-                metaEl.textContent = `PredloĹľak Â· ${this.current.days.length} ${this.current.days.length === 1 ? 'dan' : 'dana'}`;
+                metaEl.textContent = `Predložak · ${this.current.days.length} ${this.current.days.length === 1 ? 'dan' : 'dana'}`;
             } else {
                 metaEl.innerHTML = `<a href="#" class="client-link" data-client-id="${this.current.clientId}">${this.escape(this.current.clientName)}</a>
-                    Â· ${this.formatDate(this.current.startDate)} â†’ ${this.formatDate(this.current.endDate)}`;
+                    · ${this.formatDate(this.current.startDate)} → ${this.formatDate(this.current.endDate)}`;
                 const link = metaEl.querySelector('.client-link');
                 if (link) link.addEventListener('click', e => {
                     e.preventDefault();
@@ -376,7 +376,7 @@
     renderDays() {
         const container = document.getElementById('nutritionDaysList');
         if (!this.current.days.length) {
-            container.innerHTML = '<p class="muted">Bez dana. Dodaj prvi dan iznad (npr. Ponedjeljak â€” Trening dan).</p>';
+            container.innerHTML = '<p class="muted">Bez dana. Dodaj prvi dan iznad (npr. Ponedjeljak — Trening dan).</p>';
             return;
         }
         container.innerHTML = this.current.days.map(d => this.renderDay(d)).join('');
@@ -386,16 +386,16 @@
     renderDay(d) {
         const totals = this.computeDayTotals(d);
         const targetLabel = d.totalCaloriesTarget
-            ? ` Â· cilj <strong>${d.totalCaloriesTarget} kcal</strong>`
+            ? ` · cilj <strong>${d.totalCaloriesTarget} kcal</strong>`
             : '';
         return `
             <div class="exercise-block" data-day-id="${d.id}">
                 <div class="row" style="justify-content: space-between; align-items: center;">
-                    <h4>${this.dayNames[d.dayOfWeek]} â€” ${this.escape(d.label)}</h4>
-                    <button class="icon-btn delete-nut-day-btn" data-day-id="${d.id}" title="ObriĹˇi dan">Ă—</button>
+                    <h4>${this.dayNames[d.dayOfWeek]} — ${this.escape(d.label)}</h4>
+                    <button class="icon-btn delete-nut-day-btn" data-day-id="${d.id}" title="Obriši dan">×</button>
                 </div>
                 <div class="muted small">
-                    Ukupno: <strong>${totals.calories} kcal</strong> Â· P ${totals.protein.toFixed(0)}g Â· UH ${totals.carbs.toFixed(0)}g Â· M ${totals.fat.toFixed(0)}g
+                    Ukupno: <strong>${totals.calories} kcal</strong> · P ${totals.protein.toFixed(0)}g · UH ${totals.carbs.toFixed(0)}g · M ${totals.fat.toFixed(0)}g
                     ${targetLabel}
                 </div>
                 ${d.meals.length === 0
@@ -427,16 +427,16 @@
         return `
             <div class="meal-block" data-meal-id="${m.id}" style="border-left: 3px solid #4dabf7; padding-left: 0.75rem; margin: 0.75rem 0;">
                 <div class="row" style="justify-content: space-between; align-items: center;">
-                    <strong>${this.mealTypeLabels[m.mealType] || m.mealType}${m.time ? ' Â· ' + m.time : ''}</strong>
-                    <button class="icon-btn delete-meal-btn" data-meal-id="${m.id}" title="ObriĹˇi obrok">Ă—</button>
+                    <strong>${this.mealTypeLabels[m.mealType] || m.mealType}${m.time ? ' · ' + m.time : ''}</strong>
+                    <button class="icon-btn delete-meal-btn" data-meal-id="${m.id}" title="Obriši obrok">×</button>
                 </div>
                 ${m.notes ? `<div class="muted small">${this.escape(m.notes)}</div>` : ''}
-                <div class="muted small">${totals.calories} kcal Â· P ${totals.protein.toFixed(0)}g Â· UH ${totals.carbs.toFixed(0)}g Â· M ${totals.fat.toFixed(0)}g</div>
+                <div class="muted small">${totals.calories} kcal · P ${totals.protein.toFixed(0)}g · UH ${totals.carbs.toFixed(0)}g · M ${totals.fat.toFixed(0)}g</div>
                 ${m.items.length === 0
                     ? '<p class="muted small">Bez stavki.</p>'
                     : `<table class="meal-items" style="width:100%; margin-top:0.4rem; font-size:0.9rem;">
                         <thead><tr style="text-align:left; color:#a0a8b0;">
-                            <th>Namirnica</th><th>KoliÄŤina</th><th>kcal</th><th>P</th><th>UH</th><th>M</th><th></th>
+                            <th>Namirnica</th><th>Količina</th><th>kcal</th><th>P</th><th>UH</th><th>M</th><th></th>
                         </tr></thead>
                         <tbody>
                             ${m.items.map(it => `
@@ -447,7 +447,7 @@
                                     <td>${it.proteinG ?? ''}</td>
                                     <td>${it.carbsG ?? ''}</td>
                                     <td>${it.fatG ?? ''}</td>
-                                    <td><button class="btn-delete-icon delete-item-btn" data-item-id="${it.id}" title="ObriĹˇi">đź—‘</button></td>
+                                    <td><button class="btn-delete-icon delete-item-btn" data-item-id="${it.id}" title="Obriši">🗑</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -455,18 +455,18 @@
                 <div class="nutrition-add-form nf-item-form add-item-form" data-meal-id="${m.id}">
                     <div class="nf-field">
                         <label>Namirnica</label>
-                        <input type="text" class="item-desc" placeholder="npr. PileÄ‡a prsa">
+                        <input type="text" class="item-desc" placeholder="npr. Pileća prsa">
                     </div>
                     <div class="nf-field">
-                        <label>KoliÄŤina (g)</label>
-                        <input type="text" class="item-qty" placeholder="u gramima â€” npr. 150">
+                        <label>Količina (g)</label>
+                        <input type="text" class="item-qty" placeholder="u gramima — npr. 150">
                     </div>
                     <div class="nf-field">
                         <label>kcal</label>
                         <input type="number" class="item-cal" min="0" max="20000">
                     </div>
                     <div class="nf-field nf-macros-wrap">
-                        <label>Makronutrijenti (g) â€” P Â· UH Â· M</label>
+                        <label>Makronutrijenti (g) — P · UH · M</label>
                         <div class="nf-macros">
                             <input type="number" class="item-p" placeholder="P" step="0.1" min="0">
                             <input type="number" class="item-c" placeholder="UH" step="0.1" min="0">
@@ -623,7 +623,7 @@
 
     async openQrShare() {
         if (!this.current) return;
-        if (this.current.isTemplate) { alert('PredloĹˇci se ne dijele.'); return; }
+        if (this.current.isTemplate) { alert('Predlošci se ne dijele.'); return; }
         const modal = document.getElementById('qrShareModal');
         const imgWrap = document.getElementById('qrShareImage');
         const urlEl = document.getElementById('qrShareUrl');
@@ -646,15 +646,15 @@
 
     async saveAsTemplate() {
         if (!this.current) return;
-        const defaultName = `${this.current.name} (predloĹľak)`;
-        const name = prompt('Naziv predloĹˇka prehrane:', defaultName);
+        const defaultName = `${this.current.name} (predložak)`;
+        const name = prompt('Naziv predloška prehrane:', defaultName);
         if (!name || !name.trim()) return;
         try {
             await API.post(`/nutrition-plans/${this.current.id}/save-as-template`, {
                 name: name.trim(),
                 notes: this.current.notes || null
             });
-            alert('PredloĹľak prehrane spremljen.');
+            alert('Predložak prehrane spremljen.');
         } catch (err) { alert(err.message); }
     },
 

@@ -1,4 +1,4 @@
-﻿const Profile = {
+const Profile = {
     currentRole: null,
 
     init() {
@@ -209,7 +209,7 @@
 
     renderReadOnly(container, p) {
         const isTrainer = p.role === 'Trainer';
-        const dash = 'â€”';
+        const dash = '—';
         const dateLocale = I18n.lang === 'en' ? 'en-GB' : 'hr-HR';
         const rows = [
             [I18n.t('common.fullName'), p.fullName],
@@ -220,7 +220,7 @@
             !isTrainer && [I18n.t('profile.readonly.height'), p.heightCm ? `${p.heightCm} cm` : null],
             !isTrainer && [I18n.t('profile.readonly.weight'), p.weightKg != null ? `${p.weightKg} kg` : null],
             !isTrainer && [I18n.t('profile.readonly.activity'), this.activityLabel(p.activityLevel)],
-            !isTrainer && [I18n.t('profile.readonly.weeklyTrainings'), p.preferredWeeklyTrainingCount != null ? `${p.preferredWeeklyTrainingCount}Ă—` : null],
+            !isTrainer && [I18n.t('profile.readonly.weeklyTrainings'), p.preferredWeeklyTrainingCount != null ? `${p.preferredWeeklyTrainingCount}×` : null],
             !isTrainer && [I18n.t('profile.readonly.preferredType'), this.trainingTypeLabel(p.preferredTrainingType)],
             !isTrainer && [I18n.t('profile.readonly.goal'), p.goal],
             !isTrainer && [I18n.t('profile.readonly.healthNotes'), p.healthNotes]
@@ -255,7 +255,7 @@
         if (url) {
             return `<span class="${sizeClass}"><img src="${this.escape(url)}" alt=""></span>`;
         }
-        return `<span class="${sizeClass}"><span>đź‘¤</span></span>`;
+        return `<span class="${sizeClass}"><span>👤</span></span>`;
     },
 
     escape(s) {

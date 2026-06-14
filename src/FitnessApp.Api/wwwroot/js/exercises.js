@@ -1,4 +1,4 @@
-﻿const ExerciseTypeLabels = new Proxy({}, {
+const ExerciseTypeLabels = new Proxy({}, {
     get(_, type) {
         const keys = {
             Strength: 'exercises.type.strength',
@@ -71,9 +71,9 @@ const Exercises = {
                 <div>
                     <h4>${this.escape(e.name)}</h4>
                     <div class="meta">
-                        ${e.muscleGroup ? this.escape(e.muscleGroup) : 'â€”'}
-                        Â· <span class="badge type-${(e.type || '').toLowerCase()}">${ExerciseTypeLabels[e.type] || e.type}</span>
-                        ${e.videoUrl ? 'Â· <span class="badge video">â–¶ video</span>' : ''}
+                        ${e.muscleGroup ? this.escape(e.muscleGroup) : '—'}
+                        · <span class="badge type-${(e.type || '').toLowerCase()}">${ExerciseTypeLabels[e.type] || e.type}</span>
+                        ${e.videoUrl ? '· <span class="badge video">▶ video</span>' : ''}
                     </div>
                 </div>
             </div>
@@ -173,7 +173,7 @@ const Exercises = {
         if (e.imageUrl) {
             return `<span class="${sizeClass}"><img src="${this.escape(e.imageUrl)}" alt="" loading="lazy"></span>`;
         }
-        return `<span class="${sizeClass} exercise-thumb-empty">đźŹ‹ď¸Ź</span>`;
+        return `<span class="${sizeClass} exercise-thumb-empty">🏋️</span>`;
     },
 
     async uploadImage(exerciseId, file) {
@@ -222,7 +222,7 @@ const Exercises = {
         const metaParts = [];
         if (e.muscleGroup) metaParts.push(e.muscleGroup);
         metaParts.push(ExerciseTypeLabels[e.type] || e.type);
-        document.getElementById('exerciseDetailMeta').textContent = metaParts.join(' Â· ');
+        document.getElementById('exerciseDetailMeta').textContent = metaParts.join(' · ');
 
         const imageWrap = document.getElementById('exerciseDetailImageWrap');
         if (imageWrap) {
@@ -267,7 +267,7 @@ const Exercises = {
             }
         }
 
-        document.getElementById('exerciseDetailDescription').textContent = e.description || 'â€”';
+        document.getElementById('exerciseDetailDescription').textContent = e.description || '—';
 
         const editBtn = document.getElementById('editExerciseBtn');
         if (e.canEdit) editBtn.classList.remove('hidden');

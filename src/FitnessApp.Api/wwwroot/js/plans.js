@@ -1,4 +1,4 @@
-﻿const Plans = {
+const Plans = {
     list: [],
     currentPlan: null,
     progressionData: [],
@@ -6,9 +6,9 @@
     myProgressionChart: null,
     dayNames: {
         Sunday: 'Nedjelja', Monday: 'Ponedjeljak', Tuesday: 'Utorak',
-        Wednesday: 'Srijeda', Thursday: 'ÄŚetvrtak', Friday: 'Petak', Saturday: 'Subota',
+        Wednesday: 'Srijeda', Thursday: 'Četvrtak', Friday: 'Petak', Saturday: 'Subota',
         0: 'Nedjelja', 1: 'Ponedjeljak', 2: 'Utorak',
-        3: 'Srijeda', 4: 'ÄŚetvrtak', 5: 'Petak', 6: 'Subota'
+        3: 'Srijeda', 4: 'Četvrtak', 5: 'Petak', 6: 'Subota'
     },
     dayOrder: { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 },
 
@@ -67,7 +67,7 @@
             const list = await API.get(`/training-plans/client/${clientId}`);
             const container = document.getElementById('myPlansList');
             if (!list.length) {
-                container.innerHTML = '<p class="muted">Trener ti joĹˇ nije zadao plan.</p>';
+                container.innerHTML = '<p class="muted">Trener ti još nije zadao plan.</p>';
                 return;
             }
             container.innerHTML = list.map(p => `
@@ -75,13 +75,13 @@
                     <div>
                         <h4>${this.escape(p.name)}</h4>
                         <div class="meta">
-                            ${this.formatDate(p.startDate)} â†’ ${this.formatDate(p.endDate)}
-                            Â· ${p.dayCount} ${p.dayCount === 1 ? 'dan' : 'dana'}
-                            Â· ${this.formatPrice(p)}
-                            Â· <span class="${this.paymentBadgeClass(p.paymentStatus)}">${this.paymentStatusLabel(p.paymentStatus)}</span>
+                            ${this.formatDate(p.startDate)} → ${this.formatDate(p.endDate)}
+                            · ${p.dayCount} ${p.dayCount === 1 ? 'dan' : 'dana'}
+                            · ${this.formatPrice(p)}
+                            · <span class="${this.paymentBadgeClass(p.paymentStatus)}">${this.paymentStatusLabel(p.paymentStatus)}</span>
                         </div>
                     </div>
-                    <span class="muted">â†’</span>
+                    <span class="muted">→</span>
                 </div>
             `).join('');
             container.querySelectorAll('.list-item').forEach(el => {
@@ -101,7 +101,7 @@
             document.getElementById('myPlanDetail').classList.remove('hidden');
             document.getElementById('myPlanName').textContent = plan.name;
             document.getElementById('myPlanMeta').textContent =
-                `${this.formatDate(plan.startDate)} â†’ ${this.formatDate(plan.endDate)}`;
+                `${this.formatDate(plan.startDate)} → ${this.formatDate(plan.endDate)}`;
 
             this.renderClientPaymentBox(plan);
 
@@ -111,12 +111,12 @@
             if (plan.isLocked) {
                 document.getElementById('myPlanExpectations').textContent = '';
                 document.getElementById('myPlanDays').innerHTML =
-                    '<p class="muted">đź”’ SadrĹľaj plana je zakljuÄŤan dok trener ne odobri uplatu.</p>';
+                    '<p class="muted">🔒 Sadržaj plana je zaključan dok trener ne odobri uplatu.</p>';
                 return;
             }
 
             document.getElementById('myPlanExpectations').textContent =
-                plan.trainerExpectations ? `OÄŤekivanja trenera: ${plan.trainerExpectations}` : '';
+                plan.trainerExpectations ? `Očekivanja trenera: ${plan.trainerExpectations}` : '';
 
             const days = document.getElementById('myPlanDays');
             if (!plan.days.length) {
@@ -127,17 +127,17 @@
             const hasVideo = (exId) => !!exOf(exId).videoUrl;
             days.innerHTML = plan.days.map(d => `
                 <div class="exercise-block">
-                    <h4>${this.dayNames[d.dayOfWeek]} â€” ${this.escape(d.label)}</h4>
+                    <h4>${this.dayNames[d.dayOfWeek]} — ${this.escape(d.label)}</h4>
                     ${d.exercises.length === 0
-                        ? '<p class="muted small">Bez vjeĹľbi.</p>'
+                        ? '<p class="muted small">Bez vježbi.</p>'
                         : d.exercises.map(pe => `
                             <div class="planned-row ${pe.isCompletedToday ? 'completed' : ''}">
-                                <span class="planned-name exercise-link" data-exercise-id="${pe.exerciseId}" title="PrikaĹľi video / detalje vjeĹľbe">${Exercises.thumbHtml(exOf(pe.exerciseId), 'exercise-thumb exercise-thumb-sm')}<strong>${this.escape(pe.exerciseName)}</strong>${hasVideo(pe.exerciseId) ? ' <span class="badge video">â–¶</span>' : ''}</span>
+                                <span class="planned-name exercise-link" data-exercise-id="${pe.exerciseId}" title="Prikaži video / detalje vježbe">${Exercises.thumbHtml(exOf(pe.exerciseId), 'exercise-thumb exercise-thumb-sm')}<strong>${this.escape(pe.exerciseName)}</strong>${hasVideo(pe.exerciseId) ? ' <span class="badge video">▶</span>' : ''}</span>
                                 <span class="planned-target">${this.planTargetLabel(pe)}</span>
                                 ${pe.restSeconds ? `<span class="planned-rest">${pe.restSeconds}s</span>` : ''}
                                 <span class="planned-actions">
-                                    <button class="btn-toggle toggle-pe-btn" data-pe-id="${pe.id}" title="${pe.isCompletedToday ? 'PoniĹˇti odraÄ‘eno' : 'OznaÄŤi odraÄ‘eno'}">
-                                        ${pe.isCompletedToday ? 'âś… OdraÄ‘eno' : 'âś“ Odradi'}
+                                    <button class="btn-toggle toggle-pe-btn" data-pe-id="${pe.id}" title="${pe.isCompletedToday ? 'Poništi odrađeno' : 'Označi odrađeno'}">
+                                        ${pe.isCompletedToday ? '✅ Odrađeno' : '✓ Odradi'}
                                     </button>
                                 </span>
                             </div>
@@ -148,14 +148,14 @@
                                         <span>${s.actualWeightKg} kg</span>
                                         <span>${s.actualReps} rep</span>
                                         <span class="muted small">${this.formatDate(s.performedAt)}</span>
-                                        <button class="icon-btn delete-set-btn" data-set-id="${s.id}" title="ObriĹˇi seriju">Ă—</button>
+                                        <button class="icon-btn delete-set-btn" data-set-id="${s.id}" title="Obriši seriju">×</button>
                                     </div>
                                 `).join('')}
                                 <div class="add-set-form" data-pe-id="${pe.id}">
                                     <input type="number" class="set-num-input" placeholder="#" min="1" value="${(pe.recentPerformedSets || []).length + 1}">
                                     <input type="number" class="weight-input" placeholder="kg" step="0.5" min="0">
                                     <input type="number" class="reps-input" placeholder="rep" min="1">
-                                    <button class="add-set-btn">+ BiljeĹľi</button>
+                                    <button class="add-set-btn">+ Bilježi</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -193,9 +193,9 @@
             if (summary) summary.textContent = err.message;
         }
         if (!this.progressionData.length) {
-            select.innerHTML = '<option value="">â€” plan nema vjeĹľbi â€”</option>';
+            select.innerHTML = '<option value="">— plan nema vježbi —</option>';
             this.clearProgressionChart(chartKey);
-            if (summary) summary.textContent = 'Plan nema definirane vjeĹľbe.';
+            if (summary) summary.textContent = 'Plan nema definirane vježbe.';
             return;
         }
         select.innerHTML = this.progressionData.map(p =>
@@ -211,7 +211,7 @@
 
         if (!item.points.length) {
             this.clearProgressionChart(chartKey);
-            if (summary) summary.textContent = `Target ${item.targetSets}Ă—${item.targetReps} @ ${item.targetWeightKg} kg Â· klijent joĹˇ nije radio ovu vjeĹľbu u periodu plana.`;
+            if (summary) summary.textContent = `Target ${item.targetSets}×${item.targetReps} @ ${item.targetWeightKg} kg · klijent još nije radio ovu vježbu u periodu plana.`;
             return;
         }
 
@@ -222,7 +222,7 @@
         });
         const labels = item.points.map(d => {
             const dateStr = new Date(d.date).toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-            return dateCounts[new Date(d.date).toDateString()] > 1 ? `${dateStr} Â· S${d.setNumber}` : dateStr;
+            return dateCounts[new Date(d.date).toDateString()] > 1 ? `${dateStr} · S${d.setNumber}` : dateStr;
         });
         const maxWeights = item.points.map(d => d.maxWeight);
         const target = Number(item.targetWeightKg);
@@ -236,7 +236,7 @@
                 labels,
                 datasets: [
                     {
-                        label: 'TeĹľina (kg)',
+                        label: 'Težina (kg)',
                         data: maxWeights,
                         borderColor: '#4dabf7',
                         backgroundColor: 'rgba(77,171,247,0.15)',
@@ -276,9 +276,9 @@
         const targetDelta = (last - target).toFixed(1);
         if (summary) {
             summary.innerHTML =
-                `${setCount} ${setCount === 1 ? 'serija' : 'serija'} Â· ` +
-                `Zadnja teĹľina: <strong>${last} kg</strong> Â· ` +
-                `Î” od poÄŤetka: <strong>${delta >= 0 ? '+' : ''}${delta} kg</strong> Â· ` +
+                `${setCount} ${setCount === 1 ? 'serija' : 'serija'} · ` +
+                `Zadnja težina: <strong>${last} kg</strong> · ` +
+                `Δ od početka: <strong>${delta >= 0 ? '+' : ''}${delta} kg</strong> · ` +
                 `Target: ${target} kg (${targetDelta >= 0 ? '+' : ''}${targetDelta} kg vs target)`;
         }
     },
@@ -294,7 +294,7 @@
         const reps = parseInt(form.querySelector('.reps-input').value);
 
         if (!setNumber || isNaN(weight) || !reps) {
-            alert('Popuni broj serije, teĹľinu i ponavljanja.');
+            alert('Popuni broj serije, težinu i ponavljanja.');
             return;
         }
 
@@ -346,7 +346,7 @@
     render() {
         const container = document.getElementById('plansList');
         if (this.list.length === 0) {
-            container.innerHTML = '<p class="muted">JoĹˇ nemaĹˇ kreiranih planova. Klikni "+ Novi plan".</p>';
+            container.innerHTML = '<p class="muted">Još nemaš kreiranih planova. Klikni "+ Novi plan".</p>';
             return;
         }
         container.innerHTML = this.list.map(p => `
@@ -355,15 +355,15 @@
                     <h4>${this.escape(p.name)}</h4>
                     <div class="meta">
                         ${this.escape(p.clientName)}
-                        Â· ${this.formatDate(p.startDate)} â†’ ${this.formatDate(p.endDate)}
-                        Â· ${p.dayCount} ${p.dayCount === 1 ? 'dan' : 'dana'}
-                        Â· ${this.formatPrice(p)}
-                        Â· <span class="${this.paymentBadgeClass(p.paymentStatus)}">${this.paymentStatusLabel(p.paymentStatus)}</span>
+                        · ${this.formatDate(p.startDate)} → ${this.formatDate(p.endDate)}
+                        · ${p.dayCount} ${p.dayCount === 1 ? 'dan' : 'dana'}
+                        · ${this.formatPrice(p)}
+                        · <span class="${this.paymentBadgeClass(p.paymentStatus)}">${this.paymentStatusLabel(p.paymentStatus)}</span>
                     </div>
                 </div>
                 <span class="planned-actions">
-                    <button class="btn-delete-icon delete-plan-btn" data-plan-id="${p.id}" data-plan-name="${this.escape(p.name)}" title="ObriĹˇi plan">đź—‘</button>
-                    <span class="muted">â†’</span>
+                    <button class="btn-delete-icon delete-plan-btn" data-plan-id="${p.id}" data-plan-name="${this.escape(p.name)}" title="Obriši plan">🗑</button>
+                    <span class="muted">→</span>
                 </span>
             </div>
         `).join('');
@@ -380,7 +380,7 @@
                 e.stopPropagation();
                 const planId = parseInt(btn.dataset.planId);
                 const name = btn.dataset.planName;
-                if (!confirm(`Obrisati plan "${name}"? Svi odraÄ‘eni setovi i oznake odraÄ‘enog se briĹˇu trajno.`)) return;
+                if (!confirm(`Obrisati plan "${name}"? Svi odrađeni setovi i oznake odrađenog se brišu trajno.`)) return;
                 try {
                     await API.delete(`/training-plans/${planId}`);
                     await this.load();
@@ -397,7 +397,7 @@
         }
         const select = document.getElementById('planClientSelect');
         if (Trainers.clients.length === 0) {
-            select.innerHTML = '<option value="">â€” nema klijenata, prvo dodaj klijenta â€”</option>';
+            select.innerHTML = '<option value="">— nema klijenata, prvo dodaj klijenta —</option>';
         } else {
             select.innerHTML = Trainers.clients.map(c =>
                 `<option value="${c.id}">${this.escape(c.fullName || c.email)}</option>`
@@ -409,11 +409,11 @@
         if (tplSel) {
             try {
                 const templates = await API.get('/training-plans/templates');
-                tplSel.innerHTML = '<option value="">â€” bez predloĹˇka (prazan plan) â€”</option>' +
+                tplSel.innerHTML = '<option value="">— bez predloška (prazan plan) —</option>' +
                     templates.map(t => `<option value="${t.id}">${this.escape(t.name)} (${t.dayCount} ${t.dayCount === 1 ? 'dan' : 'dana'})</option>`).join('');
             } catch (err) {
                 console.error(err);
-                tplSel.innerHTML = '<option value="">â€” bez predloĹˇka â€”</option>';
+                tplSel.innerHTML = '<option value="">— bez predloška —</option>';
             }
         }
 
@@ -477,15 +477,15 @@
 
     async saveAsTemplate() {
         if (!this.currentPlan) return;
-        const defaultName = `${this.currentPlan.name} (predloĹľak)`;
-        const name = prompt('Naziv predloĹˇka:', defaultName);
+        const defaultName = `${this.currentPlan.name} (predložak)`;
+        const name = prompt('Naziv predloška:', defaultName);
         if (!name || !name.trim()) return;
         try {
             await API.post(`/training-plans/${this.currentPlan.id}/save-as-template`, {
                 name: name.trim(),
                 trainerExpectations: this.currentPlan.trainerExpectations || null
             });
-            alert('PredloĹľak spremljen. NaÄ‡i Ä‡eĹˇ ga u tabu "PredloĹˇci".');
+            alert('Predložak spremljen. Naći ćeš ga u tabu "Predlošci".');
         } catch (err) {
             alert(err.message);
         }
@@ -515,7 +515,7 @@
 
     async deleteCurrentPlan() {
         if (!this.currentPlan) return;
-        if (!confirm(`Obrisati plan "${this.currentPlan.name}"? Svi odraÄ‘eni setovi i oznake odraÄ‘enog se briĹˇu trajno.`)) return;
+        if (!confirm(`Obrisati plan "${this.currentPlan.name}"? Svi odrađeni setovi i oznake odrađenog se brišu trajno.`)) return;
         try {
             await API.delete(`/training-plans/${this.currentPlan.id}`);
             this.showPlansList();
@@ -526,7 +526,7 @@
         if (!this.currentPlan) return;
         EditPlanModal.open({
             title: 'Uredi plan treninga',
-            notesLabel: 'OÄŤekivanja trenera',
+            notesLabel: 'Očekivanja trenera',
             plan: this.currentPlan,
             onSave: async (data) => {
                 await API.put(`/training-plans/${this.currentPlan.id}`, {
@@ -552,7 +552,7 @@
                 planType: 'training',
                 language: (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr'
             });
-            alert('âś“ Email poslan klijentu.');
+            alert('✓ Email poslan klijentu.');
         } catch (err) { alert(err.message); }
     },
 
@@ -566,9 +566,9 @@
                 planType: 'training'
             });
             if (res && res.activeTokens === 0) {
-                alert('âš  Klijent nema registriran ureÄ‘aj za push notifikacije.');
+                alert('⚠ Klijent nema registriran uređaj za push notifikacije.');
             } else {
-                alert('âś“ Push poslan klijentu.');
+                alert('✓ Push poslan klijentu.');
             }
         } catch (err) { alert(err.message); }
     },
@@ -597,8 +597,8 @@
 
     paymentStatusLabel(status) {
         if (status === 'Approved') return 'Odobreno';
-        if (status === 'PaymentClaimed') return 'Klijent je platio â€” ÄŤeka odobrenje';
-        return 'ÄŚeka plaÄ‡anje';
+        if (status === 'PaymentClaimed') return 'Klijent je platio — čeka odobrenje';
+        return 'Čeka plaćanje';
     },
 
     paymentBadgeClass(status) {
@@ -617,19 +617,19 @@
         const box = document.getElementById('planDetailPayment');
         if (!box) return;
         if (parseFloat(plan.price || 0) === 0) {
-            box.innerHTML = `<span class="muted small">Besplatan plan â€” odmah dostupan klijentu.</span>`;
+            box.innerHTML = `<span class="muted small">Besplatan plan — odmah dostupan klijentu.</span>`;
             return;
         }
         const statusLabel = this.paymentStatusLabel(plan.paymentStatus);
         const cls = this.paymentBadgeClass(plan.paymentStatus);
         let action = '';
         if (plan.paymentStatus === 'Approved') {
-            action = `<button id="revokeApprovalBtn" class="secondary" data-plan-id="${plan.id}">đź”’ ZakljuÄŤaj nazad</button>`;
+            action = `<button id="revokeApprovalBtn" class="secondary" data-plan-id="${plan.id}">🔒 Zaključaj nazad</button>`;
         } else {
             action = `<button id="approvePaymentBtn" data-plan-id="${plan.id}">Odobri plan</button>`;
         }
         box.innerHTML = `
-            <div><strong>Cijena:</strong> ${this.formatPrice(plan)} Â· <span class="${cls}">${statusLabel}</span></div>
+            <div><strong>Cijena:</strong> ${this.formatPrice(plan)} · <span class="${cls}">${statusLabel}</span></div>
             ${action}
         `;
         const approveBtn = document.getElementById('approvePaymentBtn');
@@ -648,7 +648,7 @@
     },
 
     async revokeApproval(planId) {
-        if (!confirm('ZakljuÄŤati plan nazad? Klijent Ä‡e ponovo morati platiti.')) return;
+        if (!confirm('Zaključati plan nazad? Klijent će ponovo morati platiti.')) return;
         try {
             await API.post(`/training-plans/${planId}/revoke-approval`, {});
             await this.showPlanDetail(planId);
@@ -670,10 +670,10 @@
         if (plan.paymentStatus === 'Pending') {
             action = `<button id="claimPaymentBtn" data-plan-id="${plan.id}">Plati ${this.formatPrice(plan)}</button>`;
         } else if (plan.paymentStatus === 'PaymentClaimed') {
-            action = `<span class="muted small">ÄŚeka da trener potvrdi uplatu.</span>`;
+            action = `<span class="muted small">Čeka da trener potvrdi uplatu.</span>`;
         }
         box.innerHTML = `
-            <div><strong>Cijena:</strong> ${this.formatPrice(plan)} Â· <span class="${cls}">${statusLabel}</span></div>
+            <div><strong>Cijena:</strong> ${this.formatPrice(plan)} · <span class="${cls}">${statusLabel}</span></div>
             ${action}
         `;
         const btn = document.getElementById('claimPaymentBtn');
@@ -698,11 +698,11 @@
 
             document.getElementById('planDetailName').textContent = this.currentPlan.name;
             document.getElementById('planDetailMeta').textContent =
-                `${this.escape(this.currentPlan.clientName)} Â· ${this.formatDate(this.currentPlan.startDate)} â†’ ${this.formatDate(this.currentPlan.endDate)}`;
+                `${this.escape(this.currentPlan.clientName)} · ${this.formatDate(this.currentPlan.startDate)} → ${this.formatDate(this.currentPlan.endDate)}`;
             document.getElementById('planDetailExpectations').textContent =
                 this.currentPlan.trainerExpectations
-                    ? `OÄŤekivanja: ${this.currentPlan.trainerExpectations}`
-                    : 'OÄŤekivanja: â€”';
+                    ? `Očekivanja: ${this.currentPlan.trainerExpectations}`
+                    : 'Očekivanja: —';
 
             this.renderTrainerPaymentBox(this.currentPlan);
 
@@ -719,21 +719,21 @@
         if (!container) return;
         const mine = (Exercises.list || []);
         if (mine.length === 0) {
-            container.innerHTML = '<p class="muted small" style="margin-top:0.5rem">JoĹˇ nemaĹˇ vlastitih vjeĹľbi.</p>';
+            container.innerHTML = '<p class="muted small" style="margin-top:0.5rem">Još nemaš vlastitih vježbi.</p>';
             return;
         }
         const grouped = this.groupExercisesByTypeAndMuscle(mine);
         container.innerHTML = `
-            <div class="muted small" style="margin-top:0.5rem">Moje vjeĹľbe â€” klikni za ureÄ‘ivanje (opis, video), ili obriĹˇi one koje nigdje ne koristiĹˇ:</div>
+            <div class="muted small" style="margin-top:0.5rem">Moje vježbe — klikni za uređivanje (opis, video), ili obriši one koje nigdje ne koristiš:</div>
             ${grouped.map(g => `
                 <div class="exercise-group-header">${ExerciseTypeLabels[g.type] || g.type}</div>
                 ${g.muscleGroups.map(mg => `
-                    <div class="exercise-subgroup-header">${this.escape(mg.muscleGroup || 'â€” bez miĹˇiÄ‡ne grupe â€”')}</div>
+                    <div class="exercise-subgroup-header">${this.escape(mg.muscleGroup || '— bez mišićne grupe —')}</div>
                     ${mg.items.map(e => `
                         <div class="planned-row">
-                            <span class="planned-name exercise-link" data-exercise-id="${e.id}" title="Uredi vjeĹľbu (opis, YouTube link)">${Exercises.thumbHtml(e, 'exercise-thumb exercise-thumb-sm')}<span>${this.escape(e.name)}${e.videoUrl ? ' <span class="badge video">â–¶</span>' : ''}</span></span>
+                            <span class="planned-name exercise-link" data-exercise-id="${e.id}" title="Uredi vježbu (opis, YouTube link)">${Exercises.thumbHtml(e, 'exercise-thumb exercise-thumb-sm')}<span>${this.escape(e.name)}${e.videoUrl ? ' <span class="badge video">▶</span>' : ''}</span></span>
                             <span class="planned-actions">
-                                <button class="btn-delete delete-ex-btn" data-ex-id="${e.id}" title="ObriĹˇi vjeĹľbu iz kataloga">đź—‘ ObriĹˇi</button>
+                                <button class="btn-delete delete-ex-btn" data-ex-id="${e.id}" title="Obriši vježbu iz kataloga">🗑 Obriši</button>
                             </span>
                         </div>
                     `).join('')}
@@ -803,7 +803,7 @@
     },
 
     async deleteCatalogExercise(exId) {
-        if (!confirm('Obrisati ovu vjeĹľbu iz kataloga?')) return;
+        if (!confirm('Obrisati ovu vježbu iz kataloga?')) return;
         try {
             await API.delete(`/exercises/${exId}`);
             await Exercises.load();
@@ -824,30 +824,30 @@
     renderDays() {
         const container = document.getElementById('planDaysList');
         if (!this.currentPlan.days.length) {
-            container.innerHTML = '<p class="muted">Bez dana. Dodaj prvi dan iznad (npr. Ponedjeljak â€” Push Day).</p>';
+            container.innerHTML = '<p class="muted">Bez dana. Dodaj prvi dan iznad (npr. Ponedjeljak — Push Day).</p>';
             return;
         }
 
         container.innerHTML = this.currentPlan.days.map(d => `
             <div class="exercise-block" data-day-id="${d.id}">
                 <div class="row" style="justify-content: space-between; align-items: center;">
-                    <h4>${this.dayNames[d.dayOfWeek]} â€” ${this.escape(d.label)}</h4>
-                    <button class="icon-btn delete-day-btn" data-day-id="${d.id}" title="ObriĹˇi dan">Ă—</button>
+                    <h4>${this.dayNames[d.dayOfWeek]} — ${this.escape(d.label)}</h4>
+                    <button class="icon-btn delete-day-btn" data-day-id="${d.id}" title="Obriši dan">×</button>
                 </div>
                 ${d.exercises.length === 0
-                    ? '<p class="muted small">Bez vjeĹľbi.</p>'
+                    ? '<p class="muted small">Bez vježbi.</p>'
                     : d.exercises.map((pe, idx) => `
                         <div class="planned-row">
                             <span class="planned-name"><strong>${this.escape(pe.exerciseName)}</strong></span>
                             <span class="planned-target">${this.planTargetLabel(pe)}</span>
                             ${pe.restSeconds ? `<span class="planned-rest">${pe.restSeconds}s</span>` : ''}
-                            <span class="completion-badge" title="${pe.lastCompletedAt ? 'Zadnji put: ' + this.formatDate(pe.lastCompletedAt) : 'JoĹˇ nije odraÄ‘eno'}">
-                                ${pe.completionsCount > 0 ? `âś… ${pe.completionsCount}Ă—` : 'â€” 0Ă—'}
+                            <span class="completion-badge" title="${pe.lastCompletedAt ? 'Zadnji put: ' + this.formatDate(pe.lastCompletedAt) : 'Još nije odrađeno'}">
+                                ${pe.completionsCount > 0 ? `✅ ${pe.completionsCount}×` : '— 0×'}
                             </span>
                             <span class="planned-actions">
-                                <button class="move-pe-btn" data-pe-id="${pe.id}" data-direction="up" ${idx === 0 ? 'disabled' : ''} title="Pomakni gore">â–˛</button>
-                                <button class="move-pe-btn" data-pe-id="${pe.id}" data-direction="down" ${idx === d.exercises.length - 1 ? 'disabled' : ''} title="Pomakni dolje">â–Ľ</button>
-                                <button class="btn-delete delete-pe-btn" data-pe-id="${pe.id}" title="ObriĹˇi vjeĹľbu iz dana">đź—‘</button>
+                                <button class="move-pe-btn" data-pe-id="${pe.id}" data-direction="up" ${idx === 0 ? 'disabled' : ''} title="Pomakni gore">▲</button>
+                                <button class="move-pe-btn" data-pe-id="${pe.id}" data-direction="down" ${idx === d.exercises.length - 1 ? 'disabled' : ''} title="Pomakni dolje">▼</button>
+                                <button class="btn-delete delete-pe-btn" data-pe-id="${pe.id}" title="Obriši vježbu iz dana">🗑</button>
                             </span>
                         </div>
                     `).join('')}
@@ -856,8 +856,8 @@
                     <input type="number" class="pe-sets" placeholder="serije" min="1" value="3" title="Broj serija">
                     <input type="number" class="pe-reps" placeholder="rep" min="1" value="10" title="Ponavljanja">
                     <input type="number" class="pe-duration hidden" placeholder="min" step="0.1" min="0.1" value="2" title="Trajanje (min, decimalno)">
-                    <input type="number" class="pe-weight" placeholder="kg" step="0.5" min="0" value="0" title="TeĹľina">
-                    <input type="number" class="pe-rest" placeholder="odmor s" min="0" max="3600" title="Odmor izmeÄ‘u serija">
+                    <input type="number" class="pe-weight" placeholder="kg" step="0.5" min="0" value="0" title="Težina">
+                    <input type="number" class="pe-rest" placeholder="odmor s" min="0" max="3600" title="Odmor između serija">
                     <div class="pe-mode-toggle">
                         <label><input type="radio" name="peMode-${d.id}" value="reps" checked> Pon.</label>
                         <label><input type="radio" name="peMode-${d.id}" value="time"> Vrij.</label>
@@ -869,14 +869,14 @@
 
         container.querySelectorAll('.day-exercise-select').forEach(sel => {
             if (!Exercises.list.length) {
-                sel.innerHTML = '<option value="">â€” nema vjeĹľbi â€”</option>';
+                sel.innerHTML = '<option value="">— nema vježbi —</option>';
                 return;
             }
             const grouped = this.groupExercisesByType(Exercises.list);
             sel.innerHTML = grouped.map(g => `
                 <optgroup label="${ExerciseTypeLabels[g.type] || g.type}">
                     ${g.items.map(e =>
-                        `<option value="${e.id}">${this.escape(e.name)}${e.muscleGroup ? ' â€” ' + this.escape(e.muscleGroup) : ''}</option>`
+                        `<option value="${e.id}">${this.escape(e.name)}${e.muscleGroup ? ' — ' + this.escape(e.muscleGroup) : ''}</option>`
                     ).join('')}
                 </optgroup>
             `).join('');
@@ -927,7 +927,7 @@
     },
 
     async deleteDay(dayId) {
-        if (!confirm('Obrisati ovaj dan i sve vjeĹľbe u njemu?')) return;
+        if (!confirm('Obrisati ovaj dan i sve vježbe u njemu?')) return;
         try {
             await API.delete(`/training-plans/days/${dayId}`);
             await this.showPlanDetail(this.currentPlan.id);
@@ -946,7 +946,7 @@
         const restRaw = form.querySelector('.pe-rest').value;
         const rest = restRaw === '' ? null : parseInt(restRaw);
 
-        if (!exerciseId) { alert('Odaberi vjeĹľbu.'); return; }
+        if (!exerciseId) { alert('Odaberi vježbu.'); return; }
         if (!sets) { alert('Popuni broj serija.'); return; }
 
         const payload = {
@@ -980,7 +980,7 @@
     },
 
     async deletePlannedExercise(peId) {
-        if (!confirm('Obrisati vjeĹľbu iz plana?')) return;
+        if (!confirm('Obrisati vježbu iz plana?')) return;
         try {
             await API.delete(`/training-plans/exercises/${peId}`);
             await this.showPlanDetail(this.currentPlan.id);
@@ -1006,7 +1006,7 @@
         const videoUrl = document.getElementById('quickExerciseVideoUrl').value.trim();
         const fileInput = document.getElementById('quickExerciseVideoFile');
         const videoFile = fileInput && fileInput.files && fileInput.files[0];
-        if (!name) { alert('Unesi naziv vjeĹľbe.'); return; }
+        if (!name) { alert('Unesi naziv vježbe.'); return; }
 
         try {
             const created = await API.post('/exercises', {
@@ -1049,9 +1049,9 @@
     planTargetLabel(pe) {
         if (pe.targetDurationSeconds) {
             const weight = (pe.targetWeightKg && pe.targetWeightKg > 0) ? ` @ ${pe.targetWeightKg} kg` : '';
-            return `${pe.targetSets} Ă— ${this.formatDuration(pe.targetDurationSeconds)}${weight}`;
+            return `${pe.targetSets} × ${this.formatDuration(pe.targetDurationSeconds)}${weight}`;
         }
-        return `${pe.targetSets} Ă— ${pe.targetReps} @ ${pe.targetWeightKg} kg`;
+        return `${pe.targetSets} × ${pe.targetReps} @ ${pe.targetWeightKg} kg`;
     },
 
     async downloadMyPlanPdf() {
