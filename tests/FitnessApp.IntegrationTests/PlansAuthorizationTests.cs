@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Nutrition;
 using FitnessApp.Application.DTOs.TrainingPlans;
@@ -18,7 +18,7 @@ public class PlansAuthorizationTests : IntegrationTestBase
     {
         var client = Factory.CreateClient();
 
-        var response = await client.GetAsync("/api/training-plans/mine");
+        var response = await client.GetAsync("/api/v1/training-plans/mine");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -28,7 +28,7 @@ public class PlansAuthorizationTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var response = await client.PostAsJsonAsync("/api/training-plans", new { });
+        var response = await client.PostAsJsonAsync("/api/v1/training-plans", new { });
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -39,7 +39,7 @@ public class PlansAuthorizationTests : IntegrationTestBase
         var trainer = await CreateAuthenticatedClientAsync("Trainer");
 
         var plans = await trainer.GetFromJsonAsync<List<TrainingPlanListItemDto>>(
-            "/api/training-plans/mine", JsonOptions);
+            "/api/v1/training-plans/mine", JsonOptions);
 
         plans.Should().NotBeNull().And.BeEmpty();
     }
@@ -51,7 +51,7 @@ public class PlansAuthorizationTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var response = await client.PostAsJsonAsync("/api/nutrition-plans", new { });
+        var response = await client.PostAsJsonAsync("/api/v1/nutrition-plans", new { });
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -62,7 +62,7 @@ public class PlansAuthorizationTests : IntegrationTestBase
         var trainer = await CreateAuthenticatedClientAsync("Trainer");
 
         var plans = await trainer.GetFromJsonAsync<List<NutritionPlanListItemDto>>(
-            "/api/nutrition-plans/mine", JsonOptions);
+            "/api/v1/nutrition-plans/mine", JsonOptions);
 
         plans.Should().NotBeNull().And.BeEmpty();
     }

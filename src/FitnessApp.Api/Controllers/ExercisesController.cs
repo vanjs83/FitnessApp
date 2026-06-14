@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Exercises;
+﻿using FitnessApp.Application.DTOs.Exercises;
 using FitnessApp.Application.Features.Exercises.Commands;
 using FitnessApp.Application.Features.Exercises.Queries;
 using MediatR;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class ExercisesController : ApiControllerBase
 {
     private readonly ISender _sender;

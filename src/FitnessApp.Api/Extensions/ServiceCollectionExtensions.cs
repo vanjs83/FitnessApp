@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Asp.Versioning;
 using FitnessApp.Api.Middleware;
 using FitnessApp.Api.Services;
 using FitnessApp.Application;
@@ -52,8 +53,32 @@ public static class ServiceCollectionExtensions
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
+        services.AddApiVersioningConfigured();
         services.AddCorsPolicy();
         services.AddSwaggerWithJwt();
+
+        return services;
+    }
+
+    private static IServiceCollection AddApiVersioningConfigured(this IServiceCollection services)
+    {
+        services
+            .AddApiVersioning(options =>
+            {
+                // v1 is assumed when the caller omits the version, so existing /api/v1
+                // routes resolve cleanly and future v2 can be added without breaking v1.
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(options =>
+            {
+                // Produces group names like "v1" and substitutes {version} in the
+                // route templates so Swagger shows concrete paths (/api/v1/...).
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
 
         return services;
     }

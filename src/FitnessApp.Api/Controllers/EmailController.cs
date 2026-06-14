@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Email;
+﻿using FitnessApp.Application.DTOs.Email;
 using FitnessApp.Application.Features.Email.Commands;
 using FitnessApp.Application.Features.Email.Queries;
 using FitnessApp.Domain.Common;
@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize(Roles = Roles.Trainer)]
-[Route("api/email")]
+[Route("api/v{version:apiVersion}/email")]
 public class EmailController : ApiControllerBase
 {
     private readonly ISender _sender;

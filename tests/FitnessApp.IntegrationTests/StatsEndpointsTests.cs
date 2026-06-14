@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Stats;
 using FluentAssertions;
@@ -15,7 +15,7 @@ public class StatsEndpointsTests : IntegrationTestBase
     {
         var client = Factory.CreateClient();
 
-        var response = await client.GetAsync("/api/stats/my-exercises");
+        var response = await client.GetAsync("/api/v1/stats/my-exercises");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -25,7 +25,7 @@ public class StatsEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var trained = await client.GetFromJsonAsync<List<TrainedExerciseDto>>("/api/stats/my-exercises", JsonOptions);
+        var trained = await client.GetFromJsonAsync<List<TrainedExerciseDto>>("/api/v1/stats/my-exercises", JsonOptions);
 
         trained.Should().NotBeNull().And.BeEmpty();
     }
@@ -36,7 +36,7 @@ public class StatsEndpointsTests : IntegrationTestBase
         var client = await CreateAuthenticatedClientAsync("Client");
 
         var points = await client.GetFromJsonAsync<List<ExerciseProgressPointDto>>(
-            "/api/stats/exercise-progress/123", JsonOptions);
+            "/api/v1/stats/exercise-progress/123", JsonOptions);
 
         points.Should().NotBeNull().And.BeEmpty();
     }

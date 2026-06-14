@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Support;
+﻿using FitnessApp.Application.DTOs.Support;
 using FitnessApp.Application.Features.Support.Commands;
 using FitnessApp.Application.Features.Support.Queries;
 using MediatR;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize]
-[Route("api/support")]
+[Route("api/v{version:apiVersion}/support")]
 public class SupportController : ApiControllerBase
 {
     private readonly ISender _sender;

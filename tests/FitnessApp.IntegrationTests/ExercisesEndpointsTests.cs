@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Exercises;
 using FluentAssertions;
@@ -15,7 +15,7 @@ public class ExercisesEndpointsTests : IntegrationTestBase
     {
         var client = Factory.CreateClient();
 
-        var response = await client.GetAsync("/api/exercises");
+        var response = await client.GetAsync("/api/v1/exercises");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -25,7 +25,7 @@ public class ExercisesEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync();
 
-        var create = await client.PostAsJsonAsync("/api/exercises", new CreateExerciseRequest
+        var create = await client.PostAsJsonAsync("/api/v1/exercises", new CreateExerciseRequest
         {
             Name = "Bench Press",
             MuscleGroup = "Chest"
@@ -37,7 +37,7 @@ public class ExercisesEndpointsTests : IntegrationTestBase
         created!.Id.Should().BeGreaterThan(0);
         created.Name.Should().Be("Bench Press");
 
-        var list = await client.GetFromJsonAsync<List<ExerciseDto>>("/api/exercises", JsonOptions);
+        var list = await client.GetFromJsonAsync<List<ExerciseDto>>("/api/v1/exercises", JsonOptions);
         list.Should().NotBeNull();
         list!.Should().ContainSingle(e => e.Id == created.Id && e.Name == "Bench Press");
     }
@@ -47,7 +47,7 @@ public class ExercisesEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync();
 
-        var response = await client.PostAsJsonAsync("/api/exercises", new CreateExerciseRequest { Name = "" });
+        var response = await client.PostAsJsonAsync("/api/v1/exercises", new CreateExerciseRequest { Name = "" });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -58,7 +58,7 @@ public class ExercisesEndpointsTests : IntegrationTestBase
         var client = await CreateAuthenticatedClientAsync();
 
         // Create
-        var create = await client.PostAsJsonAsync("/api/exercises", new CreateExerciseRequest
+        var create = await client.PostAsJsonAsync("/api/v1/exercises", new CreateExerciseRequest
         {
             Name = "Squat",
             MuscleGroup = "Legs"
@@ -67,11 +67,11 @@ public class ExercisesEndpointsTests : IntegrationTestBase
         var id = created!.Id;
 
         // Read by id
-        var getById = await client.GetAsync($"/api/exercises/{id}");
+        var getById = await client.GetAsync($"/api/v1/exercises/{id}");
         getById.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // Update
-        var update = await client.PutAsJsonAsync($"/api/exercises/{id}", new UpdateExerciseRequest
+        var update = await client.PutAsJsonAsync($"/api/v1/exercises/{id}", new UpdateExerciseRequest
         {
             Name = "Back Squat",
             MuscleGroup = "Legs"
@@ -81,11 +81,11 @@ public class ExercisesEndpointsTests : IntegrationTestBase
         updated!.Name.Should().Be("Back Squat");
 
         // Delete
-        var delete = await client.DeleteAsync($"/api/exercises/{id}");
+        var delete = await client.DeleteAsync($"/api/v1/exercises/{id}");
         delete.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Gone
-        var getAgain = await client.GetAsync($"/api/exercises/{id}");
+        var getAgain = await client.GetAsync($"/api/v1/exercises/{id}");
         getAgain.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

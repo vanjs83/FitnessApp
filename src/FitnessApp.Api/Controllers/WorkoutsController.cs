@@ -1,4 +1,4 @@
-using FitnessApp.Application.Common;
+﻿using FitnessApp.Application.Common;
 using FitnessApp.Application.DTOs.Workouts;
 using FitnessApp.Application.Features.Workouts.Commands;
 using FitnessApp.Application.Features.Workouts.Queries;
@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize(Roles = Roles.Client)]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class WorkoutsController : ApiControllerBase
 {
     private readonly ISender _sender;

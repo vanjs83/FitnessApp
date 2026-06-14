@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Trainers;
 using FluentAssertions;
@@ -15,9 +15,9 @@ public class TrainersEndpointsTests : IntegrationTestBase
     {
         var (_, trainerId, _) = await RegisterUserAsync("Trainer");
 
-        // Endpoint is [AllowAnonymous] — no token needed.
+        // Endpoint is [AllowAnonymous] â€” no token needed.
         var anonymous = Factory.CreateClient();
-        var trainers = await anonymous.GetFromJsonAsync<List<TrainerListItemDto>>("/api/trainers", JsonOptions);
+        var trainers = await anonymous.GetFromJsonAsync<List<TrainerListItemDto>>("/api/v1/trainers", JsonOptions);
 
         trainers.Should().Contain(t => t.Id == trainerId);
     }
@@ -27,7 +27,7 @@ public class TrainersEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var response = await client.GetAsync("/api/trainers/me/clients");
+        var response = await client.GetAsync("/api/v1/trainers/me/clients");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -37,7 +37,7 @@ public class TrainersEndpointsTests : IntegrationTestBase
     {
         var (_, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
 
-        var clients = await trainer.GetFromJsonAsync<List<ClientListItemDto>>("/api/trainers/me/clients", JsonOptions);
+        var clients = await trainer.GetFromJsonAsync<List<ClientListItemDto>>("/api/v1/trainers/me/clients", JsonOptions);
 
         clients.Should().ContainSingle(c => c.Id == clientId);
     }

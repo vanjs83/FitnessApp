@@ -1,4 +1,4 @@
-const ExerciseTypeLabels = new Proxy({}, {
+﻿const ExerciseTypeLabels = new Proxy({}, {
     get(_, type) {
         const keys = {
             Strength: 'exercises.type.strength',
@@ -71,9 +71,9 @@ const Exercises = {
                 <div>
                     <h4>${this.escape(e.name)}</h4>
                     <div class="meta">
-                        ${e.muscleGroup ? this.escape(e.muscleGroup) : '—'}
-                        · <span class="badge type-${(e.type || '').toLowerCase()}">${ExerciseTypeLabels[e.type] || e.type}</span>
-                        ${e.videoUrl ? '· <span class="badge video">▶ video</span>' : ''}
+                        ${e.muscleGroup ? this.escape(e.muscleGroup) : 'â€”'}
+                        Â· <span class="badge type-${(e.type || '').toLowerCase()}">${ExerciseTypeLabels[e.type] || e.type}</span>
+                        ${e.videoUrl ? 'Â· <span class="badge video">â–¶ video</span>' : ''}
                     </div>
                 </div>
             </div>
@@ -137,7 +137,7 @@ const Exercises = {
     async uploadVideo(exerciseId, file) {
         const fd = new FormData();
         fd.append('file', file);
-        const res = await fetch(`/api/exercises/${exerciseId}/video`, {
+        const res = await fetch(`/api/v1/exercises/${exerciseId}/video`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
             body: fd
@@ -151,7 +151,7 @@ const Exercises = {
     },
 
     async deleteVideo(exerciseId) {
-        const res = await fetch(`/api/exercises/${exerciseId}/video`, {
+        const res = await fetch(`/api/v1/exercises/${exerciseId}/video`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
@@ -173,13 +173,13 @@ const Exercises = {
         if (e.imageUrl) {
             return `<span class="${sizeClass}"><img src="${this.escape(e.imageUrl)}" alt="" loading="lazy"></span>`;
         }
-        return `<span class="${sizeClass} exercise-thumb-empty">🏋️</span>`;
+        return `<span class="${sizeClass} exercise-thumb-empty">đźŹ‹ď¸Ź</span>`;
     },
 
     async uploadImage(exerciseId, file) {
         const fd = new FormData();
         fd.append('file', file);
-        const res = await fetch(`/api/exercises/${exerciseId}/image`, {
+        const res = await fetch(`/api/v1/exercises/${exerciseId}/image`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
             body: fd
@@ -193,7 +193,7 @@ const Exercises = {
     },
 
     async deleteImage(exerciseId) {
-        const res = await fetch(`/api/exercises/${exerciseId}/image`, {
+        const res = await fetch(`/api/v1/exercises/${exerciseId}/image`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
@@ -222,7 +222,7 @@ const Exercises = {
         const metaParts = [];
         if (e.muscleGroup) metaParts.push(e.muscleGroup);
         metaParts.push(ExerciseTypeLabels[e.type] || e.type);
-        document.getElementById('exerciseDetailMeta').textContent = metaParts.join(' · ');
+        document.getElementById('exerciseDetailMeta').textContent = metaParts.join(' Â· ');
 
         const imageWrap = document.getElementById('exerciseDetailImageWrap');
         if (imageWrap) {
@@ -267,7 +267,7 @@ const Exercises = {
             }
         }
 
-        document.getElementById('exerciseDetailDescription').textContent = e.description || '—';
+        document.getElementById('exerciseDetailDescription').textContent = e.description || 'â€”';
 
         const editBtn = document.getElementById('editExerciseBtn');
         if (e.canEdit) editBtn.classList.remove('hidden');

@@ -1,4 +1,4 @@
-const MyNutrition = {
+﻿const MyNutrition = {
     list: [],
     current: null,
 
@@ -37,7 +37,7 @@ const MyNutrition = {
         if (!this.current) return;
         const token = API.getToken();
         try {
-            const res = await fetch(`/api/nutrition-plans/${this.current.id}/pdf`, {
+            const res = await fetch(`/api/v1/nutrition-plans/${this.current.id}/pdf`, {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
             if (!res.ok) {
@@ -74,11 +74,11 @@ const MyNutrition = {
                     <div>
                         <h4>${this.escape(p.name)}</h4>
                         <div class="meta">
-                            ${this.formatDate(p.startDate)} → ${this.formatDate(p.endDate)}
-                            · ${p.dayCount} ${I18n.t(p.dayCount === 1 ? 'nutrition.dayUnit.one' : 'nutrition.dayUnit.many')}
+                            ${this.formatDate(p.startDate)} â†’ ${this.formatDate(p.endDate)}
+                            Â· ${p.dayCount} ${I18n.t(p.dayCount === 1 ? 'nutrition.dayUnit.one' : 'nutrition.dayUnit.many')}
                         </div>
                     </div>
-                    <span class="muted">→</span>
+                    <span class="muted">â†’</span>
                 </div>
             `).join('');
             container.querySelectorAll('.list-item').forEach(el => {
@@ -96,7 +96,7 @@ const MyNutrition = {
             document.getElementById('myNutritionDetail').classList.remove('hidden');
             document.getElementById('myNutritionName').textContent = this.current.name;
             document.getElementById('myNutritionMeta').textContent =
-                `${this.formatDate(this.current.startDate)} → ${this.formatDate(this.current.endDate)}`;
+                `${this.formatDate(this.current.startDate)} â†’ ${this.formatDate(this.current.endDate)}`;
 
             this.renderPaymentBox(this.current);
 
@@ -133,7 +133,7 @@ const MyNutrition = {
             action = `<span class="muted small">${I18n.t('payment.waitingApproval')}</span>`;
         }
         box.innerHTML = `
-            <div><strong>${I18n.t('nutrition.priceLabel')}</strong> ${parseFloat(plan.price).toFixed(2)} ${plan.currency || 'EUR'} · <span class="${cls}">${statusLabel}</span></div>
+            <div><strong>${I18n.t('nutrition.priceLabel')}</strong> ${parseFloat(plan.price).toFixed(2)} ${plan.currency || 'EUR'} Â· <span class="${cls}">${statusLabel}</span></div>
             ${action}
         `;
         const btn = document.getElementById('claimNutPaymentBtn');
@@ -165,14 +165,14 @@ const MyNutrition = {
     renderDay(d) {
         const totals = this.computeDayTotals(d);
         const targetLabel = d.totalCaloriesTarget
-            ? ` · ${I18n.t('nutrition.dayCalorieTarget')} <strong>${d.totalCaloriesTarget} kcal</strong>`
+            ? ` Â· ${I18n.t('nutrition.dayCalorieTarget')} <strong>${d.totalCaloriesTarget} kcal</strong>`
             : '';
         const P = I18n.t('nutrition.col.protein'), C = I18n.t('nutrition.col.carbs'), F = I18n.t('nutrition.col.fat');
         return `
             <div class="exercise-block">
-                <h4>${I18n.dayName(d.dayOfWeek)} — ${this.escape(d.label)}</h4>
+                <h4>${I18n.dayName(d.dayOfWeek)} â€” ${this.escape(d.label)}</h4>
                 <div class="muted small">
-                    ${I18n.t('nutrition.dayTotalsPrefix')} <strong>${totals.calories} kcal</strong> · ${P} ${totals.protein.toFixed(0)}g · ${C} ${totals.carbs.toFixed(0)}g · ${F} ${totals.fat.toFixed(0)}g
+                    ${I18n.t('nutrition.dayTotalsPrefix')} <strong>${totals.calories} kcal</strong> Â· ${P} ${totals.protein.toFixed(0)}g Â· ${C} ${totals.carbs.toFixed(0)}g Â· ${F} ${totals.fat.toFixed(0)}g
                     ${targetLabel}
                 </div>
                 ${d.meals.length === 0
@@ -187,9 +187,9 @@ const MyNutrition = {
         const P = I18n.t('nutrition.col.protein'), C = I18n.t('nutrition.col.carbs'), F = I18n.t('nutrition.col.fat');
         return `
             <div class="meal-block" style="border-left: 3px solid #4dabf7; padding-left: 0.75rem; margin: 0.75rem 0;">
-                <strong>${I18n.mealLabel(m.mealType)}${m.time ? ' · ' + m.time : ''}</strong>
+                <strong>${I18n.mealLabel(m.mealType)}${m.time ? ' Â· ' + m.time : ''}</strong>
                 ${m.notes ? `<div class="muted small">${this.escape(m.notes)}</div>` : ''}
-                <div class="muted small">${totals.calories} kcal · ${P} ${totals.protein.toFixed(0)}g · ${C} ${totals.carbs.toFixed(0)}g · ${F} ${totals.fat.toFixed(0)}g</div>
+                <div class="muted small">${totals.calories} kcal Â· ${P} ${totals.protein.toFixed(0)}g Â· ${C} ${totals.carbs.toFixed(0)}g Â· ${F} ${totals.fat.toFixed(0)}g</div>
                 ${m.items.length === 0
                     ? `<p class="muted small">${I18n.t('nutrition.empty.items')}</p>`
                     : `<table class="meal-items" style="width:100%; margin-top:0.4rem; font-size:0.9rem;">

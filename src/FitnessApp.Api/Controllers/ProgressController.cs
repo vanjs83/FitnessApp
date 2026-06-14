@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Progress;
+﻿using FitnessApp.Application.DTOs.Progress;
 using FitnessApp.Application.Features.Progress.Commands;
 using FitnessApp.Application.Features.Progress.Queries;
 using FitnessApp.Domain.Common;
@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FitnessApp.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Authorize(Roles = Roles.Client)]
 public class ProgressController : ApiControllerBase
 {

@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using FitnessApp.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,6 +8,7 @@ namespace FitnessApp.Api.Controllers;
 /// Base controller that maps a CQRS <see cref="Result"/> onto the matching HTTP response.
 /// </summary>
 [ApiController]
+[ApiVersion("1.0")]
 public abstract class ApiControllerBase : ControllerBase
 {
     protected ActionResult HandleResult(Result result) =>

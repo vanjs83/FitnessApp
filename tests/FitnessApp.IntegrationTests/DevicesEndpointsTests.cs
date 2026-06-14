@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Notifications;
 using FluentAssertions;
@@ -15,7 +15,7 @@ public class DevicesEndpointsTests : IntegrationTestBase
     {
         var client = Factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/devices",
+        var response = await client.PostAsJsonAsync("/api/v1/devices",
             new RegisterDeviceRequest { Token = "abc", Platform = "web" });
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -26,7 +26,7 @@ public class DevicesEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var response = await client.PostAsJsonAsync("/api/devices",
+        var response = await client.PostAsJsonAsync("/api/v1/devices",
             new RegisterDeviceRequest { Token = $"token-{Guid.NewGuid():N}", Platform = "web" });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -37,7 +37,7 @@ public class DevicesEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var response = await client.PostAsJsonAsync("/api/devices",
+        var response = await client.PostAsJsonAsync("/api/v1/devices",
             new RegisterDeviceRequest { Token = "", Platform = "web" });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

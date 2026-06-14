@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Workouts;
 using FluentAssertions;
@@ -15,7 +15,7 @@ public class WorkoutsEndpointsTests : IntegrationTestBase
     {
         var client = Factory.CreateClient();
 
-        var response = await client.GetAsync("/api/workouts");
+        var response = await client.GetAsync("/api/v1/workouts");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -25,7 +25,7 @@ public class WorkoutsEndpointsTests : IntegrationTestBase
     {
         var trainer = await CreateAuthenticatedClientAsync("Trainer");
 
-        var response = await trainer.GetAsync("/api/workouts");
+        var response = await trainer.GetAsync("/api/v1/workouts");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -35,7 +35,7 @@ public class WorkoutsEndpointsTests : IntegrationTestBase
     {
         var (client, _, _) = await RegisterUserAsync("Client");
 
-        var response = await client.PostAsJsonAsync("/api/workouts",
+        var response = await client.PostAsJsonAsync("/api/v1/workouts",
             new CreateWorkoutRequest { Name = "Leg day" });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -46,7 +46,7 @@ public class WorkoutsEndpointsTests : IntegrationTestBase
     {
         var (client, _, _, _) = await CreateLinkedClientAndTrainerAsync();
 
-        var create = await client.PostAsJsonAsync("/api/workouts",
+        var create = await client.PostAsJsonAsync("/api/v1/workouts",
             new CreateWorkoutRequest { Name = "Leg day", DurationMinutes = 60 });
         create.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -54,7 +54,7 @@ public class WorkoutsEndpointsTests : IntegrationTestBase
         created!.Id.Should().BeGreaterThan(0);
         created.Name.Should().Be("Leg day");
 
-        var list = await client.GetFromJsonAsync<List<WorkoutListItemDto>>("/api/workouts", JsonOptions);
+        var list = await client.GetFromJsonAsync<List<WorkoutListItemDto>>("/api/v1/workouts", JsonOptions);
         list.Should().ContainSingle(w => w.Id == created.Id && w.Name == "Leg day");
     }
 }

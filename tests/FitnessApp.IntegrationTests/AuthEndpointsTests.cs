@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Auth;
 using FluentAssertions;
@@ -16,7 +16,7 @@ public class AuthEndpointsTests : IntegrationTestBase
         var client = Factory.CreateClient();
         var email = UniqueEmail();
 
-        var register = await client.PostAsJsonAsync("/api/auth/register", new
+        var register = await client.PostAsJsonAsync("/api/v1/auth/register", new
         {
             email,
             password = "Test123!",
@@ -25,7 +25,7 @@ public class AuthEndpointsTests : IntegrationTestBase
         });
         register.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var login = await client.PostAsJsonAsync("/api/auth/login", new { email, password = "Test123!" });
+        var login = await client.PostAsJsonAsync("/api/v1/auth/login", new { email, password = "Test123!" });
         login.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var auth = await login.Content.ReadFromJsonAsync<AuthResponse>();
@@ -42,10 +42,10 @@ public class AuthEndpointsTests : IntegrationTestBase
         var email = UniqueEmail();
         var payload = new { email, password = "Test123!", fullName = "Dup", role = "Client" };
 
-        var first = await client.PostAsJsonAsync("/api/auth/register", payload);
+        var first = await client.PostAsJsonAsync("/api/v1/auth/register", payload);
         first.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var second = await client.PostAsJsonAsync("/api/auth/register", payload);
+        var second = await client.PostAsJsonAsync("/api/v1/auth/register", payload);
         second.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -54,7 +54,7 @@ public class AuthEndpointsTests : IntegrationTestBase
     {
         var client = Factory.CreateClient();
         var email = UniqueEmail();
-        await client.PostAsJsonAsync("/api/auth/register", new
+        await client.PostAsJsonAsync("/api/v1/auth/register", new
         {
             email,
             password = "Test123!",
@@ -62,7 +62,7 @@ public class AuthEndpointsTests : IntegrationTestBase
             role = "Client"
         });
 
-        var login = await client.PostAsJsonAsync("/api/auth/login", new { email, password = "WrongPass1!" });
+        var login = await client.PostAsJsonAsync("/api/v1/auth/login", new { email, password = "WrongPass1!" });
         login.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

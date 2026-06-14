@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Chat;
+﻿using FitnessApp.Application.DTOs.Chat;
 using FitnessApp.Application.Features.Chat.Commands;
 using FitnessApp.Application.Features.Chat.Queries;
 using MediatR;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize]
-[Route("api/chat")]
+[Route("api/v{version:apiVersion}/chat")]
 public class ChatController : ApiControllerBase
 {
     private readonly ISender _sender;

@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Notifications;
+﻿using FitnessApp.Application.DTOs.Notifications;
 using FitnessApp.Application.Features.Devices.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize]
-[Route("api/devices")]
+[Route("api/v{version:apiVersion}/devices")]
 public class DevicesController : ApiControllerBase
 {
     private readonly ISender _sender;

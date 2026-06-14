@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Admin;
+﻿using FitnessApp.Application.DTOs.Admin;
 using FitnessApp.Application.DTOs.Email;
 using FitnessApp.Application.Features.Admin.Commands;
 using FitnessApp.Application.Features.Admin.Queries;
@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize(Roles = Roles.SuperAdmin)]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class AdminController : ApiControllerBase
 {
     private readonly ISender _sender;

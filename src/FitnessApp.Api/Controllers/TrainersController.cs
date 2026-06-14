@@ -1,4 +1,4 @@
-using FitnessApp.Application.Common;
+﻿using FitnessApp.Application.Common;
 using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.DTOs.Progress;
 using FitnessApp.Application.DTOs.Stats;
@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FitnessApp.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class TrainersController : ApiControllerBase
 {
     private readonly ISender _sender;

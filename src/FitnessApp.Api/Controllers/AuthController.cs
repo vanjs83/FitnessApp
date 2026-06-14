@@ -1,4 +1,4 @@
-using FitnessApp.Application.Common.Interfaces;
+﻿using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.Features.Auth.Commands;
 using FitnessApp.Application.Features.Auth.Queries;
@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FitnessApp.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class AuthController : ApiControllerBase
 {
     private readonly ISender _sender;

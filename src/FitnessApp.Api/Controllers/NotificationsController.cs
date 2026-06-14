@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Notifications;
+﻿using FitnessApp.Application.DTOs.Notifications;
 using FitnessApp.Application.Features.Notifications.Commands;
 using FitnessApp.Domain.Common;
 using MediatR;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize(Roles = Roles.Trainer)]
-[Route("api/notifications")]
+[Route("api/v{version:apiVersion}/notifications")]
 public class NotificationsController : ApiControllerBase
 {
     private readonly IMediator _sender;

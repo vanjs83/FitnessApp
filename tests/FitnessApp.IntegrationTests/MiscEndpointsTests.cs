@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Chat;
 using FitnessApp.Application.DTOs.Email;
@@ -11,7 +11,7 @@ namespace FitnessApp.IntegrationTests;
 
 /// <summary>
 /// Low-setup coverage for the smaller controllers: each test still runs through the
-/// full pipeline (auth, MediatR, EF) — just without complex data fixtures.
+/// full pipeline (auth, MediatR, EF) â€” just without complex data fixtures.
 /// </summary>
 public class MiscEndpointsTests : IntegrationTestBase
 {
@@ -24,7 +24,7 @@ public class MiscEndpointsTests : IntegrationTestBase
     {
         var client = Factory.CreateClient();
 
-        var response = await client.GetAsync("/api/chat/conversations");
+        var response = await client.GetAsync("/api/v1/chat/conversations");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -35,7 +35,7 @@ public class MiscEndpointsTests : IntegrationTestBase
         var client = await CreateAuthenticatedClientAsync("Client");
 
         var conversations = await client.GetFromJsonAsync<List<ConversationDto>>(
-            "/api/chat/conversations", JsonOptions);
+            "/api/v1/chat/conversations", JsonOptions);
 
         conversations.Should().NotBeNull().And.BeEmpty();
     }
@@ -47,7 +47,7 @@ public class MiscEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var photos = await client.GetFromJsonAsync<List<ProgressPhotoDto>>("/api/progress", JsonOptions);
+        var photos = await client.GetFromJsonAsync<List<ProgressPhotoDto>>("/api/v1/progress", JsonOptions);
 
         photos.Should().NotBeNull().And.BeEmpty();
     }
@@ -57,7 +57,7 @@ public class MiscEndpointsTests : IntegrationTestBase
     {
         var trainer = await CreateAuthenticatedClientAsync("Trainer");
 
-        var response = await trainer.GetAsync("/api/progress");
+        var response = await trainer.GetAsync("/api/v1/progress");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -69,7 +69,7 @@ public class MiscEndpointsTests : IntegrationTestBase
     {
         var trainer = await CreateAuthenticatedClientAsync("Trainer");
 
-        var status = await trainer.GetFromJsonAsync<EmailStatusDto>("/api/email/status", JsonOptions);
+        var status = await trainer.GetFromJsonAsync<EmailStatusDto>("/api/v1/email/status", JsonOptions);
 
         status.Should().NotBeNull();
     }
@@ -79,7 +79,7 @@ public class MiscEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var response = await client.GetAsync("/api/email/status");
+        var response = await client.GetAsync("/api/v1/email/status");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -91,7 +91,7 @@ public class MiscEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var status = await client.GetFromJsonAsync<SupportStatusDto>("/api/support/status", JsonOptions);
+        var status = await client.GetFromJsonAsync<SupportStatusDto>("/api/v1/support/status", JsonOptions);
 
         status.Should().NotBeNull();
     }

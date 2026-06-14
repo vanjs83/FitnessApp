@@ -1,4 +1,4 @@
-using FitnessApp.Application.DTOs.Stats;
+﻿using FitnessApp.Application.DTOs.Stats;
 using FitnessApp.Application.Features.Stats.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class StatsController : ApiControllerBase
 {
     private readonly ISender _sender;

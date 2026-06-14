@@ -1,4 +1,4 @@
-// Pose labels follow the same i18n-proxy pattern as ExerciseTypeLabels.
+﻿// Pose labels follow the same i18n-proxy pattern as ExerciseTypeLabels.
 const ProgressPoseLabels = new Proxy({}, {
     get(_, pose) {
         const keys = {
@@ -55,7 +55,7 @@ const Progress = {
 
         const token = API.getToken();
         try {
-            const res = await fetch('/api/progress', {
+            const res = await fetch('/api/v1/progress', {
                 method: 'POST',
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {},
                 body: form
@@ -101,7 +101,7 @@ const Progress = {
             const cards = group.map(p => {
                 const date = new Date(p.takenOn).toLocaleDateString(dateLocale);
                 const del = editable
-                    ? `<button class="progress-del" title="${I18n.t('common.delete')}" onclick="Progress.remove(${p.id})">✕</button>`
+                    ? `<button class="progress-del" title="${I18n.t('common.delete')}" onclick="Progress.remove(${p.id})">âś•</button>`
                     : '';
                 const note = p.note ? `<div class="progress-note">${this.escape(p.note)}</div>` : '';
                 return `

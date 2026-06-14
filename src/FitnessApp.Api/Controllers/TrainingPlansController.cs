@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using FitnessApp.Application.Common;
@@ -15,7 +15,7 @@ using QRCoder;
 namespace FitnessApp.Api.Controllers;
 
 [Authorize]
-[Route("api/training-plans")]
+[Route("api/v{version:apiVersion}/training-plans")]
 public class TrainingPlansController : ApiControllerBase
 {
     private readonly ISender _sender;
@@ -264,7 +264,7 @@ public class TrainingPlansController : ApiControllerBase
                             : 2)
                 .FirstOrDefault();
         }
-        catch { /* ignore — fall back to caller default */ }
+        catch { /* ignore â€” fall back to caller default */ }
         return null;
     }
 }

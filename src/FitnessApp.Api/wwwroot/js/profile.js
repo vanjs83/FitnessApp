@@ -1,4 +1,4 @@
-const Profile = {
+﻿const Profile = {
     currentRole: null,
 
     init() {
@@ -142,7 +142,7 @@ const Profile = {
         form.append('file', file);
         const token = API.getToken();
         try {
-            const res = await fetch('/api/auth/profile-image', {
+            const res = await fetch('/api/v1/auth/profile-image', {
                 method: 'POST',
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {},
                 body: form
@@ -209,7 +209,7 @@ const Profile = {
 
     renderReadOnly(container, p) {
         const isTrainer = p.role === 'Trainer';
-        const dash = '—';
+        const dash = 'â€”';
         const dateLocale = I18n.lang === 'en' ? 'en-GB' : 'hr-HR';
         const rows = [
             [I18n.t('common.fullName'), p.fullName],
@@ -220,7 +220,7 @@ const Profile = {
             !isTrainer && [I18n.t('profile.readonly.height'), p.heightCm ? `${p.heightCm} cm` : null],
             !isTrainer && [I18n.t('profile.readonly.weight'), p.weightKg != null ? `${p.weightKg} kg` : null],
             !isTrainer && [I18n.t('profile.readonly.activity'), this.activityLabel(p.activityLevel)],
-            !isTrainer && [I18n.t('profile.readonly.weeklyTrainings'), p.preferredWeeklyTrainingCount != null ? `${p.preferredWeeklyTrainingCount}×` : null],
+            !isTrainer && [I18n.t('profile.readonly.weeklyTrainings'), p.preferredWeeklyTrainingCount != null ? `${p.preferredWeeklyTrainingCount}Ă—` : null],
             !isTrainer && [I18n.t('profile.readonly.preferredType'), this.trainingTypeLabel(p.preferredTrainingType)],
             !isTrainer && [I18n.t('profile.readonly.goal'), p.goal],
             !isTrainer && [I18n.t('profile.readonly.healthNotes'), p.healthNotes]
@@ -255,7 +255,7 @@ const Profile = {
         if (url) {
             return `<span class="${sizeClass}"><img src="${this.escape(url)}" alt=""></span>`;
         }
-        return `<span class="${sizeClass}"><span>👤</span></span>`;
+        return `<span class="${sizeClass}"><span>đź‘¤</span></span>`;
     },
 
     escape(s) {

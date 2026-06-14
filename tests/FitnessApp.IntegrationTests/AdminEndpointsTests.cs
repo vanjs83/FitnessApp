@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using FluentAssertions;
 using Xunit;
 
@@ -13,7 +13,7 @@ public class AdminEndpointsTests : IntegrationTestBase
     {
         var client = Factory.CreateClient();
 
-        var response = await client.GetAsync("/api/admin/trainers");
+        var response = await client.GetAsync("/api/v1/admin/trainers");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -23,7 +23,7 @@ public class AdminEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var response = await client.GetAsync("/api/admin/trainers");
+        var response = await client.GetAsync("/api/v1/admin/trainers");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -33,7 +33,7 @@ public class AdminEndpointsTests : IntegrationTestBase
     {
         var trainer = await CreateAuthenticatedClientAsync("Trainer");
 
-        var response = await trainer.GetAsync("/api/admin/stats");
+        var response = await trainer.GetAsync("/api/v1/admin/stats");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
