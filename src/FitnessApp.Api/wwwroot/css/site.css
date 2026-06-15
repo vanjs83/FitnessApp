@@ -927,32 +927,6 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 .msg-result { margin-top: 0.6rem; font-size: 0.88rem; }
 
 /* Progress photos gallery */
-.progress-group { margin-top: 1rem; }
-.progress-group-title { margin: 0 0 0.5rem; color: #74c0fc; }
-.progress-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 0.75rem;
-}
-.progress-card {
-    position: relative;
-    margin: 0;
-    background: #1a2028;
-    border: 1px solid #2a323d;
-    border-radius: 8px;
-    overflow: hidden;
-}
-.progress-card img {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    object-fit: cover;
-    display: block;
-}
-.progress-card figcaption {
-    padding: 0.4rem 0.5rem;
-    font-size: 0.8rem;
-    color: #a0a8b0;
-}
 .progress-note { color: #e6e8eb; margin-top: 0.2rem; }
 .progress-del {
     position: absolute;
@@ -970,6 +944,72 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
     z-index: 1;
 }
 .progress-del:hover { background: #c92a2a; }
+
+/* Progress photo carousel */
+.carousel {
+    position: relative;
+    max-width: 340px;
+    margin: 1rem auto 0;
+    overflow: hidden;
+    border: 1px solid #2a323d;
+    border-radius: 8px;
+    background: #1a2028;
+}
+.carousel-track {
+    display: flex;
+    transition: transform 0.4s ease;
+}
+.carousel-slide {
+    position: relative;
+    flex: 0 0 100%;
+    margin: 0;
+}
+.carousel-slide img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    display: block;
+}
+.carousel-slide figcaption {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    color: #a0a8b0;
+}
+.carousel-pose { color: #74c0fc; }
+.carousel-arrow {
+    position: absolute;
+    top: 42%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+}
+.carousel-arrow:hover { background: rgba(0, 0, 0, 0.85); }
+.carousel-arrow.prev { left: 6px; }
+.carousel-arrow.next { right: 6px; }
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.5rem 0;
+}
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #3a4450;
+    cursor: pointer;
+}
+.carousel-dot.active { background: #74c0fc; }
 
 /* Exercise thumbnail in catalog list */
 .exercise-item { justify-content: flex-start; gap: 0.85rem; }

@@ -1,14 +1,22 @@
 using FitnessApp.Application.Common.Interfaces;
+using FitnessApp.Application.Storage;
 using FitnessApp.Domain.Entities;
 using FitnessApp.Infrastructure.Identity;
+using FitnessApp.Infrastructure.Persistence.Converters;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Infrastructure.Persistence;
 
 public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    private readonly StorageSettings _storage;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, IOptions<StorageSettings> storage) : base(options)
+    {
+        _storage = storage.Value;
+    }
 
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<TrainingPlan> TrainingPlans => Set<TrainingPlan>();
@@ -41,12 +49,15 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
                 .OnDelete(DeleteBehavior.NoAction);
             u.HasIndex(x => x.TrainerId);
             u.HasQueryFilter(x => x.IsActive);
+            u.Property(x => x.ProfileImagePath).HasConversion(ImageFileNameConverter.For(_storage.ProfileImagesUrl));
         });
 
         builder.Entity<Exercise>(e =>
         {
             e.Property(x => x.Name).IsRequired().HasMaxLength(120);
             e.Property(x => x.MuscleGroup).HasMaxLength(60);
+            e.Property(x => x.ImageUrl).HasConversion(ImageFileNameConverter.For(_storage.ExerciseImagesUrl));
+            e.Property(x => x.VideoUrl).HasConversion(ImageFileNameConverter.For(_storage.ExerciseVideosUrl));
             e.HasIndex(x => x.Name);
         });
 
@@ -268,7 +279,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
         builder.Entity<ProgressPhoto>(e =>
         {
             e.Property(x => x.ClientId).IsRequired();
-            e.Property(x => x.ImagePath).IsRequired().HasMaxLength(400);
+            e.Property(x => x.ImagePath).IsRequired().HasMaxLength(400)
+                .HasConversion(ImageFileNameConverter.For(_storage.ProgressImagesUrl));
             e.Property(x => x.Note).HasMaxLength(500);
             e.HasIndex(x => new { x.ClientId, x.Pose, x.TakenOn });
 

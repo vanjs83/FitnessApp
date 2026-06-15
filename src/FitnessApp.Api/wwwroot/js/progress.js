@@ -12,6 +12,7 @@ const ProgressPoseLabels = new Proxy({}, {
 
 const Progress = {
     photos: [],
+    _timer: null,
 
     init() {
         const uploadBtn = document.getElementById('progressUploadBtn');
@@ -86,39 +87,72 @@ const Progress = {
         }
     },
 
-    // Renders the gallery grouped by pose. `editable` adds delete buttons (own gallery only).
+    // Renders the photos as an auto-rotating carousel ordered oldest -> newest so it reads as a
+    // progression. `editable` adds a delete button on each slide (own gallery only).
     render(container, photos, editable) {
+        if (this._timer) { clearInterval(this._timer); this._timer = null; }
+
         if (!photos || !photos.length) {
             container.innerHTML = `<p class="muted small">${I18n.t('progress.empty')}</p>`;
             return;
         }
-        const poses = ['Front', 'Back', 'Side'];
         const dateLocale = I18n.lang === 'en' ? 'en-GB' : 'hr-HR';
+        const ordered = [...photos].sort((a, b) => new Date(a.takenOn) - new Date(b.takenOn));
 
-        container.innerHTML = poses.map(pose => {
-            const group = photos.filter(p => p.pose === pose);
-            if (!group.length) return '';
-            const cards = group.map(p => {
-                const date = new Date(p.takenOn).toLocaleDateString(dateLocale);
-                const del = editable
-                    ? `<button class="progress-del" title="${I18n.t('common.delete')}" onclick="Progress.remove(${p.id})">âś•</button>`
-                    : '';
-                const note = p.note ? `<div class="progress-note">${this.escape(p.note)}</div>` : '';
-                return `
-                    <figure class="progress-card">
-                        ${del}
-                        <a href="${this.escape(p.imageUrl)}" target="_blank" rel="noopener">
-                            <img src="${this.escape(p.imageUrl)}" alt="${this.escape(date)}" loading="lazy">
-                        </a>
-                        <figcaption>${this.escape(date)}${note}</figcaption>
-                    </figure>`;
-            }).join('');
+        const slides = ordered.map(p => {
+            const date = new Date(p.takenOn).toLocaleDateString(dateLocale);
+            const del = editable
+                ? `<button class="progress-del" title="${I18n.t('common.delete')}" onclick="Progress.remove(${p.id})">&#10005;</button>`
+                : '';
+            const note = p.note ? `<div class="progress-note">${this.escape(p.note)}</div>` : '';
             return `
-                <div class="progress-group">
-                    <h4 class="progress-group-title">${ProgressPoseLabels[pose]}</h4>
-                    <div class="progress-grid">${cards}</div>
-                </div>`;
+                <figure class="carousel-slide">
+                    ${del}
+                    <img src="${this.escape(p.imageUrl)}" alt="${this.escape(date)}" loading="lazy">
+                    <figcaption><span class="carousel-pose">${ProgressPoseLabels[p.pose]}</span> · ${this.escape(date)}${note}</figcaption>
+                </figure>`;
         }).join('');
+
+        const controls = ordered.length > 1
+            ? `<button class="carousel-arrow prev" aria-label="prev">&#8249;</button>
+               <button class="carousel-arrow next" aria-label="next">&#8250;</button>
+               <div class="carousel-dots">${ordered.map((_, i) =>
+                   `<button class="carousel-dot${i === 0 ? ' active' : ''}" data-i="${i}" aria-label="${i + 1}"></button>`).join('')}</div>`
+            : '';
+
+        container.innerHTML = `
+            <div class="carousel">
+                <div class="carousel-track">${slides}</div>
+                ${controls}
+            </div>`;
+
+        this.setupCarousel(container.querySelector('.carousel'), ordered.length);
+    },
+
+    // Wires arrows, dots, auto-rotation (4s) and pause-on-hover for the rendered carousel.
+    setupCarousel(root, count) {
+        if (!root || count <= 1) return;
+        const track = root.querySelector('.carousel-track');
+        const dots = [...root.querySelectorAll('.carousel-dot')];
+        let index = 0;
+
+        const go = i => {
+            index = (i + count) % count;
+            track.style.transform = `translateX(-${index * 100}%)`;
+            dots.forEach((d, di) => d.classList.toggle('active', di === index));
+        };
+        const restart = () => {
+            if (this._timer) clearInterval(this._timer);
+            this._timer = setInterval(() => go(index + 1), 4000);
+        };
+
+        root.querySelector('.carousel-arrow.prev').addEventListener('click', () => { go(index - 1); restart(); });
+        root.querySelector('.carousel-arrow.next').addEventListener('click', () => { go(index + 1); restart(); });
+        dots.forEach(d => d.addEventListener('click', () => { go(Number(d.dataset.i)); restart(); }));
+        root.addEventListener('mouseenter', () => { if (this._timer) clearInterval(this._timer); });
+        root.addEventListener('mouseleave', restart);
+
+        restart();
     },
 
     escape(s) {
