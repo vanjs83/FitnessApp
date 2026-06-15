@@ -1,7 +1,10 @@
+using System.Security.Cryptography;
+using System.Text;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Auth;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Common;
+using FitnessApp.Domain.Entities;
 using FitnessApp.Infrastructure.Auth;
 using FitnessApp.Infrastructure.Persistence;
 using Google.Apis.Auth;
@@ -35,18 +38,34 @@ public class AuthService : IAuthService
 
     public string? GoogleClientId => _googleAuth.ClientId;
 
-    private AuthResponse Issue(ApplicationUser user, string role)
+    // Issues an access token plus a new persisted refresh token (hashed). Caller awaits the save.
+    private async Task<AuthResponse> IssueAsync(ApplicationUser user, string role, CancellationToken cancellationToken)
     {
         var (token, expiresAt) = _tokenService.CreateToken(user.Id, user.Email!, role);
+        var (refreshToken, refreshExpiresAt) = _tokenService.CreateRefreshToken();
+
+        _db.RefreshTokens.Add(new RefreshToken
+        {
+            UserId = user.Id,
+            TokenHash = Hash(refreshToken),
+            ExpiresAt = refreshExpiresAt
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+
         return new AuthResponse
         {
             Token = token,
             ExpiresAt = expiresAt,
+            RefreshToken = refreshToken,
+            RefreshTokenExpiresAt = refreshExpiresAt,
             Email = user.Email!,
             FullName = user.FullName,
             Role = role
         };
     }
+
+    private static string Hash(string token)
+        => Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 
     public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
         => await _userManager.FindByEmailAsync(email) != null;
@@ -61,7 +80,7 @@ public class AuthService : IAuthService
             return (false, result.Errors.Select(e => e.Description).ToList(), null);
 
         await _userManager.AddToRoleAsync(user, role);
-        return (true, Array.Empty<string>(), Issue(user, role));
+        return (true, Array.Empty<string>(), await IssueAsync(user, role, cancellationToken));
     }
 
     public async Task<(LoginResultCode Code, AuthResponse? Response)> LoginAsync(
@@ -74,7 +93,7 @@ public class AuthService : IAuthService
         if (!result.Succeeded) return (LoginResultCode.WrongPassword, null);
 
         var roles = await _userManager.GetRolesAsync(user);
-        return (LoginResultCode.Success, Issue(user, roles.FirstOrDefault() ?? Roles.Client));
+        return (LoginResultCode.Success, await IssueAsync(user, roles.FirstOrDefault() ?? Roles.Client, cancellationToken));
     }
 
     public async Task<(bool Ok, bool Unauthorized, string? Error, AuthResponse? Response)> GoogleLoginAsync(
@@ -103,7 +122,7 @@ public class AuthService : IAuthService
         if (user != null)
         {
             var existingRoles = await _userManager.GetRolesAsync(user);
-            return (true, false, null, Issue(user, existingRoles.FirstOrDefault() ?? Roles.Client));
+            return (true, false, null, await IssueAsync(user, existingRoles.FirstOrDefault() ?? Roles.Client, cancellationToken));
         }
 
         var role = Roles.SelfRegisterable.Contains(requestedRole) ? requestedRole! : Roles.Client;
@@ -121,7 +140,51 @@ public class AuthService : IAuthService
             return (false, false, string.Join(", ", result.Errors.Select(e => e.Description)), null);
 
         await _userManager.AddToRoleAsync(user, role);
-        return (true, false, null, Issue(user, role));
+        return (true, false, null, await IssueAsync(user, role, cancellationToken));
+    }
+
+    public async Task<(bool Ok, AuthResponse? Response)> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken)) return (false, null);
+
+        var hash = Hash(refreshToken);
+        var existing = await _db.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == hash, cancellationToken);
+        if (existing == null) return (false, null);
+
+        if (DateTime.UtcNow >= existing.ExpiresAt)
+        {
+            _db.RefreshTokens.Remove(existing);
+            await _db.SaveChangesAsync(cancellationToken);
+            return (false, null);
+        }
+
+        // Inactive (soft-deleted) users are removed by the IsActive query filter, so this is null for them.
+        var user = await _userManager.FindByIdAsync(existing.UserId);
+        if (user == null)
+        {
+            _db.RefreshTokens.Remove(existing);
+            await _db.SaveChangesAsync(cancellationToken);
+            return (false, null);
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? Roles.Client;
+
+        // Rotate: drop the used token; IssueAsync persists the replacement in the same save.
+        _db.RefreshTokens.Remove(existing);
+        return (true, await IssueAsync(user, role, cancellationToken));
+    }
+
+    public async Task RevokeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken)) return;
+
+        var hash = Hash(refreshToken);
+        var existing = await _db.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == hash, cancellationToken);
+        if (existing == null) return;
+
+        _db.RefreshTokens.Remove(existing);
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<MeResponse?> GetMeAsync(string userId, CancellationToken cancellationToken = default)

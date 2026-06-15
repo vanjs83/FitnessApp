@@ -27,6 +27,12 @@ public interface IAuthService
     Task<(bool Ok, bool Unauthorized, string? Error, AuthResponse? Response)> GoogleLoginAsync(
         string credential, string? requestedRole, CancellationToken cancellationToken = default);
 
+    /// <summary>Validates a refresh token and rotates it, returning a fresh token pair. Ok is false when invalid/expired.</summary>
+    Task<(bool Ok, AuthResponse? Response)> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default);
+
+    /// <summary>Revokes a refresh token (logout). No-op when the token is unknown.</summary>
+    Task RevokeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
+
     Task<MeResponse?> GetMeAsync(string userId, CancellationToken cancellationToken = default);
 
     Task<(bool Succeeded, IReadOnlyList<string> Errors, string? FullName)> UpdateFullNameAsync(

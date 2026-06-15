@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using FitnessApp.Application.Interfaces;
 using Microsoft.Extensions.Options;
@@ -41,5 +42,13 @@ public class TokenService : ITokenService
         );
 
         return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
+    }
+
+    public (string Token, DateTime ExpiresAt) CreateRefreshToken()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        var token = Convert.ToBase64String(bytes);
+        var expiresAt = DateTime.UtcNow.AddDays(_settings.RefreshTokenDays);
+        return (token, expiresAt);
     }
 }

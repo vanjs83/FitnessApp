@@ -70,3 +70,39 @@ public class GoogleLoginCommandHandler : IRequestHandler<GoogleLoginCommand, Goo
         return new GoogleLoginResult(ok, unauthorized, error, response);
     }
 }
+
+// ===== Refresh access token (rotates the refresh token) =====
+
+public record RefreshTokenResult(bool Ok, AuthResponse? Response);
+
+public record RefreshTokenCommand(string RefreshToken) : IRequest<RefreshTokenResult>;
+
+public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, RefreshTokenResult>
+{
+    private readonly IAuthService _auth;
+
+    public RefreshTokenCommandHandler(IAuthService auth) => _auth = auth;
+
+    public async Task<RefreshTokenResult> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+    {
+        var (ok, response) = await _auth.RefreshAsync(request.RefreshToken, cancellationToken);
+        return new RefreshTokenResult(ok, response);
+    }
+}
+
+// ===== Logout (revoke refresh token) =====
+
+public record LogoutCommand(string RefreshToken) : IRequest<Unit>;
+
+public class LogoutCommandHandler : IRequestHandler<LogoutCommand, Unit>
+{
+    private readonly IAuthService _auth;
+
+    public LogoutCommandHandler(IAuthService auth) => _auth = auth;
+
+    public async Task<Unit> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    {
+        await _auth.RevokeRefreshTokenAsync(request.RefreshToken, cancellationToken);
+        return Unit.Value;
+    }
+}

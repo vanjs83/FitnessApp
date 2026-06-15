@@ -35,6 +35,22 @@ public class AuthController : ApiControllerBase
         };
     }
 
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthResponse>> Refresh(RefreshTokenRequest request)
+    {
+        var result = await _sender.Send(new RefreshTokenCommand(request.RefreshToken));
+        return result.Ok
+            ? Ok(result.Response)
+            : Unauthorized(new { message = "Invalid or expired refresh token.", code = "invalid_refresh" });
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(RefreshTokenRequest request)
+    {
+        await _sender.Send(new LogoutCommand(request.RefreshToken));
+        return Ok(new { message = "Logged out." });
+    }
+
     [HttpGet("google-config")]
     [ResponseCache(CacheProfileName = "Reference")]
     public async Task<ActionResult<object>> GoogleConfig()

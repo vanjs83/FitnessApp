@@ -27,6 +27,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<TrainerRequest> TrainerRequests => Set<TrainerRequest>();
     public DbSet<ProgressPhoto> ProgressPhotos => Set<ProgressPhoto>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -274,6 +275,19 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
             e.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<RefreshToken>(e =>
+        {
+            e.Property(x => x.UserId).IsRequired();
+            e.Property(x => x.TokenHash).IsRequired().HasMaxLength(64);
+            e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasIndex(x => x.UserId);
+
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

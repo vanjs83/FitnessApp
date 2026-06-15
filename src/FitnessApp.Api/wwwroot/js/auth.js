@@ -213,6 +213,7 @@ const Auth = {
 
     onLoginSuccess(res) {
         API.setToken(res.token);
+        if (res.refreshToken) API.setRefreshToken(res.refreshToken);
         localStorage.setItem('userEmail', res.email);
         localStorage.setItem('userRole', res.role);
         App.showApp(res.email, res.role);
@@ -221,9 +222,13 @@ const Auth = {
         }
     },
 
-    logout() {
+    async logout() {
+        // Best-effort server-side revoke; a failure here must not block the local logout.
+        const rt = API.getRefreshToken();
+        if (rt) {
+            try { await API.post('/auth/logout', { refreshToken: rt }); } catch (e) { /* ignore */ }
+        }
         API.clearToken();
-        localStorage.removeItem('userRole');
         window.location.reload();
     },
 
