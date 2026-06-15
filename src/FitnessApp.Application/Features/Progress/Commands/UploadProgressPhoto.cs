@@ -7,6 +7,7 @@ using FitnessApp.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Application.Features.Progress.Commands;
@@ -15,7 +16,8 @@ public record UploadProgressPhotoCommand(
     IFormFile File,
     ProgressPose Pose,
     DateTime? TakenOn,
-    string? Note) : IRequest<Result<ProgressPhotoDto>>;
+    string? Note,
+    int? PlanId) : IRequest<Result<ProgressPhotoDto>>;
 
 public class UploadProgressPhotoCommandHandler : IRequestHandler<UploadProgressPhotoCommand, Result<ProgressPhotoDto>>
 {
@@ -46,6 +48,13 @@ public class UploadProgressPhotoCommandHandler : IRequestHandler<UploadProgressP
     {
         var userId = _currentUser.UserId;
 
+        // A photo may be tied to one of the client's own plans; reject ids that aren't theirs.
+        if (request.PlanId is int planId &&
+            !await _db.TrainingPlans.AnyAsync(p => p.Id == planId && p.ClientId == userId, cancellationToken))
+        {
+            return Result<ProgressPhotoDto>.Fail(ResultError.Validation, "Plan not found.");
+        }
+
         var options = new FileUploadOptions
         {
             FolderPath = _storage.ResolveProgressImagesPath(_env.ContentRootPath),
@@ -61,6 +70,7 @@ public class UploadProgressPhotoCommandHandler : IRequestHandler<UploadProgressP
         var photo = new ProgressPhoto
         {
             ClientId = userId,
+            PlanId = request.PlanId,
             ImagePath = saved.Url!,
             Pose = request.Pose,
             TakenOn = request.TakenOn ?? DateTime.UtcNow,

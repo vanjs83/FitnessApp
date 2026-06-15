@@ -41,7 +41,7 @@ const Stats = {
         const planSel = document.getElementById('statsPlanSelect');
         const planId = parseInt(planSel.value);
         if (!planId) return;
-        await Plans.loadProgression(planId, 'statsPlanExerciseSelect', 'statsPlanChart', 'statsPlanSummary', 'statsPlanChartObj');
+        await Plans.loadProgression(planId, 'statsPlanExerciseSelect', 'statsPlanChart', 'statsPlanSummary', 'statsPlanChartObj', 'statsPlanPhotos');
     },
 
     formatDate(s) {

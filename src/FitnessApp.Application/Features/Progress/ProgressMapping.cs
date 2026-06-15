@@ -10,6 +10,7 @@ internal static class ProgressMapping
     public static Expression<Func<ProgressPhoto, ProgressPhotoDto>> ToDto => p => new ProgressPhotoDto
     {
         Id = p.Id,
+        PlanId = p.PlanId,
         ImageUrl = p.ImagePath,
         Pose = p.Pose,
         TakenOn = p.TakenOn,
@@ -20,6 +21,7 @@ internal static class ProgressMapping
     public static ProgressPhotoDto ToDtoObject(this ProgressPhoto p) => new()
     {
         Id = p.Id,
+        PlanId = p.PlanId,
         ImageUrl = p.ImagePath,
         Pose = p.Pose,
         TakenOn = p.TakenOn,

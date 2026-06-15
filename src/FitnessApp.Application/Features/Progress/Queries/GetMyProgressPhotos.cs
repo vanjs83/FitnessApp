@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.Progress.Queries;
 
-public record GetMyProgressPhotosQuery : IRequest<IReadOnlyList<ProgressPhotoDto>>;
+public record GetMyProgressPhotosQuery(int? PlanId = null) : IRequest<IReadOnlyList<ProgressPhotoDto>>;
 
 public class GetMyProgressPhotosQueryHandler : IRequestHandler<GetMyProgressPhotosQuery, IReadOnlyList<ProgressPhotoDto>>
 {
@@ -23,6 +23,7 @@ public class GetMyProgressPhotosQueryHandler : IRequestHandler<GetMyProgressPhot
         var userId = _currentUser.UserId;
         return await _db.ProgressPhotos
             .Where(p => p.ClientId == userId)
+            .Where(p => request.PlanId == null || p.PlanId == request.PlanId)
             .OrderByDescending(p => p.TakenOn)
             .ThenByDescending(p => p.CreatedAt)
             .Select(ProgressMapping.ToDto)

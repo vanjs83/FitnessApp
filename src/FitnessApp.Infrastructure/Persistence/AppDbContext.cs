@@ -283,11 +283,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
                 .HasConversion(ImageFileNameConverter.For(_storage.ProgressImagesUrl));
             e.Property(x => x.Note).HasMaxLength(500);
             e.HasIndex(x => new { x.ClientId, x.Pose, x.TakenOn });
+            e.HasIndex(x => x.PlanId);
 
             e.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<TrainingPlan>()
+                .WithMany()
+                .HasForeignKey(x => x.PlanId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<RefreshToken>(e =>

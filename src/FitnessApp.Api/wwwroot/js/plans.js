@@ -182,10 +182,13 @@ const Plans = {
         }
     },
 
-    async loadProgression(planId, selectId, canvasId, summaryId, chartKey) {
+    async loadProgression(planId, selectId, canvasId, summaryId, chartKey, photosContainerId) {
         const select = document.getElementById(selectId);
         const summary = document.getElementById(summaryId);
         if (!select) return;
+
+        // Show this plan's progress photos alongside the chart, so the same period is visible.
+        this.loadPlanPhotos(planId, photosContainerId);
         try {
             this.progressionData = await API.get(`/training-plans/${planId}/weight-progression`);
         } catch (err) {
@@ -202,6 +205,19 @@ const Plans = {
             `<option value="${p.exerciseId}">${this.escape(p.exerciseName)}${p.muscleGroup ? ' (' + this.escape(p.muscleGroup) + ')' : ''}</option>`
         ).join('');
         this.renderProgression(parseInt(select.value), canvasId, summaryId, chartKey);
+    },
+
+    // Loads the progress photos for a plan and renders them as a (read-only) carousel.
+    async loadPlanPhotos(planId, containerId) {
+        if (!containerId) return;
+        const host = document.getElementById(containerId);
+        if (!host) return;
+        try {
+            const photos = await API.get(`/progress?planId=${planId}`);
+            Progress.render(host, photos, false);
+        } catch {
+            host.innerHTML = '';
+        }
     },
 
     renderProgression(exerciseId, canvasId, summaryId, chartKey) {

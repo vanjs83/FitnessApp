@@ -12,6 +12,7 @@ const ProgressPoseLabels = new Proxy({}, {
 
 const Progress = {
     photos: [],
+    plans: [],
     _timer: null,
 
     init() {
@@ -21,6 +22,8 @@ const Progress = {
             uploadBtn.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', () => this.upload(fileInput.files[0]));
         }
+        const planSel = document.getElementById('progressPlan');
+        if (planSel) planSel.addEventListener('change', () => this.load());
         const dateInput = document.getElementById('progressTakenOn');
         if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().substring(0, 10);
     },
@@ -28,12 +31,33 @@ const Progress = {
     async load() {
         const grid = document.getElementById('progressGallery');
         if (!grid) return;
+        await this.loadPlans();
+        const planId = this.selectedPlanId();
         try {
-            this.photos = await API.get('/progress');
+            this.photos = await API.get(planId ? `/progress?planId=${planId}` : '/progress');
             this.render(grid, this.photos, true);
         } catch (err) {
             grid.innerHTML = `<p class="muted small">${this.escape(err.message)}</p>`;
         }
+    },
+
+    // Populates the plan dropdown once. Selecting a plan scopes the gallery and tags new uploads.
+    async loadPlans() {
+        const sel = document.getElementById('progressPlan');
+        if (!sel || sel.dataset.loaded) return;
+        try {
+            const me = await API.get('/auth/me');
+            this.plans = await API.get(`/training-plans/client/${me.id}`);
+        } catch {
+            this.plans = [];
+        }
+        sel.innerHTML = this.plans.map(p => `<option value="${p.id}">${this.escape(p.name)}</option>`).join('');
+        sel.dataset.loaded = '1';
+    },
+
+    selectedPlanId() {
+        const sel = document.getElementById('progressPlan');
+        return sel && sel.value ? sel.value : null;
     },
 
     async upload(file) {
@@ -53,6 +77,8 @@ const Progress = {
         form.append('takenOn', document.getElementById('progressTakenOn').value || new Date().toISOString().substring(0, 10));
         const note = document.getElementById('progressNote').value.trim();
         if (note) form.append('note', note);
+        const planId = this.selectedPlanId();
+        if (planId) form.append('planId', planId);
 
         const token = API.getToken();
         try {

@@ -20,8 +20,8 @@ public class ProgressController : ApiControllerBase
 
     [HttpGet]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<ProgressPhotoDto>>> GetMine()
-        => Ok(await _sender.Send(new GetMyProgressPhotosQuery()));
+    public async Task<ActionResult<IReadOnlyList<ProgressPhotoDto>>> GetMine([FromQuery] int? planId)
+        => Ok(await _sender.Send(new GetMyProgressPhotosQuery(planId)));
 
     [HttpPost]
     [RequestSizeLimit(UploadProgressPhotoCommandHandler.MaxImageBytes + 1024)]
@@ -29,8 +29,9 @@ public class ProgressController : ApiControllerBase
         IFormFile file,
         [FromForm] ProgressPose pose,
         [FromForm] DateTime? takenOn,
-        [FromForm] string? note)
-        => HandleResult(await _sender.Send(new UploadProgressPhotoCommand(file, pose, takenOn, note)));
+        [FromForm] string? note,
+        [FromForm] int? planId)
+        => HandleResult(await _sender.Send(new UploadProgressPhotoCommand(file, pose, takenOn, note, planId)));
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
