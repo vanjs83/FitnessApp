@@ -61,18 +61,41 @@ const Admin = {
         if (tab === 'mail') this.loadMail();
     },
 
-    async loadStats() {
-        try {
-            const s = await API.get('/admin/stats');
-            document.getElementById('adminStats').innerHTML = `
-                <div class="stat-card"><div class="stat-value">${s.trainersCount}</div><div class="stat-label">${I18n.t('admin.stats.trainers')}</div></div>
-                <div class="stat-card"><div class="stat-value">${s.clientsCount}</div><div class="stat-label">${I18n.t('admin.stats.clients')}</div></div>
-                <div class="stat-card"><div class="stat-value">${s.clientsWithoutTrainer}</div><div class="stat-label">${I18n.t('admin.stats.clientsNoTrainer')}</div></div>
-                <div class="stat-card"><div class="stat-value">${s.exercisesCount}</div><div class="stat-label">${I18n.t('admin.stats.exerciseLabel')}</div></div>
-            `;
-        } catch (err) {
-            console.error(err);
-        }
+    loadStats() {
+        // SSE pushes the first frame on connect, so it both paints and keeps the cards live —
+        // no separate one-shot fetch needed.
+        this.startStatsStream();
+    },
+
+    renderStats(s) {
+        document.getElementById('adminStats').innerHTML = `
+            <div class="stat-card"><div class="stat-value">${s.trainersCount}</div><div class="stat-label">${I18n.t('admin.stats.trainers')}</div></div>
+            <div class="stat-card"><div class="stat-value">${s.clientsCount}</div><div class="stat-label">${I18n.t('admin.stats.clients')}</div></div>
+            <div class="stat-card"><div class="stat-value">${s.clientsWithoutTrainer}</div><div class="stat-label">${I18n.t('admin.stats.clientsNoTrainer')}</div></div>
+            <div class="stat-card"><div class="stat-value">${s.exercisesCount}</div><div class="stat-label">${I18n.t('admin.stats.exerciseLabel')}</div></div>
+        `;
+    },
+
+    // Opens an SSE stream that pushes the dashboard stats live. EventSource can't send an
+    // Authorization header, so the JWT goes via the access_token query param.
+    startStatsStream() {
+        if (this._statsStream) return;
+        const token = API.getToken();
+        if (!token) return;
+
+        const es = new EventSource(`${API.baseUrl}/admin/stats?access_token=${encodeURIComponent(token)}`);
+        this._statsStream = es;
+
+        es.onmessage = e => {
+            try { this.renderStats(JSON.parse(e.data)); } catch { /* ignore malformed frame */ }
+        };
+        es.onerror = () => {
+            // Drop the (possibly stale-token) connection and retry with a fresh token shortly.
+            es.close();
+            this._statsStream = null;
+            clearTimeout(this._statsStreamRetry);
+            this._statsStreamRetry = setTimeout(() => this.startStatsStream(), 5000);
+        };
     },
 
     // Debounces a server reload so we don't fire a request on every keystroke.

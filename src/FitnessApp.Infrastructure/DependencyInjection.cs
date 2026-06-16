@@ -76,14 +76,17 @@ public static class DependencyInjection
                     ClockSkew = TimeSpan.FromMinutes(1)
                 };
 
-                // Allow SignalR (WebSockets) to authenticate via access_token query string.
+                // SignalR (WebSockets) and Server-Sent Events streams can't send an Authorization
+                // header, so they authenticate via the access_token query string instead.
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
                     {
                         var accessToken = context.Request.Query["access_token"];
                         var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                        var isTokenInQuery = path.StartsWithSegments("/hubs")
+                            || (path.Value?.EndsWith("/admin/stats", StringComparison.OrdinalIgnoreCase) ?? false);
+                        if (!string.IsNullOrEmpty(accessToken) && isTokenInQuery)
                             context.Token = accessToken;
                         return Task.CompletedTask;
                     }
