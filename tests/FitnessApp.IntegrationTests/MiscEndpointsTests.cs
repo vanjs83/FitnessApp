@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using FitnessApp.Application.Common;
 using FitnessApp.Application.DTOs.Chat;
 using FitnessApp.Application.DTOs.Email;
 using FitnessApp.Application.DTOs.Progress;
@@ -47,9 +48,9 @@ public class MiscEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var photos = await client.GetFromJsonAsync<List<ProgressPhotoDto>>("/api/v1/progress", JsonOptions);
+        var photos = await client.GetFromJsonAsync<PagedResult<ProgressPhotoDto>>("/api/v1/progress", JsonOptions);
 
-        photos.Should().NotBeNull().And.BeEmpty();
+        photos!.Items.Should().NotBeNull().And.BeEmpty();
     }
 
     [Fact]

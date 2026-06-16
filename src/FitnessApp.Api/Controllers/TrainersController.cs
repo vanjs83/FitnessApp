@@ -25,8 +25,8 @@ public class TrainersController : ApiControllerBase
     [HttpGet]
     [AllowAnonymous]
     [ResponseCache(CacheProfileName = "Reference")]
-    public async Task<ActionResult<IReadOnlyList<TrainerListItemDto>>> GetAll()
-        => Ok(await _sender.Send(new GetAllTrainersQuery()));
+    public async Task<ActionResult<PagedResult<TrainerListItemDto>>> GetAll([FromQuery] int page = 1, [FromQuery] string? search = null)
+        => Ok(await _sender.Send(new GetAllTrainersQuery(page, search)));
 
     [HttpPost("me/clients")]
     [Authorize(Roles = Roles.Trainer)]
@@ -36,8 +36,8 @@ public class TrainersController : ApiControllerBase
     [HttpGet("me/clients")]
     [Authorize(Roles = Roles.Trainer)]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<ClientListItemDto>>> GetMyClients()
-        => Ok(await _sender.Send(new GetMyClientsQuery()));
+    public async Task<ActionResult<PagedResult<ClientListItemDto>>> GetMyClients([FromQuery] int page = 1, [FromQuery] string? search = null)
+        => Ok(await _sender.Send(new GetMyClientsQuery(page, search)));
 
     [HttpGet("me/clients/{clientId}/stats/my-exercises")]
     [Authorize(Roles = Roles.Trainer)]
@@ -72,8 +72,8 @@ public class TrainersController : ApiControllerBase
     [HttpGet("me/clients/{clientId}/workouts")]
     [Authorize(Roles = Roles.Trainer)]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<WorkoutListItemDto>>> GetClientWorkouts(string clientId)
-        => HandleResult(await _sender.Send(new GetClientWorkoutsQuery(clientId)));
+    public async Task<ActionResult<PagedResult<WorkoutListItemDto>>> GetClientWorkouts(string clientId, [FromQuery] int page = 1)
+        => HandleResult(await _sender.Send(new GetClientWorkoutsQuery(clientId, page)));
 
     [HttpPost("me/clients/{clientId}/workouts")]
     [Authorize(Roles = Roles.Trainer)]

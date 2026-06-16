@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.TrainingPlans.Queries;
 
-public record GetTrainingPlansForClientQuery(string ClientId)
-    : IRequest<Result<IReadOnlyList<TrainingPlanListItemDto>>>;
+public record GetTrainingPlansForClientQuery(string ClientId, int Page = 1)
+    : IRequest<Result<PagedResult<TrainingPlanListItemDto>>>;
 
 public class GetTrainingPlansForClientQueryHandler
-    : IRequestHandler<GetTrainingPlansForClientQuery, Result<IReadOnlyList<TrainingPlanListItemDto>>>
+    : IRequestHandler<GetTrainingPlansForClientQuery, Result<PagedResult<TrainingPlanListItemDto>>>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
@@ -24,25 +24,26 @@ public class GetTrainingPlansForClientQueryHandler
         _users = users;
     }
 
-    public async Task<Result<IReadOnlyList<TrainingPlanListItemDto>>> Handle(
+    public async Task<Result<PagedResult<TrainingPlanListItemDto>>> Handle(
         GetTrainingPlansForClientQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId;
         var isTrainer = _currentUser.IsInRole(Roles.Trainer);
 
         if (!isTrainer && request.ClientId != userId)
-            return Result<IReadOnlyList<TrainingPlanListItemDto>>.Forbidden();
+            return Result<PagedResult<TrainingPlanListItemDto>>.Forbidden();
 
         var client = await _users.FindAsync(request.ClientId, cancellationToken);
-        if (client == null) return Result<IReadOnlyList<TrainingPlanListItemDto>>.NotFound();
+        if (client == null) return Result<PagedResult<TrainingPlanListItemDto>>.NotFound();
         if (isTrainer && client.TrainerId != userId)
-            return Result<IReadOnlyList<TrainingPlanListItemDto>>.Forbidden();
+            return Result<PagedResult<TrainingPlanListItemDto>>.Forbidden();
 
         var query = _db.TrainingPlans.Where(p => p.ClientId == request.ClientId && !p.IsTemplate);
         if (!isTrainer)
         {
             if (string.IsNullOrEmpty(client.TrainerId))
-                return Result<IReadOnlyList<TrainingPlanListItemDto>>.Success(new List<TrainingPlanListItemDto>());
+                return Result<PagedResult<TrainingPlanListItemDto>>.Success(
+                    PagedResult<TrainingPlanListItemDto>.Create([], request.Page, PaginationExtensions.DefaultPageSize, 0));
             query = query.Where(p => p.TrainerId == client.TrainerId);
         }
 
@@ -61,8 +62,8 @@ public class GetTrainingPlansForClientQueryHandler
                 Currency = p.Currency,
                 PaymentStatus = p.PaymentStatus
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(request.Page, PaginationExtensions.DefaultPageSize, cancellationToken);
 
-        return Result<IReadOnlyList<TrainingPlanListItemDto>>.Success(plans);
+        return Result<PagedResult<TrainingPlanListItemDto>>.Success(plans);
     }
 }

@@ -4,7 +4,16 @@ const Trainers = {
     currentClientWorkouts: [],
     currentWorkout: null,
     clientSearch: '',
+    clientsPage: 1,
+    clientsMeta: null,
+    clientWorkoutsPage: 1,
+    clientWorkoutsMeta: null,
+    clientPlansPage: 1,
+    clientPlansMeta: null,
+    clientNutritionPage: 1,
+    clientNutritionMeta: null,
     statsChart: null,
+    _clientSearchTimer: null,
 
     init() {
         document.getElementById('backToClientsBtn').addEventListener('click', () => this.showClientsList());
@@ -32,8 +41,9 @@ const Trainers = {
         if (emailModal) emailModal.addEventListener('click', e => { if (e.target === emailModal) this.closeEmailModal(); });
 
         document.getElementById('trainerClientsSearch').addEventListener('input', e => {
-            this.clientSearch = e.target.value.toLowerCase();
-            this.renderClients();
+            this.clientSearch = e.target.value;
+            clearTimeout(this._clientSearchTimer);
+            this._clientSearchTimer = setTimeout(() => { this.clientsPage = 1; this.loadClients(); }, 300);
         });
 
         document.getElementById('trainerStatsExerciseSelect').addEventListener('change', e => {
@@ -84,13 +94,34 @@ const Trainers = {
     },
 
     async load() {
+        await this.loadClients();
+        await this.loadRequests();
+    },
+
+    async loadClients() {
         try {
-            this.clients = await API.get('/trainers/me/clients');
-            this.renderClients();
+            const params = new URLSearchParams({ page: this.clientsPage });
+            if (this.clientSearch.trim()) params.set('search', this.clientSearch.trim());
+            const res = await API.get(`/trainers/me/clients?${params}`);
+            if (this.clientsPage > 1 && res.totalPages > 0 && this.clientsPage > res.totalPages) {
+                this.clientsPage = res.totalPages;
+                return this.loadClients();
+            }
+            this.clients = res.items;
+            this.clientsMeta = res;
         } catch (err) {
             console.error(err);
+            this.clients = [];
+            this.clientsMeta = null;
         }
-        await this.loadRequests();
+        this.renderClients();
+    },
+
+    renderClientsPager() {
+        Pagination.render(document.getElementById('clientsListPager'), this.clientsMeta, p => {
+            this.clientsPage = p;
+            this.loadClients();
+        });
     },
 
     async loadRequests() {
@@ -152,17 +183,13 @@ const Trainers = {
 
     renderClients() {
         const container = document.getElementById('clientsList');
-        const filtered = this.clients.filter(c =>
-            !this.clientSearch ||
-            (c.fullName || '').toLowerCase().includes(this.clientSearch) ||
-            (c.email || '').toLowerCase().includes(this.clientSearch)
-        );
-        if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${this.clients.length === 0 ? 'Još nemaš klijenata.' : 'Nema rezultata za pretragu.'}</p>`;
+        if (this.clients.length === 0) {
+            container.innerHTML = `<p class="muted">${this.clientSearch.trim() ? 'Nema rezultata za pretragu.' : 'Još nemaš klijenata.'}</p>`;
+            this.renderClientsPager();
             return;
         }
 
-        container.innerHTML = filtered.map(c => `
+        container.innerHTML = this.clients.map(c => `
             <div class="list-item" data-id="${c.id}">
                 <div class="list-item-main">
                     ${Profile.avatarHtml(c.profileImageUrl, 'avatar-mini')}
@@ -181,6 +208,8 @@ const Trainers = {
         container.querySelectorAll('.list-item').forEach(el => {
             el.addEventListener('click', () => this.showClientDetail(el.dataset.id));
         });
+
+        this.renderClientsPager();
     },
 
     async showClientDetail(clientId) {
@@ -188,6 +217,9 @@ const Trainers = {
         if (!client) return;
 
         this.currentClient = client;
+        this.clientPlansPage = 1;
+        this.clientNutritionPage = 1;
+        this.clientWorkoutsPage = 1;
         document.getElementById('clientsView').classList.add('hidden');
         document.getElementById('clientDetail').classList.remove('hidden');
         const nameEl = document.getElementById('clientDetailName');
@@ -222,7 +254,8 @@ const Trainers = {
         if (!planSel || !this.currentClient) return;
         let plans = [];
         try {
-            plans = await API.get(`/training-plans/client/${this.currentClient.id}`);
+            const res = await API.get(`/training-plans/client/${this.currentClient.id}`);
+            plans = res.items;
         } catch (err) {
             if (summary) summary.textContent = err.message;
         }
@@ -257,12 +290,22 @@ const Trainers = {
         }
     },
 
+    renderClientPlansPager() {
+        Pagination.render(document.getElementById('clientPlansListPager'), this.clientPlansMeta, p => {
+            this.clientPlansPage = p;
+            this.loadClientPlans();
+        });
+    },
+
     async loadClientPlans() {
         const container = document.getElementById('clientPlansList');
         try {
-            const plans = await API.get(`/training-plans/client/${this.currentClient.id}`);
+            const res = await API.get(`/training-plans/client/${this.currentClient.id}?page=${this.clientPlansPage}`);
+            const plans = res.items;
+            this.clientPlansMeta = res;
             if (!plans.length) {
                 container.innerHTML = '<p class="muted">Klijent još nema plan. Klikni "+ Novi plan".</p>';
+                this.renderClientPlansPager();
                 return;
             }
             container.innerHTML = plans.map(p => `
@@ -303,19 +346,31 @@ const Trainers = {
                     }
                 });
             });
+
+            this.renderClientPlansPager();
         } catch (err) {
             console.error(err);
             container.innerHTML = `<p class="muted">Greška: ${this.escape(err.message)}</p>`;
         }
     },
 
+    renderClientNutritionPager() {
+        Pagination.render(document.getElementById('clientNutritionPlansListPager'), this.clientNutritionMeta, p => {
+            this.clientNutritionPage = p;
+            this.loadClientNutritionPlans();
+        });
+    },
+
     async loadClientNutritionPlans() {
         const container = document.getElementById('clientNutritionPlansList');
         if (!container) return;
         try {
-            const plans = await API.get(`/nutrition-plans/client/${this.currentClient.id}`);
+            const res = await API.get(`/nutrition-plans/client/${this.currentClient.id}?page=${this.clientNutritionPage}`);
+            const plans = res.items;
+            this.clientNutritionMeta = res;
             if (!plans.length) {
                 container.innerHTML = '<p class="muted">Klijent još nema plan prehrane.</p>';
+                this.renderClientNutritionPager();
                 return;
             }
             container.innerHTML = plans.map(p => `
@@ -353,6 +408,8 @@ const Trainers = {
                     } catch (err) { alert(err.message); }
                 });
             });
+
+            this.renderClientNutritionPager();
         } catch (err) {
             container.innerHTML = `<p class="muted">Greška: ${this.escape(err.message)}</p>`;
         }
@@ -477,17 +534,31 @@ const Trainers = {
 
     async loadClientWorkouts() {
         try {
-            this.currentClientWorkouts = await API.get(`/trainers/me/clients/${this.currentClient.id}/workouts`);
+            const res = await API.get(`/trainers/me/clients/${this.currentClient.id}/workouts?page=${this.clientWorkoutsPage}`);
+            if (this.clientWorkoutsPage > 1 && res.totalPages > 0 && this.clientWorkoutsPage > res.totalPages) {
+                this.clientWorkoutsPage = res.totalPages;
+                return this.loadClientWorkouts();
+            }
+            this.currentClientWorkouts = res.items;
+            this.clientWorkoutsMeta = res;
             this.renderClientWorkouts();
         } catch (err) {
             alert(err.message);
         }
     },
 
+    renderClientWorkoutsPager() {
+        Pagination.render(document.getElementById('clientWorkoutsListPager'), this.clientWorkoutsMeta, p => {
+            this.clientWorkoutsPage = p;
+            this.loadClientWorkouts();
+        });
+    },
+
     renderClientWorkouts() {
         const container = document.getElementById('clientWorkoutsList');
         if (this.currentClientWorkouts.length === 0) {
             container.innerHTML = '<p class="muted">Ovaj klijent još nema treninga.</p>';
+            this.renderClientWorkoutsPager();
             return;
         }
 
@@ -521,6 +592,8 @@ const Trainers = {
                 this.deleteClientWorkout(parseInt(btn.dataset.id), btn.dataset.name);
             });
         });
+
+        this.renderClientWorkoutsPager();
     },
 
     async deleteClientWorkout(workoutId, workoutName) {

@@ -19,8 +19,8 @@ public class WorkoutsController : ApiControllerBase
 
     [HttpGet]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<WorkoutListItemDto>>> GetMyWorkouts()
-        => Ok(await _sender.Send(new GetMyWorkoutsQuery()));
+    public async Task<ActionResult<PagedResult<WorkoutListItemDto>>> GetMyWorkouts([FromQuery] int page = 1)
+        => Ok(await _sender.Send(new GetMyWorkoutsQuery(page)));
 
     [HttpPost]
     public async Task<ActionResult<WorkoutDetailDto>> Create(CreateWorkoutRequest request)

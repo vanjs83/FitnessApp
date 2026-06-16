@@ -121,6 +121,7 @@
                 <div id="clientTrainerStatus"></div>
                 <input type="text" id="clientTrainersSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga trenera...">
                 <div id="clientTrainersList" class="list"></div>
+                <div id="clientTrainersListPager" class="pager"></div>
             </div>
 
             <div id="workoutsView" class="view">
@@ -143,6 +144,7 @@
                 </div>
 
                 <div id="workoutsList" class="list"></div>
+                <div id="workoutsListPager" class="pager"></div>
 
                 <div id="workoutDetail" class="card hidden">
                     <button id="backToListBtn" class="secondary" data-i18n="common.back">← Nazad</button>
@@ -207,6 +209,7 @@
             <div id="myPlansView" class="view hidden">
                 <h2 data-i18n="myPlans.title">Plan koji mi je trener zadao</h2>
                 <div id="myPlansList" class="list"></div>
+                <div id="myPlansListPager" class="pager"></div>
                 <div id="myPlanDetail" class="card hidden">
                     <button id="backToMyPlansBtn" class="secondary" data-i18n="nav.plans">← Planovi</button>
                     <h3 id="myPlanName"></h3>
@@ -224,6 +227,7 @@
             <div id="myNutritionView" class="view hidden">
                 <h2 data-i18n="myNutrition.title">Plan prehrane</h2>
                 <div id="myNutritionList" class="list"></div>
+                <div id="myNutritionListPager" class="pager"></div>
                 <div id="myNutritionDetail" class="card hidden">
                     <button id="backToMyNutritionBtn" class="secondary"><span data-i18n="common.back">← Nazad</span></button>
                     <h3 id="myNutritionName"></h3>
@@ -543,6 +547,7 @@
 
                 <input type="text" id="trainerClientsSearch" class="search-input" data-i18n-ph="common.search" placeholder="🔍 Pretraga klijenata...">
                 <div id="clientsList" class="list"></div>
+                <div id="clientsListPager" class="pager"></div>
             </div>
 
             <div id="clientDetail" class="card hidden">
@@ -564,6 +569,7 @@
                 </div>
 
                 <div id="clientPlansList" class="list"></div>
+                <div id="clientPlansListPager" class="pager"></div>
 
                 <div class="row" style="justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0;">Planovi prehrane</h4>
@@ -571,6 +577,7 @@
                 </div>
 
                 <div id="clientNutritionPlansList" class="list"></div>
+                <div id="clientNutritionPlansListPager" class="pager"></div>
 
                 <div class="row" style="justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0;" data-i18n="trainer.clientWorkouts">Treninzi klijenta</h4>
@@ -589,6 +596,7 @@
                 </div>
 
                 <div id="clientWorkoutsList" class="list"></div>
+                <div id="clientWorkoutsListPager" class="pager"></div>
 
                 <div id="clientWorkoutDetail" class="card-inset hidden">
                     <button id="backToClientWorkoutsBtn" class="secondary small-btn"><span data-i18n="common.back">← Nazad</span></button>
@@ -678,6 +686,7 @@
                 </div>
 
                 <div id="plansList" class="list"></div>
+                <div id="plansListPager" class="pager"></div>
 
                 <!-- Plan detail -->
                 <div id="planDetail" class="card hidden">
@@ -863,6 +872,7 @@
                 </div>
 
                 <div id="nutritionPlansList" class="list"></div>
+                <div id="nutritionPlansListPager" class="pager"></div>
 
                 <!-- Plan/template detail (reused) -->
                 <div id="nutritionDetail" class="card hidden">

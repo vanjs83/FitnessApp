@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.Nutrition.Queries;
 
-public record GetNutritionPlansForClientQuery(string ClientId)
-    : IRequest<Result<IReadOnlyList<NutritionPlanListItemDto>>>;
+public record GetNutritionPlansForClientQuery(string ClientId, int Page = 1)
+    : IRequest<Result<PagedResult<NutritionPlanListItemDto>>>;
 
 public class GetNutritionPlansForClientQueryHandler
-    : IRequestHandler<GetNutritionPlansForClientQuery, Result<IReadOnlyList<NutritionPlanListItemDto>>>
+    : IRequestHandler<GetNutritionPlansForClientQuery, Result<PagedResult<NutritionPlanListItemDto>>>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
@@ -24,25 +24,26 @@ public class GetNutritionPlansForClientQueryHandler
         _users = users;
     }
 
-    public async Task<Result<IReadOnlyList<NutritionPlanListItemDto>>> Handle(
+    public async Task<Result<PagedResult<NutritionPlanListItemDto>>> Handle(
         GetNutritionPlansForClientQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId;
         var isTrainer = _currentUser.IsInRole(Roles.Trainer);
 
         if (!isTrainer && request.ClientId != userId)
-            return Result<IReadOnlyList<NutritionPlanListItemDto>>.Forbidden();
+            return Result<PagedResult<NutritionPlanListItemDto>>.Forbidden();
 
         var client = await _users.FindAsync(request.ClientId, cancellationToken);
-        if (client == null) return Result<IReadOnlyList<NutritionPlanListItemDto>>.NotFound();
+        if (client == null) return Result<PagedResult<NutritionPlanListItemDto>>.NotFound();
         if (isTrainer && client.TrainerId != userId)
-            return Result<IReadOnlyList<NutritionPlanListItemDto>>.Forbidden();
+            return Result<PagedResult<NutritionPlanListItemDto>>.Forbidden();
 
         var query = _db.NutritionPlans.Where(p => p.ClientId == request.ClientId && !p.IsTemplate);
         if (!isTrainer)
         {
             if (string.IsNullOrEmpty(client.TrainerId))
-                return Result<IReadOnlyList<NutritionPlanListItemDto>>.Success(new List<NutritionPlanListItemDto>());
+                return Result<PagedResult<NutritionPlanListItemDto>>.Success(
+                    PagedResult<NutritionPlanListItemDto>.Create([], request.Page, PaginationExtensions.DefaultPageSize, 0));
             query = query.Where(p => p.TrainerId == client.TrainerId);
         }
 
@@ -61,8 +62,8 @@ public class GetNutritionPlansForClientQueryHandler
                 Currency = p.Currency,
                 PaymentStatus = p.PaymentStatus
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(request.Page, PaginationExtensions.DefaultPageSize, cancellationToken);
 
-        return Result<IReadOnlyList<NutritionPlanListItemDto>>.Success(plans);
+        return Result<PagedResult<NutritionPlanListItemDto>>.Success(plans);
     }
 }

@@ -1,5 +1,10 @@
 const Plans = {
     list: [],
+    page: 1,
+    meta: null,
+    minePage: 1,
+    mineMeta: null,
+    myClientId: null,
     currentPlan: null,
     progressionData: [],
     progressionChart: null,
@@ -62,12 +67,23 @@ const Plans = {
         await this.showNewPlanForm(client.id);
     },
 
+    renderMinePager() {
+        Pagination.render(document.getElementById('myPlansListPager'), this.mineMeta, p => {
+            this.minePage = p;
+            this.loadMine(this.myClientId);
+        });
+    },
+
     async loadMine(clientId) {
         try {
-            const list = await API.get(`/training-plans/client/${clientId}`);
+            this.myClientId = clientId;
+            const res = await API.get(`/training-plans/client/${clientId}?page=${this.minePage}`);
+            const list = res.items;
+            this.mineMeta = res;
             const container = document.getElementById('myPlansList');
             if (!list.length) {
                 container.innerHTML = '<p class="muted">Trener ti još nije zadao plan.</p>';
+                this.renderMinePager();
                 return;
             }
             container.innerHTML = list.map(p => `
@@ -87,6 +103,7 @@ const Plans = {
             container.querySelectorAll('.list-item').forEach(el => {
                 el.addEventListener('click', () => this.showMyPlanDetail(parseInt(el.dataset.id)));
             });
+            this.renderMinePager();
         } catch (err) {
             console.error(err);
         }
@@ -213,8 +230,8 @@ const Plans = {
         const host = document.getElementById(containerId);
         if (!host) return;
         try {
-            const photos = await API.get(`/progress?planId=${planId}`);
-            Progress.render(host, photos, false);
+            const res = await API.get(`/progress?planId=${planId}`);
+            Progress.render(host, res.items, false);
         } catch {
             host.innerHTML = '';
         }
@@ -352,17 +369,31 @@ const Plans = {
 
     async load() {
         try {
-            this.list = await API.get('/training-plans/mine');
+            const res = await API.get(`/training-plans/mine?page=${this.page}`);
+            if (this.page > 1 && res.totalPages > 0 && this.page > res.totalPages) {
+                this.page = res.totalPages;
+                return this.load();
+            }
+            this.list = res.items;
+            this.meta = res;
             this.render();
         } catch (err) {
             console.error(err);
         }
     },
 
+    renderPager() {
+        Pagination.render(document.getElementById('plansListPager'), this.meta, p => {
+            this.page = p;
+            this.load();
+        });
+    },
+
     render() {
         const container = document.getElementById('plansList');
         if (this.list.length === 0) {
             container.innerHTML = '<p class="muted">Još nemaš kreiranih planova. Klikni "+ Novi plan".</p>';
+            this.renderPager();
             return;
         }
         container.innerHTML = this.list.map(p => `
@@ -405,6 +436,8 @@ const Plans = {
                 }
             });
         });
+
+        this.renderPager();
     },
 
     async showNewPlanForm(preselectClientId) {

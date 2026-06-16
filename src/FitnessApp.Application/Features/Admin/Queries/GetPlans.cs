@@ -1,13 +1,13 @@
+using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Admin;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.Admin.Queries;
 
-public record GetPlansQuery : IRequest<IReadOnlyList<PlanAdminDto>>;
+public record GetPlansQuery(int Page = 1) : IRequest<PagedResult<PlanAdminDto>>;
 
-public class GetPlansQueryHandler : IRequestHandler<GetPlansQuery, IReadOnlyList<PlanAdminDto>>
+public class GetPlansQueryHandler : IRequestHandler<GetPlansQuery, PagedResult<PlanAdminDto>>
 {
     private readonly IAppDbContext _db;
     private readonly IUserDirectory _users;
@@ -18,9 +18,9 @@ public class GetPlansQueryHandler : IRequestHandler<GetPlansQuery, IReadOnlyList
         _users = users;
     }
 
-    public async Task<IReadOnlyList<PlanAdminDto>> Handle(GetPlansQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<PlanAdminDto>> Handle(GetPlansQuery request, CancellationToken cancellationToken)
     {
-        var plans = await _db.TrainingPlans
+        var page = await _db.TrainingPlans
             .OrderByDescending(p => p.StartDate)
             .Select(p => new
             {
@@ -33,12 +33,12 @@ public class GetPlansQueryHandler : IRequestHandler<GetPlansQuery, IReadOnlyList
                 p.TrainerId,
                 p.ClientId
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(request.Page, PaginationExtensions.DefaultPageSize, cancellationToken);
 
-        var userIds = plans.Select(p => p.TrainerId).Concat(plans.Select(p => p.ClientId)).Distinct();
+        var userIds = page.Items.Select(p => p.TrainerId).Concat(page.Items.Select(p => p.ClientId)).Distinct();
         var names = await _users.GetDisplayNamesAsync(userIds, cancellationToken);
 
-        return plans.Select(p => new PlanAdminDto
+        var items = page.Items.Select(p => new PlanAdminDto
         {
             Id = p.Id,
             Name = p.Name,
@@ -49,5 +49,7 @@ public class GetPlansQueryHandler : IRequestHandler<GetPlansQuery, IReadOnlyList
             ClientName = names.TryGetValue(p.ClientId, out var cn) ? cn : "(nepoznat)",
             TrainerName = names.TryGetValue(p.TrainerId, out var tn) ? tn : null
         }).ToList();
+
+        return PagedResult<PlanAdminDto>.Create(items, page.Page, page.PageSize, page.TotalCount);
     }
 }

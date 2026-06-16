@@ -1,14 +1,14 @@
+using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.TrainingPlans;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.TrainingPlans.Queries;
 
-public record GetMyTrainingPlansQuery : IRequest<IReadOnlyList<TrainingPlanListItemDto>>;
+public record GetMyTrainingPlansQuery(int Page = 1) : IRequest<PagedResult<TrainingPlanListItemDto>>;
 
 public class GetMyTrainingPlansQueryHandler
-    : IRequestHandler<GetMyTrainingPlansQuery, IReadOnlyList<TrainingPlanListItemDto>>
+    : IRequestHandler<GetMyTrainingPlansQuery, PagedResult<TrainingPlanListItemDto>>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
@@ -21,12 +21,12 @@ public class GetMyTrainingPlansQueryHandler
         _users = users;
     }
 
-    public async Task<IReadOnlyList<TrainingPlanListItemDto>> Handle(
+    public async Task<PagedResult<TrainingPlanListItemDto>> Handle(
         GetMyTrainingPlansQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId;
 
-        var plans = await _db.TrainingPlans
+        var page = await _db.TrainingPlans
             .Where(p => p.TrainerId == userId && !p.IsTemplate)
             .OrderByDescending(p => p.StartDate)
             .Select(p => new
@@ -41,12 +41,12 @@ public class GetMyTrainingPlansQueryHandler
                 p.Currency,
                 p.PaymentStatus
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(request.Page, PaginationExtensions.DefaultPageSize, cancellationToken);
 
         var names = await _users.GetDisplayNamesAsync(
-            plans.Where(p => p.ClientId != null).Select(p => p.ClientId!), cancellationToken);
+            page.Items.Where(p => p.ClientId != null).Select(p => p.ClientId!), cancellationToken);
 
-        return plans.Select(p => new TrainingPlanListItemDto
+        var items = page.Items.Select(p => new TrainingPlanListItemDto
         {
             Id = p.Id,
             Name = p.Name,
@@ -59,5 +59,7 @@ public class GetMyTrainingPlansQueryHandler
             Currency = p.Currency,
             PaymentStatus = p.PaymentStatus
         }).ToList();
+
+        return PagedResult<TrainingPlanListItemDto>.Create(items, page.Page, page.PageSize, page.TotalCount);
     }
 }

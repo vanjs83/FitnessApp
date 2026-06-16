@@ -1,3 +1,4 @@
+using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Trainers;
 using MediatR;
@@ -5,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.Trainers.Queries;
 
-public record GetMyClientsQuery : IRequest<IReadOnlyList<ClientListItemDto>>;
+public record GetMyClientsQuery(int Page = 1, string? Search = null) : IRequest<PagedResult<ClientListItemDto>>;
 
-public class GetMyClientsQueryHandler : IRequestHandler<GetMyClientsQuery, IReadOnlyList<ClientListItemDto>>
+public class GetMyClientsQueryHandler : IRequestHandler<GetMyClientsQuery, PagedResult<ClientListItemDto>>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
@@ -20,7 +21,7 @@ public class GetMyClientsQueryHandler : IRequestHandler<GetMyClientsQuery, IRead
         _users = users;
     }
 
-    public async Task<IReadOnlyList<ClientListItemDto>> Handle(GetMyClientsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<ClientListItemDto>> Handle(GetMyClientsQuery request, CancellationToken cancellationToken)
     {
         var clients = await _users.GetClientsOfAsync(_currentUser.UserId, cancellationToken);
         var ids = clients.Select(c => c.Id).ToList();
@@ -37,7 +38,12 @@ public class GetMyClientsQueryHandler : IRequestHandler<GetMyClientsQuery, IRead
             .Select(g => new { ClientId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.ClientId, x => x.Count, cancellationToken);
 
+        var search = request.Search?.Trim();
+
         return clients
+            .Where(c => string.IsNullOrEmpty(search)
+                || (c.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)
+                || (c.Email ?? "").Contains(search, StringComparison.OrdinalIgnoreCase))
             .Select(c => new ClientListItemDto
             {
                 Id = c.Id,
@@ -48,6 +54,7 @@ public class GetMyClientsQueryHandler : IRequestHandler<GetMyClientsQuery, IRead
                 PerformedSetCount = setCounts.TryGetValue(c.Id, out var sc) ? sc : 0,
                 ProfileImageUrl = c.ProfileImageUrl
             })
-            .ToList();
+            .ToList()
+            .ToPagedResult(request.Page, PaginationExtensions.DefaultPageSize);
     }
 }

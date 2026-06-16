@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using FitnessApp.Application.Common;
 using FitnessApp.Application.DTOs.Trainers;
 using FluentAssertions;
 using Xunit;
@@ -17,9 +18,9 @@ public class TrainersEndpointsTests : IntegrationTestBase
 
         // Endpoint is [AllowAnonymous] â€” no token needed.
         var anonymous = Factory.CreateClient();
-        var trainers = await anonymous.GetFromJsonAsync<List<TrainerListItemDto>>("/api/v1/trainers", JsonOptions);
+        var trainers = await anonymous.GetFromJsonAsync<PagedResult<TrainerListItemDto>>("/api/v1/trainers", JsonOptions);
 
-        trainers.Should().Contain(t => t.Id == trainerId);
+        trainers!.Items.Should().Contain(t => t.Id == trainerId);
     }
 
     [Fact]
@@ -37,8 +38,8 @@ public class TrainersEndpointsTests : IntegrationTestBase
     {
         var (_, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
 
-        var clients = await trainer.GetFromJsonAsync<List<ClientListItemDto>>("/api/v1/trainers/me/clients", JsonOptions);
+        var clients = await trainer.GetFromJsonAsync<PagedResult<ClientListItemDto>>("/api/v1/trainers/me/clients", JsonOptions);
 
-        clients.Should().ContainSingle(c => c.Id == clientId);
+        clients!.Items.Should().ContainSingle(c => c.Id == clientId);
     }
 }

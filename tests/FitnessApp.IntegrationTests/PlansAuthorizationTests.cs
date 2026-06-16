@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using FitnessApp.Application.Common;
 using FitnessApp.Application.DTOs.Nutrition;
 using FitnessApp.Application.DTOs.TrainingPlans;
 using FluentAssertions;
@@ -38,10 +39,10 @@ public class PlansAuthorizationTests : IntegrationTestBase
     {
         var trainer = await CreateAuthenticatedClientAsync("Trainer");
 
-        var plans = await trainer.GetFromJsonAsync<List<TrainingPlanListItemDto>>(
+        var plans = await trainer.GetFromJsonAsync<PagedResult<TrainingPlanListItemDto>>(
             "/api/v1/training-plans/mine", JsonOptions);
 
-        plans.Should().NotBeNull().And.BeEmpty();
+        plans!.Items.Should().NotBeNull().And.BeEmpty();
     }
 
     // ===== Nutrition plans =====
@@ -61,9 +62,9 @@ public class PlansAuthorizationTests : IntegrationTestBase
     {
         var trainer = await CreateAuthenticatedClientAsync("Trainer");
 
-        var plans = await trainer.GetFromJsonAsync<List<NutritionPlanListItemDto>>(
+        var plans = await trainer.GetFromJsonAsync<PagedResult<NutritionPlanListItemDto>>(
             "/api/v1/nutrition-plans/mine", JsonOptions);
 
-        plans.Should().NotBeNull().And.BeEmpty();
+        plans!.Items.Should().NotBeNull().And.BeEmpty();
     }
 }

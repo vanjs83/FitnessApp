@@ -1,6 +1,8 @@
 const Nutrition = {
     plans: [],
     templates: [],
+    plansPage: 1,
+    plansMeta: null,
     current: null,
     currentTab: 'plans',
     dayNames: {
@@ -140,17 +142,31 @@ const Nutrition = {
         this.current = null;
 
         try {
-            this.plans = await API.get('/nutrition-plans/mine');
+            const res = await API.get(`/nutrition-plans/mine?page=${this.plansPage}`);
+            if (this.plansPage > 1 && res.totalPages > 0 && this.plansPage > res.totalPages) {
+                this.plansPage = res.totalPages;
+                return this.load();
+            }
+            this.plans = res.items;
+            this.plansMeta = res;
             this.renderPlans();
         } catch (err) {
             console.error(err);
         }
     },
 
+    renderPlansPager() {
+        Pagination.render(document.getElementById('nutritionPlansListPager'), this.plansMeta, p => {
+            this.plansPage = p;
+            this.load();
+        });
+    },
+
     renderPlans() {
         const container = document.getElementById('nutritionPlansList');
         if (!this.plans.length) {
             container.innerHTML = '<p class="muted">Još nemaš planova prehrane. Klikni "+ Novi plan prehrane".</p>';
+            this.renderPlansPager();
             return;
         }
         container.innerHTML = this.plans.map(p => `
@@ -189,6 +205,8 @@ const Nutrition = {
                 } catch (err) { alert(err.message); }
             });
         });
+
+        this.renderPlansPager();
     },
 
     paymentStatusLabel(status) {

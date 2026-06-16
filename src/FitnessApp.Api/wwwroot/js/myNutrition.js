@@ -1,6 +1,9 @@
 const MyNutrition = {
     list: [],
     current: null,
+    page: 1,
+    meta: null,
+    clientId: null,
 
     init() {
         const back = document.getElementById('backToMyNutritionBtn');
@@ -59,14 +62,25 @@ const MyNutrition = {
         } catch (err) { alert(err.message); }
     },
 
+    renderPager() {
+        Pagination.render(document.getElementById('myNutritionListPager'), this.meta, p => {
+            this.page = p;
+            this.loadMine(this.clientId);
+        });
+    },
+
     async loadMine(clientId) {
         const container = document.getElementById('myNutritionList');
         try {
-            this.list = await API.get(`/nutrition-plans/client/${clientId}`);
+            this.clientId = clientId;
+            const res = await API.get(`/nutrition-plans/client/${clientId}?page=${this.page}`);
+            this.list = res.items;
+            this.meta = res;
             document.getElementById('myNutritionDetail').classList.add('hidden');
             container.classList.remove('hidden');
             if (!this.list.length) {
                 container.innerHTML = `<p class="muted">${I18n.t('nutrition.empty.client')}</p>`;
+                this.renderPager();
                 return;
             }
             container.innerHTML = this.list.map(p => `
@@ -84,6 +98,7 @@ const MyNutrition = {
             container.querySelectorAll('.list-item').forEach(el => {
                 el.addEventListener('click', () => this.showDetail(parseInt(el.dataset.id)));
             });
+            this.renderPager();
         } catch (err) {
             container.innerHTML = `<p class="muted">${I18n.t('app.errorPrefix')}${this.escape(err.message)}</p>`;
         }

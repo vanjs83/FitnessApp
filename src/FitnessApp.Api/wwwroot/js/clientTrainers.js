@@ -3,13 +3,20 @@
 const ClientTrainers = {
     all: [],
     search: '',
+    page: 1,
+    meta: null,
     me: null,
     myRequest: null,
     modalTrainerId: null,
+    _searchTimer: null,
 
     init() {
         const s = document.getElementById('clientTrainersSearch');
-        if (s) s.addEventListener('input', e => { this.search = e.target.value.toLowerCase(); this.renderList(); });
+        if (s) s.addEventListener('input', e => {
+            this.search = e.target.value;
+            clearTimeout(this._searchTimer);
+            this._searchTimer = setTimeout(() => { this.page = 1; this.loadTrainers(); }, 300);
+        });
         const b = document.getElementById('modalSendRequestBtn');
         if (b) b.addEventListener('click', () => this.sendRequest(this.modalTrainerId));
     },
@@ -19,12 +26,37 @@ const ClientTrainers = {
             this.me = await API.get('/auth/me');
             this.myRequest = null;
             try { this.myRequest = await API.get('/trainer-requests/mine'); } catch (e) { /* ignore */ }
-            this.all = await API.get('/trainers');
+            await this.loadTrainers();
         } catch (err) {
             console.error(err);
         }
         this.renderStatus();
+    },
+
+    async loadTrainers() {
+        try {
+            const params = new URLSearchParams({ page: this.page });
+            if (this.search.trim()) params.set('search', this.search.trim());
+            const res = await API.get(`/trainers?${params}`);
+            if (this.page > 1 && res.totalPages > 0 && this.page > res.totalPages) {
+                this.page = res.totalPages;
+                return this.loadTrainers();
+            }
+            this.all = res.items;
+            this.meta = res;
+        } catch (err) {
+            console.error(err);
+            this.all = [];
+            this.meta = null;
+        }
         this.renderList();
+    },
+
+    renderPager() {
+        Pagination.render(document.getElementById('clientTrainersListPager'), this.meta, p => {
+            this.page = p;
+            this.loadTrainers();
+        });
     },
 
     renderStatus() {
@@ -54,16 +86,12 @@ const ClientTrainers = {
     renderList() {
         const c = document.getElementById('clientTrainersList');
         if (!c) return;
-        const f = this.all.filter(t =>
-            !this.search ||
-            (t.fullName || '').toLowerCase().includes(this.search) ||
-            (t.email || '').toLowerCase().includes(this.search)
-        );
-        if (!f.length) {
-            c.innerHTML = `<p class="muted">${this.search ? 'Nema rezultata za pretragu.' : 'Trenutno nema dostupnih trenera.'}</p>`;
+        if (!this.all.length) {
+            c.innerHTML = `<p class="muted">${this.search.trim() ? 'Nema rezultata za pretragu.' : 'Trenutno nema dostupnih trenera.'}</p>`;
+            this.renderPager();
             return;
         }
-        c.innerHTML = f.map(t => `
+        c.innerHTML = this.all.map(t => `
             <div class="list-item" data-id="${t.id}">
                 <div class="list-item-main">
                     ${Profile.avatarHtml(t.profileImageUrl, 'avatar-mini')}
@@ -76,6 +104,7 @@ const ClientTrainers = {
             </div>
         `).join('');
         c.querySelectorAll('.list-item').forEach(el => el.addEventListener('click', () => this.openProfile(el.dataset.id)));
+        this.renderPager();
     },
 
     async openProfile(trainerId) {

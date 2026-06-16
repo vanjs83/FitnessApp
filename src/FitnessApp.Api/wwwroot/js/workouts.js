@@ -1,6 +1,8 @@
 const Workouts = {
     list: [],
     current: null,
+    page: 1,
+    meta: null,
 
     init() {
         document.getElementById('newWorkoutBtn').addEventListener('click', () => {
@@ -14,17 +16,31 @@ const Workouts = {
 
     async load() {
         try {
-            this.list = await API.get('/workouts');
+            const res = await API.get(`/workouts?page=${this.page}`);
+            if (this.page > 1 && res.totalPages > 0 && this.page > res.totalPages) {
+                this.page = res.totalPages;
+                return this.load();
+            }
+            this.list = res.items;
+            this.meta = res;
             this.render();
         } catch (err) {
             console.error(err);
         }
     },
 
+    renderPager() {
+        Pagination.render(document.getElementById('workoutsListPager'), this.meta, p => {
+            this.page = p;
+            this.load();
+        });
+    },
+
     render() {
         const container = document.getElementById('workoutsList');
         if (this.list.length === 0) {
             container.innerHTML = `<p class="muted">${I18n.t('workouts.empty.client')}</p>`;
+            this.renderPager();
             return;
         }
 
@@ -45,6 +61,8 @@ const Workouts = {
         container.querySelectorAll('.list-item').forEach(el => {
             el.addEventListener('click', () => this.showDetail(parseInt(el.dataset.id)));
         });
+
+        this.renderPager();
     },
 
     async save() {

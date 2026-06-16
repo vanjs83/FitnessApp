@@ -34,7 +34,8 @@ const Progress = {
         await this.loadPlans();
         const planId = this.selectedPlanId();
         try {
-            this.photos = await API.get(planId ? `/progress?planId=${planId}` : '/progress');
+            const res = await API.get(planId ? `/progress?planId=${planId}` : '/progress');
+            this.photos = res.items;
             this.render(grid, this.photos, true);
         } catch (err) {
             grid.innerHTML = `<p class="muted small">${this.escape(err.message)}</p>`;
@@ -47,7 +48,8 @@ const Progress = {
         if (!sel || sel.dataset.loaded) return;
         try {
             const me = await API.get('/auth/me');
-            this.plans = await API.get(`/training-plans/client/${me.id}`);
+            const res = await API.get(`/training-plans/client/${me.id}`);
+            this.plans = res.items;
         } catch {
             this.plans = [];
         }

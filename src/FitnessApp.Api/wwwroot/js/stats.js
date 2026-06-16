@@ -19,7 +19,8 @@ const Stats = {
         if (!planSel) return;
         try {
             const me = await API.get('/auth/me');
-            this.plans = await API.get(`/training-plans/client/${me.id}`);
+            const res = await API.get(`/training-plans/client/${me.id}`);
+            this.plans = res.items;
         } catch (err) {
             this.plans = [];
             if (summary) summary.textContent = err.message;

@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using FitnessApp.Application.Common;
 using FitnessApp.Application.DTOs.Workouts;
 using FluentAssertions;
 using Xunit;
@@ -54,7 +55,7 @@ public class WorkoutsEndpointsTests : IntegrationTestBase
         created!.Id.Should().BeGreaterThan(0);
         created.Name.Should().Be("Leg day");
 
-        var list = await client.GetFromJsonAsync<List<WorkoutListItemDto>>("/api/v1/workouts", JsonOptions);
-        list.Should().ContainSingle(w => w.Id == created.Id && w.Name == "Leg day");
+        var list = await client.GetFromJsonAsync<PagedResult<WorkoutListItemDto>>("/api/v1/workouts", JsonOptions);
+        list!.Items.Should().ContainSingle(w => w.Id == created.Id && w.Name == "Leg day");
     }
 }

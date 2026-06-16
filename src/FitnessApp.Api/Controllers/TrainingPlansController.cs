@@ -25,13 +25,13 @@ public class TrainingPlansController : ApiControllerBase
     [HttpGet("mine")]
     [Authorize(Roles = Roles.Trainer)]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<TrainingPlanListItemDto>>> GetMyPlans()
-        => Ok(await _sender.Send(new GetMyTrainingPlansQuery()));
+    public async Task<ActionResult<PagedResult<TrainingPlanListItemDto>>> GetMyPlans([FromQuery] int page = 1)
+        => Ok(await _sender.Send(new GetMyTrainingPlansQuery(page)));
 
     [HttpGet("client/{clientId}")]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<TrainingPlanListItemDto>>> GetForClient(string clientId)
-        => HandleResult(await _sender.Send(new GetTrainingPlansForClientQuery(clientId)));
+    public async Task<ActionResult<PagedResult<TrainingPlanListItemDto>>> GetForClient(string clientId, [FromQuery] int page = 1)
+        => HandleResult(await _sender.Send(new GetTrainingPlansForClientQuery(clientId, page)));
 
     [HttpGet("{id:int}")]
     [ResponseCache(CacheProfileName = "UserData")]

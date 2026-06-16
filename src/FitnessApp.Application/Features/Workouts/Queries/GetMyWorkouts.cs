@@ -1,13 +1,13 @@
+using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Workouts;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.Workouts.Queries;
 
-public record GetMyWorkoutsQuery : IRequest<IReadOnlyList<WorkoutListItemDto>>;
+public record GetMyWorkoutsQuery(int Page = 1) : IRequest<PagedResult<WorkoutListItemDto>>;
 
-public class GetMyWorkoutsQueryHandler : IRequestHandler<GetMyWorkoutsQuery, IReadOnlyList<WorkoutListItemDto>>
+public class GetMyWorkoutsQueryHandler : IRequestHandler<GetMyWorkoutsQuery, PagedResult<WorkoutListItemDto>>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
@@ -18,7 +18,7 @@ public class GetMyWorkoutsQueryHandler : IRequestHandler<GetMyWorkoutsQuery, IRe
         _currentUser = currentUser;
     }
 
-    public async Task<IReadOnlyList<WorkoutListItemDto>> Handle(GetMyWorkoutsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<WorkoutListItemDto>> Handle(GetMyWorkoutsQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId;
 
@@ -34,6 +34,6 @@ public class GetMyWorkoutsQueryHandler : IRequestHandler<GetMyWorkoutsQuery, IRe
                 Notes = w.Notes,
                 ExerciseCount = w.Exercises.Count
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(request.Page, PaginationExtensions.DefaultPageSize, cancellationToken);
     }
 }

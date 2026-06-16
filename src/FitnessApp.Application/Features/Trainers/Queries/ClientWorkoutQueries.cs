@@ -9,9 +9,9 @@ namespace FitnessApp.Application.Features.Trainers.Queries;
 
 // ===== List of a client's workouts (created by this trainer) =====
 
-public record GetClientWorkoutsQuery(string ClientId) : IRequest<Result<IReadOnlyList<WorkoutListItemDto>>>;
+public record GetClientWorkoutsQuery(string ClientId, int Page = 1) : IRequest<Result<PagedResult<WorkoutListItemDto>>>;
 
-public class GetClientWorkoutsQueryHandler : IRequestHandler<GetClientWorkoutsQuery, Result<IReadOnlyList<WorkoutListItemDto>>>
+public class GetClientWorkoutsQueryHandler : IRequestHandler<GetClientWorkoutsQuery, Result<PagedResult<WorkoutListItemDto>>>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
@@ -24,10 +24,10 @@ public class GetClientWorkoutsQueryHandler : IRequestHandler<GetClientWorkoutsQu
         _users = users;
     }
 
-    public async Task<Result<IReadOnlyList<WorkoutListItemDto>>> Handle(GetClientWorkoutsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<WorkoutListItemDto>>> Handle(GetClientWorkoutsQuery request, CancellationToken cancellationToken)
     {
         var error = await TrainerGuard.CheckOwnClientAsync(_users, request.ClientId, _currentUser.UserId, cancellationToken);
-        if (error != null) return Result<IReadOnlyList<WorkoutListItemDto>>.Fail(error.Value);
+        if (error != null) return Result<PagedResult<WorkoutListItemDto>>.Fail(error.Value);
 
         var data = await _db.Workouts
             .Where(w => w.ClientId == request.ClientId && w.TrainerId == _currentUser.UserId)
@@ -41,9 +41,9 @@ public class GetClientWorkoutsQueryHandler : IRequestHandler<GetClientWorkoutsQu
                 Notes = w.Notes,
                 ExerciseCount = w.Exercises.Count
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(request.Page, PaginationExtensions.DefaultPageSize, cancellationToken);
 
-        return Result<IReadOnlyList<WorkoutListItemDto>>.Success(data);
+        return Result<PagedResult<WorkoutListItemDto>>.Success(data);
     }
 }
 

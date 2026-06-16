@@ -1,14 +1,14 @@
+using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Nutrition;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.Nutrition.Queries;
 
-public record GetMyNutritionPlansQuery : IRequest<IReadOnlyList<NutritionPlanListItemDto>>;
+public record GetMyNutritionPlansQuery(int Page = 1) : IRequest<PagedResult<NutritionPlanListItemDto>>;
 
 public class GetMyNutritionPlansQueryHandler
-    : IRequestHandler<GetMyNutritionPlansQuery, IReadOnlyList<NutritionPlanListItemDto>>
+    : IRequestHandler<GetMyNutritionPlansQuery, PagedResult<NutritionPlanListItemDto>>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
@@ -21,12 +21,12 @@ public class GetMyNutritionPlansQueryHandler
         _users = users;
     }
 
-    public async Task<IReadOnlyList<NutritionPlanListItemDto>> Handle(
+    public async Task<PagedResult<NutritionPlanListItemDto>> Handle(
         GetMyNutritionPlansQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId;
 
-        var plans = await _db.NutritionPlans
+        var page = await _db.NutritionPlans
             .Where(p => p.TrainerId == userId && !p.IsTemplate)
             .OrderByDescending(p => p.StartDate)
             .Select(p => new
@@ -41,12 +41,12 @@ public class GetMyNutritionPlansQueryHandler
                 p.Currency,
                 p.PaymentStatus
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(request.Page, PaginationExtensions.DefaultPageSize, cancellationToken);
 
         var names = await _users.GetDisplayNamesAsync(
-            plans.Where(p => p.ClientId != null).Select(p => p.ClientId!), cancellationToken);
+            page.Items.Where(p => p.ClientId != null).Select(p => p.ClientId!), cancellationToken);
 
-        return plans.Select(p => new NutritionPlanListItemDto
+        var items = page.Items.Select(p => new NutritionPlanListItemDto
         {
             Id = p.Id,
             Name = p.Name,
@@ -59,5 +59,7 @@ public class GetMyNutritionPlansQueryHandler
             Currency = p.Currency,
             PaymentStatus = p.PaymentStatus
         }).ToList();
+
+        return PagedResult<NutritionPlanListItemDto>.Create(items, page.Page, page.PageSize, page.TotalCount);
     }
 }

@@ -40,8 +40,8 @@ public class AdminController : ApiControllerBase
 
     [HttpGet("plans")]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<PlanAdminDto>>> GetPlans()
-        => Ok(await _sender.Send(new GetPlansQuery()));
+    public async Task<ActionResult<PagedResult<PlanAdminDto>>> GetPlans([FromQuery] int page = 1)
+        => Ok(await _sender.Send(new GetPlansQuery(page)));
 
     [HttpGet("stats")]
     [ResponseCache(CacheProfileName = "Volatile")]
