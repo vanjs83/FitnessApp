@@ -229,6 +229,7 @@ const Plans = {
         if (!containerId) return;
         const host = document.getElementById(containerId);
         if (!host) return;
+        host.innerHTML = '';
         try {
             const photos = await API.get(`/progress?planId=${planId}`);
             Progress.render(host, photos, false);

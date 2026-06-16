@@ -286,8 +286,13 @@ const Trainers = {
     async loadClientPlanPhotos(planId) {
         const host = document.getElementById('trainerStatsPlanPhotos');
         if (!host || !this.currentClient) return;
+        host.innerHTML = '';
+        const clientId = this.currentClient.id;
         try {
-            const photos = await API.get(`/trainers/me/clients/${this.currentClient.id}/progress?planId=${planId}`);
+            const photos = await API.get(`/trainers/me/clients/${clientId}/progress?planId=${planId}`);
+            // Skip if the user switched plan/client while this request was in flight.
+            const sel = document.getElementById('trainerStatsPlanSelect');
+            if (!this.currentClient || this.currentClient.id !== clientId || (sel && parseInt(sel.value) !== planId)) return;
             Progress.render(host, photos, false);
         } catch {
             host.innerHTML = '';
