@@ -48,8 +48,8 @@ public class TrainersController : ApiControllerBase
     [HttpGet("me/clients/{clientId}/progress")]
     [Authorize(Roles = Roles.Trainer)]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<ProgressPhotoDto>>> GetClientProgress(string clientId)
-        => HandleResult(await _sender.Send(new GetClientProgressPhotosQuery(clientId)));
+    public async Task<ActionResult<IReadOnlyList<ProgressPhotoDto>>> GetClientProgress(string clientId, [FromQuery] int? planId)
+        => HandleResult(await _sender.Send(new GetClientProgressPhotosQuery(clientId, planId)));
 
     [HttpGet("me/clients/{clientId}/stats/exercise-progress/{exerciseId:int}")]
     [Authorize(Roles = Roles.Trainer)]

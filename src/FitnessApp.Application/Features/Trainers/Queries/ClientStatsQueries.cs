@@ -95,7 +95,7 @@ public class GetClientExerciseProgressQueryHandler : IRequestHandler<GetClientEx
 
 // ===== The client's progress photos (read-only for their trainer) =====
 
-public record GetClientProgressPhotosQuery(string ClientId) : IRequest<Result<IReadOnlyList<ProgressPhotoDto>>>;
+public record GetClientProgressPhotosQuery(string ClientId, int? PlanId = null) : IRequest<Result<IReadOnlyList<ProgressPhotoDto>>>;
 
 public class GetClientProgressPhotosQueryHandler : IRequestHandler<GetClientProgressPhotosQuery, Result<IReadOnlyList<ProgressPhotoDto>>>
 {
@@ -117,6 +117,7 @@ public class GetClientProgressPhotosQueryHandler : IRequestHandler<GetClientProg
 
         var photos = await _db.ProgressPhotos
             .Where(p => p.ClientId == request.ClientId)
+            .Where(p => request.PlanId == null || p.PlanId == request.PlanId)
             .OrderByDescending(p => p.TakenOn)
             .ThenByDescending(p => p.CreatedAt)
             .Select(ProgressMapping.ToDto)

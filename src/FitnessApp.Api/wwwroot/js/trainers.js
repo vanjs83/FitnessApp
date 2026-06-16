@@ -276,7 +276,22 @@ const Trainers = {
         const planSel = document.getElementById('trainerStatsPlanSelect');
         const planId = parseInt(planSel.value);
         if (!planId) return;
+        // loadProgression's own photo loader hits /progress (the *current* user = trainer), so it
+        // can't be reused here; load this client's photos for the selected plan separately.
         await Plans.loadProgression(planId, 'trainerStatsPlanExerciseSelect', 'trainerStatsPlanChart', 'trainerStatsPlanSummary', 'trainerStatsPlanChartObj');
+        await this.loadClientPlanPhotos(planId);
+    },
+
+    // Renders the selected plan's progress photos (this client's) next to the weight-progression chart.
+    async loadClientPlanPhotos(planId) {
+        const host = document.getElementById('trainerStatsPlanPhotos');
+        if (!host || !this.currentClient) return;
+        try {
+            const photos = await API.get(`/trainers/me/clients/${this.currentClient.id}/progress?planId=${planId}`);
+            Progress.render(host, photos, false);
+        } catch {
+            host.innerHTML = '';
+        }
     },
 
     async loadClientProfile() {
