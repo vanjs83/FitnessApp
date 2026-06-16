@@ -234,18 +234,6 @@ const Trainers = {
         await this.loadClientWorkouts();
         await this.loadStatsExercises();
         await this.loadPlansForStats();
-        await this.loadClientProgressPhotos();
-    },
-
-    async loadClientProgressPhotos() {
-        const container = document.getElementById('trainerProgressGallery');
-        if (!container || !this.currentClient) return;
-        try {
-            const photos = await API.get(`/trainers/me/clients/${this.currentClient.id}/progress`);
-            Progress.render(container, photos, false);
-        } catch (err) {
-            container.innerHTML = `<p class="muted small">${this.escape(err.message)}</p>`;
-        }
     },
 
     async loadPlansForStats() {
