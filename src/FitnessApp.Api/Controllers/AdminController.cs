@@ -10,7 +10,6 @@ using FitnessApp.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.WebSockets.
 
 namespace FitnessApp.Api.Controllers;
 
