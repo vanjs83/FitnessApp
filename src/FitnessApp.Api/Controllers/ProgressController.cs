@@ -1,5 +1,4 @@
-﻿using FitnessApp.Application.Common;
-using FitnessApp.Application.DTOs.Progress;
+﻿using FitnessApp.Application.DTOs.Progress;
 using FitnessApp.Application.Features.Progress.Commands;
 using FitnessApp.Application.Features.Progress.Queries;
 using FitnessApp.Domain.Common;
@@ -21,8 +20,8 @@ public class ProgressController : ApiControllerBase
 
     [HttpGet]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<PagedResult<ProgressPhotoDto>>> GetMine([FromQuery] int? planId, [FromQuery] int page = 1)
-        => Ok(await _sender.Send(new GetMyProgressPhotosQuery(planId, page)));
+    public async Task<ActionResult<IReadOnlyList<ProgressPhotoDto>>> GetMine([FromQuery] int? planId)
+        => Ok(await _sender.Send(new GetMyProgressPhotosQuery(planId)));
 
     [HttpPost]
     [RequestSizeLimit(UploadProgressPhotoCommandHandler.MaxImageBytes + 1024)]

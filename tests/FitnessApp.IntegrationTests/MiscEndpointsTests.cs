@@ -48,9 +48,9 @@ public class MiscEndpointsTests : IntegrationTestBase
     {
         var client = await CreateAuthenticatedClientAsync("Client");
 
-        var photos = await client.GetFromJsonAsync<PagedResult<ProgressPhotoDto>>("/api/v1/progress", JsonOptions);
+        var photos = await client.GetFromJsonAsync<List<ProgressPhotoDto>>("/api/v1/progress", JsonOptions);
 
-        photos!.Items.Should().NotBeNull().And.BeEmpty();
+        photos.Should().NotBeNull().And.BeEmpty();
     }
 
     [Fact]

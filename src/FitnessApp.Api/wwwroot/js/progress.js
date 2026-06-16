@@ -34,8 +34,7 @@ const Progress = {
         await this.loadPlans();
         const planId = this.selectedPlanId();
         try {
-            const res = await API.get(planId ? `/progress?planId=${planId}` : '/progress');
-            this.photos = res.items;
+            this.photos = await API.get(planId ? `/progress?planId=${planId}` : '/progress');
             this.render(grid, this.photos, true);
         } catch (err) {
             grid.innerHTML = `<p class="muted small">${this.escape(err.message)}</p>`;

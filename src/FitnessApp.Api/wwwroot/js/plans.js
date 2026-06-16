@@ -230,8 +230,8 @@ const Plans = {
         const host = document.getElementById(containerId);
         if (!host) return;
         try {
-            const res = await API.get(`/progress?planId=${planId}`);
-            Progress.render(host, res.items, false);
+            const photos = await API.get(`/progress?planId=${planId}`);
+            Progress.render(host, photos, false);
         } catch {
             host.innerHTML = '';
         }
