@@ -296,6 +296,30 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 .list-item .meta { color: #a0a8b0; font-size: 0.85rem; margin-top: 0.2rem; }
 .muted { color: #a0a8b0; font-size: 0.9rem; }
 
+/* Pager control for server-paginated lists (js/pagination.js) */
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.pager:empty { display: none; }
+.pager-btn {
+    background: #1a2028;
+    color: #e6e9ec;
+    border: 1px solid #2a3340;
+    border-radius: 6px;
+    width: 2.2rem;
+    height: 2.2rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.pager-btn:hover:not(:disabled) { background: #232b35; }
+.pager-btn:disabled { opacity: 0.4; cursor: default; }
+.pager-info { color: #a0a8b0; font-size: 0.9rem; min-width: 5rem; text-align: center; }
+
 .badge {
     background: #2a3340;
     color: #a0a8b0;

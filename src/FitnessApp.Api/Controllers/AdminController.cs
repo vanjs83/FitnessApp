@@ -1,4 +1,5 @@
-﻿using FitnessApp.Application.DTOs.Admin;
+﻿using FitnessApp.Application.Common;
+using FitnessApp.Application.DTOs.Admin;
 using FitnessApp.Application.DTOs.Email;
 using FitnessApp.Application.Features.Admin.Commands;
 using FitnessApp.Application.Features.Admin.Queries;
@@ -20,8 +21,8 @@ public class AdminController : ApiControllerBase
 
     [HttpGet("trainers")]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<TrainerAdminDto>>> GetTrainers()
-        => Ok(await _sender.Send(new GetTrainersQuery()));
+    public async Task<ActionResult<PagedResult<TrainerAdminDto>>> GetTrainers([FromQuery] int page = 1, [FromQuery] string? search = null)
+        => Ok(await _sender.Send(new GetTrainersQuery(page, search)));
 
     [HttpPost("trainers")]
     public async Task<ActionResult<TrainerAdminDto>> CreateTrainer(CreateTrainerRequest request)
@@ -29,8 +30,13 @@ public class AdminController : ApiControllerBase
 
     [HttpGet("clients")]
     [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<ClientAdminDto>>> GetClients()
-        => Ok(await _sender.Send(new GetClientsQuery()));
+    public async Task<ActionResult<PagedResult<ClientAdminDto>>> GetClients([FromQuery] int page = 1, [FromQuery] string? search = null)
+        => Ok(await _sender.Send(new GetClientsQuery(page, search)));
+
+    [HttpGet("recipients")]
+    [ResponseCache(CacheProfileName = "UserData")]
+    public async Task<ActionResult<IReadOnlyList<AdminRecipientDto>>> GetRecipients()
+        => Ok(await _sender.Send(new GetRecipientsQuery()));
 
     [HttpGet("plans")]
     [ResponseCache(CacheProfileName = "UserData")]

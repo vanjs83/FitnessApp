@@ -1,3 +1,4 @@
+using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Admin;
 using FitnessApp.Domain.Common;
@@ -6,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.Admin.Queries;
 
-public record GetClientsQuery : IRequest<IReadOnlyList<ClientAdminDto>>;
+public record GetClientsQuery(int Page = 1, string? Search = null) : IRequest<PagedResult<ClientAdminDto>>;
 
-public class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, IReadOnlyList<ClientAdminDto>>
+public class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, PagedResult<ClientAdminDto>>
 {
     private readonly IIdentityAdminService _identity;
     private readonly IUserDirectory _users;
@@ -21,7 +22,7 @@ public class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, IReadOnly
         _db = db;
     }
 
-    public async Task<IReadOnlyList<ClientAdminDto>> Handle(GetClientsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<ClientAdminDto>> Handle(GetClientsQuery request, CancellationToken cancellationToken)
     {
         var clients = await _identity.GetUsersInRoleAsync(Roles.Client, cancellationToken);
         var clientIds = clients.Select(c => c.Id).ToList();
@@ -35,6 +36,8 @@ public class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, IReadOnly
         var trainerIds = clients.Where(c => c.TrainerId != null).Select(c => c.TrainerId!).Distinct();
         var trainerNames = await _users.GetDisplayNamesAsync(trainerIds, cancellationToken);
 
+        var search = request.Search?.Trim();
+
         return clients
             .OrderBy(c => c.FullName ?? c.Email)
             .Select(c => new ClientAdminDto
@@ -46,6 +49,11 @@ public class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, IReadOnly
                 TrainerName = c.TrainerId != null && trainerNames.TryGetValue(c.TrainerId, out var tn) ? tn : null,
                 PerformedSetCount = performedCounts.TryGetValue(c.Id, out var pc) ? pc : 0
             })
-            .ToList();
+            .Where(c => string.IsNullOrEmpty(search)
+                || (c.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)
+                || (c.Email ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)
+                || (c.TrainerName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase))
+            .ToList()
+            .ToPagedResult(request.Page, PaginationExtensions.DefaultPageSize);
     }
 }

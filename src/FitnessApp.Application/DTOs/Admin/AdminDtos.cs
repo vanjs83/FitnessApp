@@ -38,6 +38,16 @@ public class PlanAdminDto
     public string? TrainerName { get; set; }
 }
 
+/// <summary>Lightweight all-users payload for the mail/push recipient picker (intentionally not paginated).</summary>
+public class AdminRecipientDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? FullName { get; set; }
+    public string Role { get; set; } = string.Empty;
+    public bool HasTrainer { get; set; }
+}
+
 public class AdminStatsDto
 {
     public int TrainersCount { get; set; }

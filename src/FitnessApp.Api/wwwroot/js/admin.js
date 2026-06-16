@@ -1,12 +1,17 @@
 const Admin = {
     trainers: [],
     clients: [],
+    trainersPage: 1,
+    clientsPage: 1,
+    trainersMeta: null,
+    clientsMeta: null,
     trainerSearch: '',
     clientSearch: '',
     recipients: [],
     msgSearch: '',
     msgSelectedIds: new Set(),
     mailConfigured: null,
+    _searchTimers: {},
 
     init() {
         document.getElementById('newTrainerBtn').addEventListener('click', () => {
@@ -20,12 +25,12 @@ const Admin = {
         });
 
         document.getElementById('adminTrainersSearch').addEventListener('input', e => {
-            this.trainerSearch = e.target.value.toLowerCase();
-            this.renderTrainers();
+            this.trainerSearch = e.target.value;
+            this.debouncedReload('trainers', () => { this.trainersPage = 1; this.loadTrainers(); });
         });
         document.getElementById('adminClientsSearch').addEventListener('input', e => {
-            this.clientSearch = e.target.value.toLowerCase();
-            this.renderClients();
+            this.clientSearch = e.target.value;
+            this.debouncedReload('clients', () => { this.clientsPage = 1; this.loadClients(); });
         });
 
         document.getElementById('adminMsgSearch').addEventListener('input', e => {
@@ -70,28 +75,46 @@ const Admin = {
         }
     },
 
+    // Debounces a server reload so we don't fire a request on every keystroke.
+    debouncedReload(key, fn) {
+        clearTimeout(this._searchTimers[key]);
+        this._searchTimers[key] = setTimeout(fn, 300);
+    },
+
     async loadTrainers() {
         try {
-            this.trainers = await API.get('/admin/trainers');
+            const params = new URLSearchParams({ page: this.trainersPage });
+            if (this.trainerSearch.trim()) params.set('search', this.trainerSearch.trim());
+            const res = await API.get(`/admin/trainers?${params}`);
+            // A deletion can empty the last page; fall back to the new last page.
+            if (this.trainersPage > 1 && res.totalPages > 0 && this.trainersPage > res.totalPages) {
+                this.trainersPage = res.totalPages;
+                return this.loadTrainers();
+            }
+            this.trainers = res.items;
+            this.trainersMeta = res;
             this.renderTrainers();
         } catch (err) {
             console.error(err);
         }
     },
 
+    renderTrainersPager() {
+        Pagination.render(document.getElementById('adminTrainersPager'), this.trainersMeta, p => {
+            this.trainersPage = p;
+            this.loadTrainers();
+        });
+    },
+
     renderTrainers() {
         const container = document.getElementById('adminTrainersList');
-        const filtered = this.trainers.filter(t =>
-            !this.trainerSearch ||
-            (t.fullName || '').toLowerCase().includes(this.trainerSearch) ||
-            (t.email || '').toLowerCase().includes(this.trainerSearch)
-        );
-        if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${I18n.t(this.trainers.length === 0 ? 'admin.empty.trainers' : 'admin.empty.search')}</p>`;
+        if (this.trainers.length === 0) {
+            container.innerHTML = `<p class="muted">${I18n.t(this.trainerSearch.trim() ? 'admin.empty.search' : 'admin.empty.trainers')}</p>`;
+            this.renderTrainersPager();
             return;
         }
 
-        container.innerHTML = filtered.map(t => `
+        container.innerHTML = this.trainers.map(t => `
             <div class="list-item">
                 <div>
                     <h4>${this.escape(t.fullName || t.email)}</h4>
@@ -114,32 +137,43 @@ const Admin = {
                 this.deleteTrainer(btn.dataset.id, name);
             });
         });
+
+        this.renderTrainersPager();
     },
 
     async loadClients() {
         try {
-            this.clients = await API.get('/admin/clients');
+            const params = new URLSearchParams({ page: this.clientsPage });
+            if (this.clientSearch.trim()) params.set('search', this.clientSearch.trim());
+            const res = await API.get(`/admin/clients?${params}`);
+            if (this.clientsPage > 1 && res.totalPages > 0 && this.clientsPage > res.totalPages) {
+                this.clientsPage = res.totalPages;
+                return this.loadClients();
+            }
+            this.clients = res.items;
+            this.clientsMeta = res;
             this.renderClients();
         } catch (err) {
             console.error(err);
         }
     },
 
+    renderClientsPager() {
+        Pagination.render(document.getElementById('adminClientsPager'), this.clientsMeta, p => {
+            this.clientsPage = p;
+            this.loadClients();
+        });
+    },
+
     renderClients() {
         const container = document.getElementById('adminClientsList');
-        const filtered = this.clients.filter(c =>
-            !this.clientSearch ||
-            (c.fullName || '').toLowerCase().includes(this.clientSearch) ||
-            (c.email || '').toLowerCase().includes(this.clientSearch) ||
-            (c.trainerName || '').toLowerCase().includes(this.clientSearch)
-        );
-
-        if (filtered.length === 0) {
-            container.innerHTML = `<p class="muted">${I18n.t(this.clients.length === 0 ? 'admin.empty.clients' : 'admin.empty.search')}</p>`;
+        if (this.clients.length === 0) {
+            container.innerHTML = `<p class="muted">${I18n.t(this.clientSearch.trim() ? 'admin.empty.search' : 'admin.empty.clients')}</p>`;
+            this.renderClientsPager();
             return;
         }
 
-        container.innerHTML = filtered.map(c => `
+        container.innerHTML = this.clients.map(c => `
             <div class="list-item">
                 <div>
                     <h4>${this.escape(c.fullName || c.email)}</h4>
@@ -152,6 +186,8 @@ const Admin = {
                 </div>
             </div>
         `).join('');
+
+        this.renderClientsPager();
     },
 
     async saveTrainer() {
@@ -212,21 +248,26 @@ const Admin = {
             statusEl.style.color = '#d9534f';
         }
 
-        if (this.trainers.length === 0) await this.loadTrainers();
-        if (this.clients.length === 0) await this.loadClients();
-        this.buildRecipients();
+        await this.buildRecipients();
         this.renderRecipients();
     },
 
-    // Trainers + clients combined into one selectable recipient list.
-    buildRecipients() {
-        const fromTrainers = this.trainers.map(t => ({
-            id: t.id, name: t.fullName || t.email, email: t.email, role: 'Trainer', hasTrainer: true
-        }));
-        const fromClients = this.clients.map(c => ({
-            id: c.id, name: c.fullName || c.email, email: c.email, role: 'Client', hasTrainer: !!c.trainerName
-        }));
-        this.recipients = [...fromTrainers, ...fromClients];
+    // All trainers + clients in one selectable list. Fetched unpaginated from a
+    // dedicated endpoint so "select all" covers every user, not just one table page.
+    async buildRecipients() {
+        try {
+            const all = await API.get('/admin/recipients');
+            this.recipients = all.map(r => ({
+                id: r.id,
+                name: r.fullName || r.email,
+                email: r.email,
+                role: r.role,
+                hasTrainer: r.role === 'Trainer' ? true : r.hasTrainer
+            }));
+        } catch (err) {
+            console.error(err);
+            this.recipients = [];
+        }
     },
 
     filteredRecipients() {

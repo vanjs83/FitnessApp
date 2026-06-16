@@ -7,6 +7,7 @@
   "common.back": "← Back",
   "common.loading": "Loading...",
   "common.search": "🔍 Search...",
+  "common.pageOf": "Page {page} / {total}",
   "common.logout": "Log out",
   "common.settings": "Settings",
   "common.donate": "☕ Donate",
