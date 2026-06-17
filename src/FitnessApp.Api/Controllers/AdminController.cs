@@ -74,36 +74,22 @@ public class AdminController : ApiControllerBase
         Response.Headers.CacheControl = "no-cache";
         Response.Headers["X-Accel-Buffering"] = "no";
 
-        var channel = Channel.CreateUnbounded<AdminStatsDto>();
-
-        // Producer: a fresh DI scope per tick keeps the DbContext short-lived.
-        var producer = Task.Run(async () =>
-        {
-            try
-            {
-                while (!ct.IsCancellationRequested)
-                {
-                    using var scope = _scopeFactory.CreateScope();
-                    var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-                    var stats = await sender.Send(new GetAdminStatsQuery(), ct);
-                    await channel.Writer.WriteAsync(stats, ct);
-                    await Task.Delay(TimeSpan.FromSeconds(5), ct);
-                }
-            }
-            catch (OperationCanceledException) { /* client disconnected */ }
-            finally { channel.Writer.Complete(); }
-        }, ct);
-
         try
         {
-            await foreach (var stats in channel.Reader.ReadAllAsync(ct))
+            // A fresh DI scope per tick keeps the DbContext short-lived.
+            while (!ct.IsCancellationRequested)
             {
+                using var scope = _scopeFactory.CreateScope();
+                var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+                var stats = await sender.Send(new GetAdminStatsQuery(), ct);
+
                 await Response.WriteAsync($"data: {JsonSerializer.Serialize(stats, json)}\n\n", ct);
                 await Response.Body.FlushAsync(ct);
+
+                await Task.Delay(TimeSpan.FromSeconds(5), ct);
             }
         }
         catch (OperationCanceledException) { /* client disconnected */ }
-        await producer;
     }
 
     [HttpDelete("trainers/{id}")]
