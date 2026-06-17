@@ -28,10 +28,12 @@ public class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, PagedResu
         var clientIds = clients.Select(c => c.Id).ToList();
 
         var performedCounts = await _db.PerformedSets
-            .Where(ps => clientIds.Contains(ps.PlannedExercise.TrainingDay.TrainingPlan.ClientId))
+            .Where(ps =>
+                ps.PlannedExercise.TrainingDay.TrainingPlan.ClientId != null &&
+                clientIds.Contains(ps.PlannedExercise.TrainingDay.TrainingPlan.ClientId))
             .GroupBy(ps => ps.PlannedExercise.TrainingDay.TrainingPlan.ClientId)
-            .Select(g => new { ClientId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.ClientId, x => x.Count, cancellationToken);
+            .Select(g => new { ClientId = g.Key!, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ClientId!, x => x.Count, cancellationToken);
 
         var trainerIds = clients.Where(c => c.TrainerId != null).Select(c => c.TrainerId!).Distinct();
         var trainerNames = await _users.GetDisplayNamesAsync(trainerIds, cancellationToken);

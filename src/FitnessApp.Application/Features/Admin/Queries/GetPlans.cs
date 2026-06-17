@@ -35,7 +35,11 @@ public class GetPlansQueryHandler : IRequestHandler<GetPlansQuery, PagedResult<P
             })
             .ToPagedResultAsync(request.Page, PaginationExtensions.DefaultPageSize, cancellationToken);
 
-        var userIds = page.Items.Select(p => p.TrainerId).Concat(page.Items.Select(p => p.ClientId)).Distinct();
+        var userIds = page.Items.Select(p => p.TrainerId)
+            .Concat(page.Items.Select(p => p.ClientId))
+            .Where(id => id != null)
+            .Cast<string>()
+            .Distinct();
         var names = await _users.GetDisplayNamesAsync(userIds, cancellationToken);
 
         var items = page.Items.Select(p => new PlanAdminDto
@@ -46,7 +50,7 @@ public class GetPlansQueryHandler : IRequestHandler<GetPlansQuery, PagedResult<P
             EndDate = p.EndDate,
             DayCount = p.DayCount,
             PerformedSetCount = p.PerformedSetCount,
-            ClientName = names.TryGetValue(p.ClientId, out var cn) ? cn : "(nepoznat)",
+            ClientName = p.ClientId != null && names.TryGetValue(p.ClientId, out var cn) ? cn : "(nepoznat)",
             TrainerName = names.TryGetValue(p.TrainerId, out var tn) ? tn : null
         }).ToList();
 
