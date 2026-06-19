@@ -35,6 +35,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<TrainerRequest> TrainerRequests => Set<TrainerRequest>();
     public DbSet<ProgressPhoto> ProgressPhotos => Set<ProgressPhoto>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -293,6 +294,25 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
                 .WithMany()
                 .HasForeignKey(x => x.PlanId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<Appointment>(e =>
+        {
+            e.Property(x => x.TrainerId).IsRequired();
+            e.Property(x => x.ClientId).IsRequired();
+            e.Property(x => x.Location).HasMaxLength(400);
+            e.Property(x => x.Notes).HasMaxLength(2000);
+            e.HasIndex(x => new { x.TrainerId, x.StartsAt });
+            e.HasIndex(x => new { x.ClientId, x.StartsAt });
+
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.TrainerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<RefreshToken>(e =>

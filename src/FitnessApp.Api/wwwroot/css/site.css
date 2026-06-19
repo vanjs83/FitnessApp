@@ -1074,3 +1074,69 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
     vertical-align: middle;
 }
 
+/* ===== Trainer calendar ===== */
+.cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 0.8rem 0;
+}
+.cal-header strong { min-width: 11rem; text-align: center; text-transform: capitalize; }
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+.cal-wd {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #8b95a3;
+    padding: 4px 0;
+    text-transform: uppercase;
+}
+.cal-cell {
+    position: relative;
+    min-height: 56px;
+    background: #1a2028;
+    border: 1px solid #2a3340;
+    border-radius: 8px;
+    padding: 4px 6px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.cal-cell:hover { background: #222a34; }
+.cal-cell.empty { background: none; border: none; cursor: default; }
+.cal-cell.today { border-color: #4dabf7; }
+.cal-cell.selected { background: #2a3340; border-color: #4dabf7; }
+.cal-num { font-size: 0.85rem; color: #e6e8eb; }
+.cal-badge {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: #4dabf7;
+    color: #fff;
+    font-size: 0.7rem;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 9px;
+    padding: 0 4px;
+}
+.cal-item { margin-bottom: 8px; }
+.cal-status {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 1px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+    background: #2a3340;
+    color: #c4ccd6;
+}
+.cal-Requested { background: #5c4a1a; color: #ffd66b; }
+.cal-Scheduled { background: #1d3b57; color: #74c0fc; }
+.cal-Completed { background: #1d4a2e; color: #69db7c; }
+.cal-Cancelled { background: #4a1d1d; color: #ff8787; }
+.cal-NoShow { background: #3a2440; color: #d8a7e6; }
+

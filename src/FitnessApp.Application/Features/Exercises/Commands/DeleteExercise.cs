@@ -20,7 +20,7 @@ public class DeleteExerciseCommandHandler : IRequestHandler<DeleteExerciseComman
 
     public async Task<Result> Handle(DeleteExerciseCommand request, CancellationToken cancellationToken)
     {
-        var e = await _db.Exercises.FindAsync(new object?[] { request.Id }, cancellationToken);
+        var e = await _db.Exercises.FindAsync(new object[] { request.Id}  , cancellationToken);
         if (e == null) return Result.NotFound();
         if (e.CreatedByUserId != _currentUser.UserId) return Result.Forbidden();
 

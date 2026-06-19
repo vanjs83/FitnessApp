@@ -27,6 +27,7 @@ public interface IAppDbContext
     DbSet<ProgressPhoto> ProgressPhotos { get; }
     DbSet<ChatMessage> ChatMessages { get; }
     DbSet<TrainerRequest> TrainerRequests { get; }
+    DbSet<Appointment> Appointments { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
