@@ -171,6 +171,17 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task Booking_a_session_in_the_past_is_rejected_returns_400()
+    {
+        var (_, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var response = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { ClientId = clientId, StartsAt = DateTime.UtcNow.AddDays(-2) });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task An_outsider_cannot_view_someone_elses_appointment_returns_403()
     {
         var (_, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();

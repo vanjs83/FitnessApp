@@ -31,6 +31,9 @@ public class RequestAppointmentCommandHandler : IRequestHandler<RequestAppointme
     {
         var clientId = _currentUser.UserId;
 
+        if (AppointmentTime.IsClearlyInPast(request.StartsAt))
+            return Result<AppointmentDto>.Fail(ResultError.Validation, "The session time is in the past.");
+
         var trainerId = await _currentUser.GetTrainerIdAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(trainerId))
             return Result<AppointmentDto>.Fail(ResultError.Validation, "You need a trainer assigned to request a session.");

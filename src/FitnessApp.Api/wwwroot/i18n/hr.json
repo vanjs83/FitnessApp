@@ -83,6 +83,7 @@
   "calendar.online": "Online",
   "calendar.noSessions": "Nema termina.",
   "calendar.required": "Odaberi klijenta i vrijeme.",
+  "calendar.past": "Vrijeme termina je u prošlosti.",
   "calendar.confirm": "Potvrdi",
   "calendar.complete": "Završeno",
   "calendar.noShow": "Nije došao",

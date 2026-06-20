@@ -164,8 +164,10 @@ const Calendar = {
     toggleForm(show) {
         document.getElementById('calNewForm').classList.toggle('hidden', !show);
         document.getElementById('calError').textContent = '';
-        if (show && this.selected) {
-            document.getElementById('calStart').value = this.selected + 'T09:00';
+        if (show) {
+            // Block past times in the native picker (browser local "now").
+            document.getElementById('calStart').min = this.isoLocal(new Date()).slice(0, 16);
+            if (this.selected) document.getElementById('calStart').value = this.selected + 'T09:00';
         }
     },
 
@@ -176,6 +178,10 @@ const Calendar = {
         const startsAt = document.getElementById('calStart').value;
         if (!clientId || !startsAt) {
             err.textContent = I18n.t('calendar.required', 'Odaberi klijenta i vrijeme.');
+            return;
+        }
+        if (new Date(startsAt) < new Date()) {
+            err.textContent = I18n.t('calendar.past', 'Vrijeme termina je u prošlosti.');
             return;
         }
         try {

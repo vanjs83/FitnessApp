@@ -33,6 +33,9 @@ public class CreateAppointmentCommandHandler : IRequestHandler<CreateAppointment
     {
         var trainerId = _currentUser.UserId;
 
+        if (AppointmentTime.IsClearlyInPast(request.StartsAt))
+            return Result<AppointmentDto>.Fail(ResultError.Validation, "The session time is in the past.");
+
         var guard = await TrainerGuard.CheckOwnClientAsync(_users, request.ClientId, trainerId, cancellationToken);
         if (guard is not null) return Result<AppointmentDto>.Fail(guard.Value);
 

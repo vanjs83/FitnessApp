@@ -83,6 +83,7 @@
   "calendar.online": "Online",
   "calendar.noSessions": "No sessions.",
   "calendar.required": "Pick a client and a time.",
+  "calendar.past": "The session time is in the past.",
   "calendar.confirm": "Confirm",
   "calendar.complete": "Complete",
   "calendar.noShow": "No-show",
