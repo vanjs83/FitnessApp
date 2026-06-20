@@ -85,10 +85,15 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddCorsPolicy(this IServiceCollection services)
     {
+        // Production frontend (fitness-application.com) plus local dev (Vite / Angular).
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(policy =>
-                policy.WithOrigins("http://localhost:5173", "http://localhost:4200")
+                policy.WithOrigins(
+                        "https://fitness-application.com",
+                        "https://www.fitness-application.com",
+                        "http://localhost:5173",
+                        "http://localhost:4200")
                       .AllowAnyHeader()
                       .AllowAnyMethod());
         });

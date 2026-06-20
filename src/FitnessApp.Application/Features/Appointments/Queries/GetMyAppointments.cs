@@ -1,5 +1,6 @@
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Appointments;
+using FitnessApp.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +35,7 @@ public class GetMyAppointmentsQueryHandler
 
         var appointments = await _db.Appointments
             .Where(a => (a.TrainerId == userId || a.ClientId == userId)
+                        && a.Status != AppointmentStatus.Cancelled
                         && a.StartsAt >= from && a.StartsAt < to)
             .OrderBy(a => a.StartsAt)
             .ToListAsync(cancellationToken);

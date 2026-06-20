@@ -28,6 +28,10 @@ public class ConfirmAppointmentCommandHandler : IRequestHandler<ConfirmAppointme
         if (appointment.Status != AppointmentStatus.Requested)
             return Result.Fail(ResultError.Validation, "Only a requested appointment can be confirmed.");
 
+        if (await AppointmentConflict.TrainerBusyAsync(
+                _db, appointment.TrainerId, appointment.StartsAt, appointment.DurationMinutes, appointment.Id, cancellationToken))
+            return Result.Conflict("You already have a session booked in that time slot.");
+
         appointment.Status = AppointmentStatus.Scheduled;
         await _db.SaveChangesAsync(cancellationToken);
         return Result.Success();

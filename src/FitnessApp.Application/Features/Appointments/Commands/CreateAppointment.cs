@@ -36,6 +36,9 @@ public class CreateAppointmentCommandHandler : IRequestHandler<CreateAppointment
         var guard = await TrainerGuard.CheckOwnClientAsync(_users, request.ClientId, trainerId, cancellationToken);
         if (guard is not null) return Result<AppointmentDto>.Fail(guard.Value);
 
+        if (await AppointmentConflict.TrainerBusyAsync(_db, trainerId, request.StartsAt, request.DurationMinutes, null, cancellationToken))
+            return Result<AppointmentDto>.Conflict("You already have a session booked in that time slot.");
+
         var appointment = new Appointment
         {
             TrainerId = trainerId,

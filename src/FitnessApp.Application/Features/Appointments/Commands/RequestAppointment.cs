@@ -35,6 +35,9 @@ public class RequestAppointmentCommandHandler : IRequestHandler<RequestAppointme
         if (string.IsNullOrWhiteSpace(trainerId))
             return Result<AppointmentDto>.Fail(ResultError.Validation, "You need a trainer assigned to request a session.");
 
+        if (await AppointmentConflict.TrainerBusyAsync(_db, trainerId, request.StartsAt, request.DurationMinutes, null, cancellationToken))
+            return Result<AppointmentDto>.Conflict("Your trainer already has a session booked in that time slot.");
+
         var appointment = new Appointment
         {
             TrainerId = trainerId,

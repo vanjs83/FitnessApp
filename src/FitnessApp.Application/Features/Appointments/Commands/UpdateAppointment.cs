@@ -39,6 +39,9 @@ public class UpdateAppointmentCommandHandler : IRequestHandler<UpdateAppointment
         if (appointment.Status is AppointmentStatus.Completed or AppointmentStatus.Cancelled or AppointmentStatus.NoShow)
             return Result<AppointmentDto>.Fail(ResultError.Validation, "A closed appointment can no longer be edited.");
 
+        if (await AppointmentConflict.TrainerBusyAsync(_db, trainerId, request.StartsAt, request.DurationMinutes, appointment.Id, cancellationToken))
+            return Result<AppointmentDto>.Conflict("You already have a session booked in that time slot.");
+
         appointment.StartsAt = request.StartsAt;
         appointment.DurationMinutes = request.DurationMinutes;
         appointment.Type = request.Type;

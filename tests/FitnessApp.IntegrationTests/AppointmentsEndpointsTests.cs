@@ -145,6 +145,29 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
 
         var after = await client.GetFromJsonAsync<AppointmentDto>($"/api/v1/appointments/{created.Id}", JsonOptions);
         after!.Status.Should().Be("Cancelled");
+
+        // A cancelled session drops out of the calendar list (but is still fetchable by id).
+        var list = await client.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
+        list!.Should().NotContain(a => a.Id == created.Id);
+    }
+
+    [Fact]
+    public async Task Booking_two_sessions_in_the_same_slot_is_rejected_returns_400()
+    {
+        var (_, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+        var slot = Tomorrow(14);
+
+        var first = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { ClientId = clientId, StartsAt = slot, DurationMinutes = 60 });
+        first.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Overlapping slot (starts 30 min into the first session) must be refused.
+        var clash = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { ClientId = clientId, StartsAt = slot.AddMinutes(30), DurationMinutes = 60 });
+        clash.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var list = await trainer.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
+        list!.Count(a => a.StartsAt.Date == slot.Date).Should().Be(1);
     }
 
     [Fact]
