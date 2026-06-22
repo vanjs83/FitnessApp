@@ -152,7 +152,7 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task Booking_two_sessions_in_the_same_slot_is_rejected_returns_400()
+    public async Task Booking_two_sessions_in_the_same_slot_is_rejected_returns_409()
     {
         var (_, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
         var slot = Tomorrow(14);
@@ -164,7 +164,7 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
         // Overlapping slot (starts 30 min into the first session) must be refused.
         var clash = await trainer.PostAsJsonAsync("/api/v1/appointments",
             new CreateAppointmentRequest { ClientId = clientId, StartsAt = slot.AddMinutes(30), DurationMinutes = 60 });
-        clash.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        clash.StatusCode.Should().Be(HttpStatusCode.Conflict);
 
         var list = await trainer.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
         list!.Count(a => a.StartsAt.Date == slot.Date).Should().Be(1);
