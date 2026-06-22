@@ -21,6 +21,7 @@ public abstract class ApiControllerBase : ControllerBase
     {
         ResultError.NotFound => result.Message is null ? NotFound() : NotFound(new { message = result.Message }),
         ResultError.Forbidden => Forbid(),
+        ResultError.Conflict => Conflict(new { message = result.Message }),
         _ => BadRequest(new { message = result.Message })
     };
 }
