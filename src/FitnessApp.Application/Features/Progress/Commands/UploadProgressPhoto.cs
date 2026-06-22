@@ -80,6 +80,6 @@ public class UploadProgressPhotoCommandHandler : IRequestHandler<UploadProgressP
         _db.ProgressPhotos.Add(photo);
         await _db.SaveChangesAsync(cancellationToken);
 
-        return Result<ProgressPhotoDto>.Success(photo.ToDtoObject());
+        return Result<ProgressPhotoDto>.Success(photo.ToDtoObject(_storage.MediaBase));
     }
 }

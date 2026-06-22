@@ -3,8 +3,10 @@ using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Progress;
 using FitnessApp.Application.DTOs.Stats;
 using FitnessApp.Application.Features.Progress;
+using FitnessApp.Application.Storage;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Application.Features.Trainers.Queries;
 
@@ -102,12 +104,14 @@ public class GetClientProgressPhotosQueryHandler : IRequestHandler<GetClientProg
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
+    private readonly StorageSettings _storage;
 
-    public GetClientProgressPhotosQueryHandler(IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users)
+    public GetClientProgressPhotosQueryHandler(IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users, IOptions<StorageSettings> storage)
     {
         _db = db;
         _currentUser = currentUser;
         _users = users;
+        _storage = storage.Value;
     }
 
     public async Task<Result<IReadOnlyList<ProgressPhotoDto>>> Handle(GetClientProgressPhotosQuery request, CancellationToken cancellationToken)
@@ -120,7 +124,7 @@ public class GetClientProgressPhotosQueryHandler : IRequestHandler<GetClientProg
             .Where(p => request.PlanId == null || p.PlanId == request.PlanId)
             .OrderByDescending(p => p.TakenOn)
             .ThenByDescending(p => p.CreatedAt)
-            .Select(ProgressMapping.ToDto)
+            .Select(ProgressMapping.ToDto(_storage.MediaBase))
             .ToListAsync(cancellationToken);
 
         return Result<IReadOnlyList<ProgressPhotoDto>>.Success(photos);

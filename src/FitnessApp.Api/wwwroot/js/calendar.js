@@ -1,26 +1,56 @@
-// Trainer calendar: month grid of their booked sessions, plus create / status actions.
+// Month-grid calendar of booked sessions. Used by both roles:
+//  - 'trainer': can create sessions and confirm / complete / no-show / cancel them.
+//  - 'client':  read-only view of their own sessions, with cancel only.
+// The two modes render into separate DOM blocks (trainer 'cal*' ids, client 'cc*' ids);
+// `mode` selects the id-set so the rest of the logic is shared.
 const Calendar = {
+    ids: {
+        trainer: {
+            grid: 'calGrid', monthLabel: 'calMonthLabel', prev: 'calPrevBtn', next: 'calNextBtn',
+            dayPanel: 'calDayPanel', dayTitle: 'calDayTitle', dayList: 'calDayList',
+            newBtn: 'calNewBtn', newForm: 'calNewForm', cancelBtn: 'calCancelBtn', saveBtn: 'calSaveBtn',
+            client: 'calClient', start: 'calStart', duration: 'calDuration', type: 'calType',
+            location: 'calLocation', notes: 'calNotes', error: 'calError'
+        },
+        client: {
+            grid: 'ccGrid', monthLabel: 'ccMonthLabel', prev: 'ccPrevBtn', next: 'ccNextBtn',
+            dayPanel: 'ccDayPanel', dayTitle: 'ccDayTitle', dayList: 'ccDayList'
+        }
+    },
+
+    mode: 'trainer',
+    wiredMode: null,
     ref: new Date(),          // any day in the currently shown month
     selected: null,           // 'YYYY-MM-DD' of the open day panel
     appointments: [],
     clients: [],
-    wired: false,
 
-    async load() {
+    // Element by logical key for the current mode.
+    el(key) {
+        const id = this.ids[this.mode][key];
+        return id ? document.getElementById(id) : null;
+    },
+
+    async load(mode = 'trainer') {
+        this.mode = mode;
         this.wire();
-        await Promise.all([this.loadClients(), this.loadMonth()]);
+        const tasks = [this.loadMonth()];
+        if (mode === 'trainer') tasks.push(this.loadClients());
+        await Promise.all(tasks);
         this.renderGrid();
         this.renderDay();
     },
 
     wire() {
-        if (this.wired) return;
-        this.wired = true;
-        document.getElementById('calPrevBtn').addEventListener('click', () => this.shiftMonth(-1));
-        document.getElementById('calNextBtn').addEventListener('click', () => this.shiftMonth(1));
-        document.getElementById('calNewBtn').addEventListener('click', () => this.toggleForm(true));
-        document.getElementById('calCancelBtn').addEventListener('click', () => this.toggleForm(false));
-        document.getElementById('calSaveBtn').addEventListener('click', () => this.save());
+        if (this.wiredMode === this.mode) return;
+        this.wiredMode = this.mode;
+        this.el('prev').addEventListener('click', () => this.shiftMonth(-1));
+        this.el('next').addEventListener('click', () => this.shiftMonth(1));
+        if (this.mode === 'trainer') {
+            this.el('newBtn').addEventListener('click', () => this.toggleForm(true));
+            this.el('cancelBtn').addEventListener('click', () => this.toggleForm(false));
+            this.el('saveBtn').addEventListener('click', () => this.save());
+        }
     },
 
     async shiftMonth(delta) {
@@ -58,14 +88,14 @@ const Calendar = {
             if (items.length < 25) break;
             page++;
         }
-        const sel = document.getElementById('calClient');
+        const sel = this.el('client');
         sel.innerHTML = `<option value="">${I18n.t('calendar.selectClient', 'Odaberi klijenta')}</option>` +
             this.clients.map(c => `<option value="${c.id}">${this.esc(c.fullName || c.email)}</option>`).join('');
     },
 
     renderGrid() {
         const y = this.ref.getFullYear(), m = this.ref.getMonth();
-        document.getElementById('calMonthLabel').textContent =
+        this.el('monthLabel').textContent =
             this.ref.toLocaleDateString(I18n.lang, { month: 'long', year: 'numeric' });
 
         // Count appointments per day key.
@@ -96,7 +126,7 @@ const Calendar = {
             </div>`;
         }
 
-        const grid = document.getElementById('calGrid');
+        const grid = this.el('grid');
         grid.innerHTML = html;
         grid.querySelectorAll('.cal-cell[data-day]').forEach(cell => {
             cell.addEventListener('click', () => {
@@ -108,7 +138,7 @@ const Calendar = {
     },
 
     renderDay() {
-        const panel = document.getElementById('calDayPanel');
+        const panel = this.el('dayPanel');
         if (!this.selected) { panel.classList.add('hidden'); return; }
         panel.classList.remove('hidden');
 
@@ -116,10 +146,10 @@ const Calendar = {
             .filter(a => a.startsAt.slice(0, 10) === this.selected)
             .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 
-        document.getElementById('calDayTitle').textContent =
+        this.el('dayTitle').textContent =
             new Date(this.selected + 'T00:00').toLocaleDateString(I18n.lang, { weekday: 'long', day: 'numeric', month: 'long' });
 
-        const list = document.getElementById('calDayList');
+        const list = this.el('dayList');
         if (!dayAppts.length) {
             list.innerHTML = `<p class="muted small">${I18n.t('calendar.noSessions', 'Nema termina.')}</p>`;
             return;
@@ -149,6 +179,9 @@ const Calendar = {
     actions(a) {
         const btn = (act, key, cls = 'secondary') =>
             `<button class="${cls}" data-act="${act}" data-id="${a.id}">${I18n.t('calendar.' + key)}</button>`;
+        // Clients can only cancel their own pending/booked sessions; the rest is trainer-driven.
+        if (this.mode === 'client')
+            return (a.status === 'Requested' || a.status === 'Scheduled') ? btn('cancel', 'cancel') : '';
         if (a.status === 'Requested') return btn('confirm', 'confirm', '') + btn('cancel', 'cancel');
         if (a.status === 'Scheduled') return btn('complete', 'complete', '') + btn('no-show', 'noShow') + btn('cancel', 'cancel');
         return '';
@@ -162,20 +195,20 @@ const Calendar = {
     },
 
     toggleForm(show) {
-        document.getElementById('calNewForm').classList.toggle('hidden', !show);
-        document.getElementById('calError').textContent = '';
+        this.el('newForm').classList.toggle('hidden', !show);
+        this.el('error').textContent = '';
         if (show) {
             // Block past times in the native picker (browser local "now").
-            document.getElementById('calStart').min = this.isoLocal(new Date()).slice(0, 16);
-            if (this.selected) document.getElementById('calStart').value = this.selected + 'T09:00';
+            this.el('start').min = this.isoLocal(new Date()).slice(0, 16);
+            if (this.selected) this.el('start').value = this.selected + 'T09:00';
         }
     },
 
     async save() {
-        const err = document.getElementById('calError');
+        const err = this.el('error');
         err.textContent = '';
-        const clientId = document.getElementById('calClient').value;
-        const startsAt = document.getElementById('calStart').value;
+        const clientId = this.el('client').value;
+        const startsAt = this.el('start').value;
         if (!clientId || !startsAt) {
             err.textContent = I18n.t('calendar.required', 'Odaberi klijenta i vrijeme.');
             return;
@@ -188,13 +221,13 @@ const Calendar = {
             await API.post('/appointments', {
                 clientId,
                 startsAt,
-                durationMinutes: Number(document.getElementById('calDuration').value) || 60,
-                type: document.getElementById('calType').value,
-                location: document.getElementById('calLocation').value || null,
-                notes: document.getElementById('calNotes').value || null
+                durationMinutes: Number(this.el('duration').value) || 60,
+                type: this.el('type').value,
+                location: this.el('location').value || null,
+                notes: this.el('notes').value || null
             });
             this.toggleForm(false);
-            ['calLocation', 'calNotes'].forEach(id => document.getElementById(id).value = '');
+            ['location', 'notes'].forEach(k => this.el(k).value = '');
             await this.loadMonth();
             this.renderGrid();
             this.renderDay();
@@ -203,7 +236,7 @@ const Calendar = {
         }
     },
 
-    // Local-time ISO (no trailing Z) so the value matches what the trainer picked.
+    // Local-time ISO (no trailing Z) so the value matches what the user picked.
     isoLocal(d) {
         const p = n => String(n).padStart(2, '0');
         return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`;

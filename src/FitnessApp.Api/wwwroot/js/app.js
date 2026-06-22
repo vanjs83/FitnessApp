@@ -194,6 +194,8 @@ const App = {
         document.getElementById('statsView').classList.toggle('hidden', view !== 'stats');
         const progressV = document.getElementById('progressView');
         if (progressV) progressV.classList.toggle('hidden', view !== 'progress');
+        const clientCalV = document.getElementById('clientCalendarView');
+        if (clientCalV) clientCalV.classList.toggle('hidden', view !== 'calendar');
         document.getElementById('profileView').classList.toggle('hidden', view !== 'profile');
         document.getElementById('chatView').classList.toggle('hidden', view !== 'chat');
         const trainersV = document.getElementById('trainersView');
@@ -205,6 +207,7 @@ const App = {
         if (view === 'exercises') Exercises.load();
         if (view === 'stats') Stats.load();
         if (view === 'progress') Progress.load();
+        if (view === 'calendar') Calendar.load('client');
         if (view === 'profile') Profile.load();
         if (view === 'myPlans') {
             Plans.showMyPlansList();

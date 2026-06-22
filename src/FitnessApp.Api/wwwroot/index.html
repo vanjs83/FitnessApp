@@ -110,6 +110,7 @@
                 <button class="nav-btn" data-view="trainers" data-i18n="nav.trainers">Treneri</button>
                 <button class="nav-btn" data-view="stats" data-i18n="nav.stats">Statistika</button>
                 <button class="nav-btn" data-view="progress" data-i18n="nav.progress">Napredak</button>
+                <button class="nav-btn" data-view="calendar" data-i18n="nav.calendar">Kalendar</button>
                 <button class="nav-btn" data-view="chat" data-i18n="nav.chat">Poruke<span class="nav-badge hidden" id="clientChatBadge"></span></button>
                 <button class="nav-btn" data-view="profile" data-i18n="nav.profile">Osobni podaci</button>
             </nav>
@@ -282,6 +283,22 @@
                 </div>
 
                 <div id="progressGallery"></div>
+            </div>
+
+            <div id="clientCalendarView" class="view hidden">
+                <div class="view-header">
+                    <h2 data-i18n="calendar.title">Kalendar</h2>
+                </div>
+                <div class="cal-header">
+                    <button id="ccPrevBtn" class="secondary">‹</button>
+                    <strong id="ccMonthLabel"></strong>
+                    <button id="ccNextBtn" class="secondary">›</button>
+                </div>
+                <div id="ccGrid" class="cal-grid"></div>
+                <div id="ccDayPanel" class="card hidden">
+                    <h3 id="ccDayTitle"></h3>
+                    <div id="ccDayList" class="list"></div>
+                </div>
             </div>
 
         </section>
