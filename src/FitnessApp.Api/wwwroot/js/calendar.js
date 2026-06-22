@@ -1,6 +1,6 @@
 // Month-grid calendar of booked sessions. Used by both roles:
-//  - 'trainer': can create sessions and confirm / complete / no-show / cancel them.
-//  - 'client':  read-only view of their own sessions, with cancel only.
+//  - 'trainer': books sessions directly and confirms / completes / no-shows / cancels them.
+//  - 'client':  proposes sessions (their trainer confirms) and can cancel/decline their own.
 // The two modes render into separate DOM blocks (trainer 'cal*' ids, client 'cc*' ids);
 // `mode` selects the id-set so the rest of the logic is shared.
 const Calendar = {
@@ -14,7 +14,10 @@ const Calendar = {
         },
         client: {
             grid: 'ccGrid', monthLabel: 'ccMonthLabel', prev: 'ccPrevBtn', next: 'ccNextBtn',
-            dayPanel: 'ccDayPanel', dayTitle: 'ccDayTitle', dayList: 'ccDayList'
+            dayPanel: 'ccDayPanel', dayTitle: 'ccDayTitle', dayList: 'ccDayList',
+            newBtn: 'ccNewBtn', newForm: 'ccNewForm', cancelBtn: 'ccCancelBtn', saveBtn: 'ccSaveBtn',
+            start: 'ccStart', duration: 'ccDuration', type: 'ccType',
+            location: 'ccLocation', notes: 'ccNotes', error: 'ccError'
         }
     },
 
@@ -41,16 +44,16 @@ const Calendar = {
         this.renderDay();
     },
 
+    // Both roles have a "new session" form: the trainer books it (Scheduled), the client
+    // proposes it (Requested → trainer confirms), so the wiring is the same.
     wire() {
         if (this.wiredMode === this.mode) return;
         this.wiredMode = this.mode;
         this.el('prev').addEventListener('click', () => this.shiftMonth(-1));
         this.el('next').addEventListener('click', () => this.shiftMonth(1));
-        if (this.mode === 'trainer') {
-            this.el('newBtn').addEventListener('click', () => this.toggleForm(true));
-            this.el('cancelBtn').addEventListener('click', () => this.toggleForm(false));
-            this.el('saveBtn').addEventListener('click', () => this.save());
-        }
+        this.el('newBtn').addEventListener('click', () => this.toggleForm(true));
+        this.el('cancelBtn').addEventListener('click', () => this.toggleForm(false));
+        this.el('saveBtn').addEventListener('click', () => this.save());
     },
 
     async shiftMonth(delta) {
@@ -207,25 +210,29 @@ const Calendar = {
     async save() {
         const err = this.el('error');
         err.textContent = '';
-        const clientId = this.el('client').value;
         const startsAt = this.el('start').value;
-        if (!clientId || !startsAt) {
-            err.textContent = I18n.t('calendar.required', 'Odaberi klijenta i vrijeme.');
+        const clientId = this.mode === 'trainer' ? this.el('client').value : null;
+        if (!startsAt || (this.mode === 'trainer' && !clientId)) {
+            err.textContent = this.mode === 'trainer'
+                ? I18n.t('calendar.required', 'Odaberi klijenta i vrijeme.')
+                : I18n.t('calendar.requiredTime', 'Odaberi vrijeme.');
             return;
         }
         if (new Date(startsAt) < new Date()) {
             err.textContent = I18n.t('calendar.past', 'Vrijeme termina je u prošlosti.');
             return;
         }
+        const body = {
+            startsAt,
+            durationMinutes: Number(this.el('duration').value) || 60,
+            type: this.el('type').value,
+            location: this.el('location').value || null,
+            notes: this.el('notes').value || null
+        };
         try {
-            await API.post('/appointments', {
-                clientId,
-                startsAt,
-                durationMinutes: Number(this.el('duration').value) || 60,
-                type: this.el('type').value,
-                location: this.el('location').value || null,
-                notes: this.el('notes').value || null
-            });
+            // Trainer books directly; client sends a proposal their trainer must confirm.
+            if (this.mode === 'trainer') await API.post('/appointments', { clientId, ...body });
+            else await API.post('/appointments/request', body);
             this.toggleForm(false);
             ['location', 'notes'].forEach(k => this.el(k).value = '');
             await this.loadMonth();

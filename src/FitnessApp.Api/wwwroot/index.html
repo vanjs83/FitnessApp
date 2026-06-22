@@ -288,7 +288,26 @@
             <div id="clientCalendarView" class="view hidden">
                 <div class="view-header">
                     <h2 data-i18n="calendar.title">Kalendar</h2>
+                    <button id="ccNewBtn" data-i18n="calendar.propose">+ Predloži termin</button>
                 </div>
+
+                <div id="ccNewForm" class="card hidden">
+                    <h3 data-i18n="calendar.proposeTitle">Prijedlog termina</h3>
+                    <input type="datetime-local" id="ccStart">
+                    <input type="number" id="ccDuration" min="5" max="480" value="60" data-i18n-ph="calendar.durationPh" placeholder="Trajanje (min)">
+                    <select id="ccType">
+                        <option value="InPerson" data-i18n="calendar.inPerson">Uživo</option>
+                        <option value="Online" data-i18n="calendar.online">Online</option>
+                    </select>
+                    <input type="text" id="ccLocation" data-i18n-ph="calendar.locationPh" placeholder="Lokacija ili link">
+                    <textarea id="ccNotes" data-i18n-ph="calendar.notesPh" placeholder="Napomene..."></textarea>
+                    <div class="row">
+                        <button id="ccSaveBtn" data-i18n="calendar.send">Pošalji prijedlog</button>
+                        <button id="ccCancelBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+                    </div>
+                    <div class="error" id="ccError"></div>
+                </div>
+
                 <div class="cal-header">
                     <button id="ccPrevBtn" class="secondary">‹</button>
                     <strong id="ccMonthLabel"></strong>
