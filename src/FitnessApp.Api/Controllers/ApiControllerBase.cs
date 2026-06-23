@@ -17,6 +17,10 @@ public abstract class ApiControllerBase : ControllerBase
     protected ActionResult<T> HandleResult<T>(Result<T> result) =>
         result.Succeeded ? Ok(result.Value) : MapError(result);
 
+    /// <summary>Like <see cref="HandleResult{T}(Result{T})"/> but returns 201 Created for endpoints that create a new resource.</summary>
+    protected ActionResult<T> HandleCreated<T>(Result<T> result) =>
+        result.Succeeded ? StatusCode(StatusCodes.Status201Created, result.Value) : MapError(result);
+
     protected ActionResult MapError(Result result) => result.Error switch
     {
         ResultError.NotFound => result.Message is null ? NotFound() : NotFound(new { message = result.Message }),
