@@ -17,11 +17,13 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
 {
     private readonly IAppDbContext _db;
     private readonly IPushNotificationService _push;
+    private readonly IUserDirectory _users;
 
-    public SendDueAppointmentRemindersCommandHandler(IAppDbContext db, IPushNotificationService push)
+    public SendDueAppointmentRemindersCommandHandler(IAppDbContext db, IPushNotificationService push, IUserDirectory users)
     {
         _db = db;
         _push = push;
+        _users = users;
     }
 
     public async Task<int> Handle(SendDueAppointmentRemindersCommand request, CancellationToken cancellationToken)
@@ -53,8 +55,12 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
 
         foreach (var s in sessions)
         {
-            var (title, body, data) = AppointmentHelper.GroupReminder(s, s.Group?.Name ?? "");
-            foreach (var member in s.Group?.Members ?? Enumerable.Empty<TrainingGroupMember>())
+            var members = s.Group?.Members ?? Enumerable.Empty<TrainingGroupMember>();
+            var memberIds = members.Select(m => m.ClientId).ToList();
+            var names = await _users.GetDisplayNamesAsync(memberIds, cancellationToken);
+            var memberNames = memberIds.Select(id => names.TryGetValue(id, out var n) ? n : "").ToList();
+            var (title, body, data) = AppointmentHelper.GroupReminder(s, s.Group?.Name ?? "", memberNames);
+            foreach (var member in members)
                 await _push.SendToUserAsync(member.ClientId, title, body, data, cancellationToken);
             s.ReminderSentAt = now;
             sent++;
