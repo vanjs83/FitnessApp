@@ -36,6 +36,9 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
     public DbSet<TrainerRequest> TrainerRequests => Set<TrainerRequest>();
     public DbSet<ProgressPhoto> ProgressPhotos => Set<ProgressPhoto>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<TrainingGroup> TrainingGroups => Set<TrainingGroup>();
+    public DbSet<TrainingGroupMember> TrainingGroupMembers => Set<TrainingGroupMember>();
+    public DbSet<GroupSession> GroupSessions => Set<GroupSession>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -313,6 +316,53 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<TrainingGroup>(e =>
+        {
+            e.Property(x => x.TrainerId).IsRequired();
+            e.Property(x => x.Name).IsRequired().HasMaxLength(120);
+            e.HasIndex(x => new { x.TrainerId, x.IsActive });
+
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.TrainerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasMany(x => x.Members)
+                .WithOne(m => m.Group!)
+                .HasForeignKey(m => m.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<TrainingGroupMember>(e =>
+        {
+            e.Property(x => x.ClientId).IsRequired();
+            e.HasIndex(x => new { x.GroupId, x.ClientId }).IsUnique();
+            e.HasIndex(x => x.ClientId);
+
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<GroupSession>(e =>
+        {
+            e.Property(x => x.TrainerId).IsRequired();
+            e.Property(x => x.Location).HasMaxLength(400);
+            e.Property(x => x.Notes).HasMaxLength(2000);
+            e.HasIndex(x => new { x.TrainerId, x.StartsAt });
+            e.HasIndex(x => new { x.GroupId, x.StartsAt });
+
+            e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.TrainerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Group)
+                .WithMany()
+                .HasForeignKey(x => x.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<RefreshToken>(e =>

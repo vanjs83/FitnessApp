@@ -1,6 +1,7 @@
 using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Appointments;
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Entities;
 using MediatR;
 
@@ -19,12 +20,15 @@ public class RequestAppointmentCommandHandler : IRequestHandler<RequestAppointme
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
+    private readonly IPushNotificationService _push;
 
-    public RequestAppointmentCommandHandler(IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users)
+    public RequestAppointmentCommandHandler(
+        IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users, IPushNotificationService push)
     {
         _db = db;
         _currentUser = currentUser;
         _users = users;
+        _push = push;
     }
 
     public async Task<Result<AppointmentDto>> Handle(RequestAppointmentCommand request, CancellationToken cancellationToken)
@@ -55,6 +59,11 @@ public class RequestAppointmentCommandHandler : IRequestHandler<RequestAppointme
 
         _db.Appointments.Add(appointment);
         await _db.SaveChangesAsync(cancellationToken);
+
+        // Best-effort push to the trainer that a client is requesting a slot.
+        var client = await _users.FindAsync(clientId, cancellationToken);
+        var (title, body, data) = AppointmentHelper.Requested(appointment, client?.DisplayName ?? "Klijent");
+        await _push.SendToUserAsync(trainerId, title, body, data, cancellationToken);
 
         return Result<AppointmentDto>.Success(
             await AppointmentResolver.ToDtoAsync(appointment, clientId, _users, cancellationToken));

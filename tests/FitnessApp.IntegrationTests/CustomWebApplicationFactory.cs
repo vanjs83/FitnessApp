@@ -30,6 +30,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         // Program.cs skips the SQL Server migrate/seed when the environment is "Testing".
         builder.UseEnvironment("Testing");
 
+        // Keep the reminder background worker idle during tests so it never polls/sends.
+        builder.UseSetting("Reminders:Enabled", "false");
+
         builder.ConfigureTestServices(services =>
         {
             // Drop the SQL Server AppDbContext that Infrastructure registered. In EF Core 9

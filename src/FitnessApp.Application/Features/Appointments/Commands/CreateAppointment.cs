@@ -2,6 +2,7 @@ using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Application.DTOs.Appointments;
 using FitnessApp.Application.Features.Trainers;
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Entities;
 using MediatR;
 
@@ -21,12 +22,15 @@ public class CreateAppointmentCommandHandler : IRequestHandler<CreateAppointment
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
+    private readonly IPushNotificationService _push;
 
-    public CreateAppointmentCommandHandler(IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users)
+    public CreateAppointmentCommandHandler(
+        IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users, IPushNotificationService push)
     {
         _db = db;
         _currentUser = currentUser;
         _users = users;
+        _push = push;
     }
 
     public async Task<Result<AppointmentDto>> Handle(CreateAppointmentCommand request, CancellationToken cancellationToken)
@@ -56,6 +60,10 @@ public class CreateAppointmentCommandHandler : IRequestHandler<CreateAppointment
 
         _db.Appointments.Add(appointment);
         await _db.SaveChangesAsync(cancellationToken);
+
+        // Best-effort push to the client; the service never throws (no tokens / Firebase off → no-op).
+        var (title, body, data) = AppointmentHelper.Booked(appointment);
+        await _push.SendToUserAsync(appointment.ClientId, title, body, data, cancellationToken);
 
         return Result<AppointmentDto>.Success(
             await AppointmentResolver.ToDtoAsync(appointment, trainerId, _users, cancellationToken));

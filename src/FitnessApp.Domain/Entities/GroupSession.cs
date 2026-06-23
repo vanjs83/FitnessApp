@@ -1,28 +1,15 @@
 namespace FitnessApp.Domain.Entities;
 
-public enum AppointmentStatus
-{
-    Requested = 0,   // client asked for a slot, awaiting trainer confirmation
-    Scheduled = 1,   // confirmed by the trainer
-    Completed = 2,
-    Cancelled = 3,
-    NoShow = 4
-}
-
-public enum AppointmentType
-{
-    InPerson = 0,
-    Online = 1
-}
-
 /// <summary>
-/// A training session booked between a trainer and one of their clients.
+/// A single training session booked for a whole <see cref="TrainingGroup"/>. Reuses the
+/// <see cref="AppointmentType"/>/<see cref="AppointmentStatus"/> enums; the session carries one
+/// status for everyone (per-member attendance is out of scope for now).
 /// </summary>
-public class Appointment
+public class GroupSession
 {
     public int Id { get; set; }
     public string TrainerId { get; set; } = string.Empty;
-    public string ClientId { get; set; } = string.Empty;
+    public int GroupId { get; set; }
 
     public DateTime StartsAt { get; set; }
     public int DurationMinutes { get; set; } = 60;
@@ -38,6 +25,8 @@ public class Appointment
 
     /// <summary>Set once the pre-session reminder push has been sent, so it fires only once.</summary>
     public DateTime? ReminderSentAt { get; set; }
+
+    public TrainingGroup? Group { get; set; }
 
     public DateTime EndsAt => StartsAt.AddMinutes(DurationMinutes);
 }
