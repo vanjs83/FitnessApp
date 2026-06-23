@@ -114,6 +114,13 @@
   "groups.booked": "Grupni termin zakazan.",
   "groups.empty": "Nemaš grupa.",
   "groups.deleteConfirm": "Obrisati grupu?",
+  "groups.searchPh": "🔍 Pretraži klijente za dodavanje...",
+  "groups.noMatches": "Nema rezultata.",
+  "groups.addHint": "Članove dodaješ pretragom nakon kreiranja grupe.",
+  "calendar.target": "Vrsta termina",
+  "calendar.individual": "Individualni",
+  "calendar.group": "Grupni",
+  "calendar.selectGroup": "Odaberi grupu",
 
   "chat.title": "Poruke",
   "chat.noConversations": "Nema dostupnih razgovora.",

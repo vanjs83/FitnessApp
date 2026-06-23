@@ -10,7 +10,8 @@ const Calendar = {
             dayPanel: 'calDayPanel', dayTitle: 'calDayTitle', dayList: 'calDayList',
             newBtn: 'calNewBtn', newForm: 'calNewForm', cancelBtn: 'calCancelBtn', saveBtn: 'calSaveBtn',
             client: 'calClient', start: 'calStart', duration: 'calDuration', type: 'calType',
-            location: 'calLocation', notes: 'calNotes', error: 'calError'
+            location: 'calLocation', notes: 'calNotes', error: 'calError',
+            targetMode: 'calTargetMode', group: 'calGroup'
         },
         client: {
             grid: 'ccGrid', monthLabel: 'ccMonthLabel', prev: 'ccPrevBtn', next: 'ccNextBtn',
@@ -38,7 +39,7 @@ const Calendar = {
         this.mode = mode;
         this.wire();
         const tasks = [this.loadMonth()];
-        if (mode === 'trainer') tasks.push(this.loadClients());
+        if (mode === 'trainer') tasks.push(this.loadClients(), this.loadGroups());
         await Promise.all(tasks);
         this.renderGrid();
         this.renderDay();
@@ -54,6 +55,23 @@ const Calendar = {
         this.el('newBtn').addEventListener('click', () => this.toggleForm(true));
         this.el('cancelBtn').addEventListener('click', () => this.toggleForm(false));
         this.el('saveBtn').addEventListener('click', () => this.save());
+        // Trainer only: switching individual ⇄ group swaps the client/group picker.
+        const target = this.el('targetMode');
+        if (target) target.addEventListener('change', () => this.applyTarget());
+    },
+
+    // Shows the client picker for an individual session, the group picker for a group session.
+    applyTarget() {
+        const target = this.el('targetMode');
+        if (!target) return;
+        const isGroup = target.value === 'group';
+        this.el('client').classList.toggle('hidden', isGroup);
+        this.el('group').classList.toggle('hidden', !isGroup);
+    },
+
+    isGroupTarget() {
+        const target = this.el('targetMode');
+        return this.mode === 'trainer' && target && target.value === 'group';
     },
 
     async shiftMonth(delta) {
@@ -108,6 +126,16 @@ const Calendar = {
         const sel = this.el('client');
         sel.innerHTML = `<option value="">${I18n.t('calendar.selectClient', 'Odaberi klijenta')}</option>` +
             this.clients.map(c => `<option value="${c.id}">${this.esc(c.fullName || c.email)}</option>`).join('');
+    },
+
+    // Populates the group picker (trainer only) for booking a group session from the calendar.
+    async loadGroups() {
+        let groups = [];
+        try { groups = await API.get('/groups') || []; } catch { groups = []; }
+        const sel = this.el('group');
+        if (!sel) return;
+        sel.innerHTML = `<option value="">${I18n.t('calendar.selectGroup', 'Odaberi grupu')}</option>` +
+            groups.map(g => `<option value="${g.id}">${this.esc(g.name)} (${g.memberCount})</option>`).join('');
     },
 
     renderGrid() {
@@ -220,6 +248,7 @@ const Calendar = {
             // Block past times in the native picker (browser local "now").
             this.el('start').min = this.isoLocal(new Date()).slice(0, 16);
             if (this.selected) this.el('start').value = this.selected + 'T09:00';
+            this.applyTarget();
         }
     },
 
@@ -227,13 +256,15 @@ const Calendar = {
         const err = this.el('error');
         err.textContent = '';
         const startsAt = this.el('start').value;
-        const clientId = this.mode === 'trainer' ? this.el('client').value : null;
-        if (!startsAt || (this.mode === 'trainer' && !clientId)) {
-            err.textContent = this.mode === 'trainer'
-                ? I18n.t('calendar.required', 'Odaberi klijenta i vrijeme.')
-                : I18n.t('calendar.requiredTime', 'Odaberi vrijeme.');
-            return;
+        const isGroup = this.isGroupTarget();
+        const clientId = (this.mode === 'trainer' && !isGroup) ? this.el('client').value : null;
+        const groupId = isGroup ? this.el('group').value : null;
+
+        if (!startsAt) { err.textContent = I18n.t('calendar.requiredTime', 'Odaberi vrijeme.'); return; }
+        if (this.mode === 'trainer' && !isGroup && !clientId) {
+            err.textContent = I18n.t('calendar.required', 'Odaberi klijenta i vrijeme.'); return;
         }
+        if (isGroup && !groupId) { err.textContent = I18n.t('calendar.selectGroup', 'Odaberi grupu'); return; }
         if (new Date(startsAt) < new Date()) {
             err.textContent = I18n.t('calendar.past', 'Vrijeme termina je u prošlosti.');
             return;
@@ -246,8 +277,9 @@ const Calendar = {
             notes: this.el('notes').value || null
         };
         try {
-            // Trainer books directly; client sends a proposal their trainer must confirm.
-            if (this.mode === 'trainer') await API.post('/appointments', { clientId, ...body });
+            // Group session (push to all members), trainer individual booking, or client proposal.
+            if (isGroup) await API.post(`/groups/${groupId}/sessions`, body);
+            else if (this.mode === 'trainer') await API.post('/appointments', { clientId, ...body });
             else await API.post('/appointments/request', body);
             this.toggleForm(false);
             ['location', 'notes'].forEach(k => this.el(k).value = '');

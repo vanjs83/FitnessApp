@@ -114,6 +114,13 @@
   "groups.booked": "Group session booked.",
   "groups.empty": "You have no groups.",
   "groups.deleteConfirm": "Delete group?",
+  "groups.searchPh": "🔍 Search clients to add...",
+  "groups.noMatches": "No matches.",
+  "groups.addHint": "Add members by search after creating the group.",
+  "calendar.target": "Session type",
+  "calendar.individual": "Individual",
+  "calendar.group": "Group",
+  "calendar.selectGroup": "Select a group",
 
   "chat.title": "Messages",
   "chat.noConversations": "No conversations available.",

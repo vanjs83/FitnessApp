@@ -1171,6 +1171,17 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
     font-size: 0.85rem;
     line-height: 1;
 }
-.group-add { gap: 6px; margin-bottom: 6px; }
-.group-book-form { margin-top: 10px; }
+.group-add { margin-bottom: 6px; }
+.group-add-search { width: 100%; }
+.group-add-results { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.group-add-result {
+    background: #1d3b57;
+    color: #74c0fc;
+    border: none;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.group-add-result:hover { background: #245379; }
 

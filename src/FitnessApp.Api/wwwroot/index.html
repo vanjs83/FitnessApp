@@ -571,7 +571,12 @@
 
                 <div id="calNewForm" class="card hidden">
                     <h3 data-i18n="calendar.newTitle">Novi termin</h3>
+                    <select id="calTargetMode">
+                        <option value="individual" data-i18n="calendar.individual">Individualni</option>
+                        <option value="group" data-i18n="calendar.group">Grupni</option>
+                    </select>
                     <select id="calClient"></select>
+                    <select id="calGroup" class="hidden"></select>
                     <input type="datetime-local" id="calStart">
                     <input type="number" id="calDuration" min="5" max="480" value="60" data-i18n-ph="calendar.durationPh" placeholder="Trajanje (min)">
                     <select id="calType">
@@ -608,8 +613,7 @@
                 <div id="groupCreateForm" class="card hidden">
                     <h3 data-i18n="groups.newTitle">Nova grupa</h3>
                     <input type="text" id="groupName" data-i18n-ph="groups.namePh" placeholder="Naziv grupe">
-                    <label class="muted small" data-i18n="groups.members">Članovi</label>
-                    <div id="groupClientChecklist" class="group-checklist"></div>
+                    <p class="muted small" data-i18n="groups.addHint">Članove dodaješ pretragom nakon kreiranja grupe.</p>
                     <div class="row">
                         <button id="groupSaveBtn" data-i18n="common.save">Spremi</button>
                         <button id="groupCancelBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
