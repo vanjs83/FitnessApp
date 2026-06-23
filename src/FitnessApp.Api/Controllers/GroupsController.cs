@@ -58,4 +58,9 @@ public class GroupsController : ApiControllerBase
     public async Task<ActionResult<IReadOnlyList<GroupSessionDto>>> GetSessions(
         [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
         => Ok(await _sender.Send(new GetMyGroupSessionsQuery(from, to)));
+
+    [HttpPost("sessions/{sessionId:int}/cancel")]
+    [Authorize(Roles = Roles.Trainer)]
+    public async Task<IActionResult> CancelSession(int sessionId)
+        => HandleResult(await _sender.Send(new CancelGroupSessionCommand(sessionId)));
 }

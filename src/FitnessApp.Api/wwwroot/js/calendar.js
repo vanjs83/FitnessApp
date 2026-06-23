@@ -222,10 +222,11 @@ const Calendar = {
     },
 
     actions(a) {
-        // Group sessions are display-only in the calendar (managed from the Groups view).
-        if (a.isGroup) return '';
         const btn = (act, key, cls = 'secondary') =>
             `<button class="${cls}" data-act="${act}" data-id="${a.id}">${I18n.t('calendar.' + key)}</button>`;
+        // Group session: only the owning trainer can cancel it, straight from the calendar.
+        if (a.isGroup)
+            return (this.mode === 'trainer' && a.status === 'Scheduled') ? btn('group-cancel', 'cancel') : '';
         // Clients can only cancel their own pending/booked sessions; the rest is trainer-driven.
         if (this.mode === 'client')
             return (a.status === 'Requested' || a.status === 'Scheduled') ? btn('cancel', 'cancel') : '';
@@ -235,7 +236,9 @@ const Calendar = {
     },
 
     async act(action, id) {
-        await API.post(`/appointments/${id}/${action}`);
+        // Group sessions cancel via the groups endpoint; individual appointments via /appointments.
+        if (action === 'group-cancel') await API.post(`/groups/sessions/${id}/cancel`);
+        else await API.post(`/appointments/${id}/${action}`);
         await this.loadMonth();
         this.renderGrid();
         this.renderDay();

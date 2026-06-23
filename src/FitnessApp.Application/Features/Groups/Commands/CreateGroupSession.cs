@@ -22,12 +22,15 @@ public class CreateGroupSessionCommandHandler : IRequestHandler<CreateGroupSessi
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IPushNotificationService _push;
+    private readonly IUserDirectory _users;
 
-    public CreateGroupSessionCommandHandler(IAppDbContext db, ICurrentUserService currentUser, IPushNotificationService push)
+    public CreateGroupSessionCommandHandler(
+        IAppDbContext db, ICurrentUserService currentUser, IPushNotificationService push, IUserDirectory users)
     {
         _db = db;
         _currentUser = currentUser;
         _push = push;
+        _users = users;
     }
 
     public async Task<Result<GroupSessionDto>> Handle(CreateGroupSessionCommand request, CancellationToken cancellationToken)
@@ -60,8 +63,11 @@ public class CreateGroupSessionCommandHandler : IRequestHandler<CreateGroupSessi
         _db.GroupSessions.Add(session);
         await _db.SaveChangesAsync(cancellationToken);
 
-        // Best-effort push fan-out to each group member (service never throws).
-        var (title, body, data) = AppointmentHelper.GroupBooked(session, group.Name);
+        // Best-effort push fan-out to each group member, listing the whole roster in the body.
+        var memberIds = group.Members.Select(m => m.ClientId).ToList();
+        var names = await _users.GetDisplayNamesAsync(memberIds, cancellationToken);
+        var memberNames = memberIds.Select(id => names.TryGetValue(id, out var n) ? n : "").ToList();
+        var (title, body, data) = AppointmentHelper.GroupBooked(session, group.Name, memberNames);
         foreach (var member in group.Members)
             await _push.SendToUserAsync(member.ClientId, title, body, data, cancellationToken);
 
