@@ -32,7 +32,9 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
         var windowEnd = now.AddMinutes(request.LeadMinutes);
         var sent = 0;
 
+        // One query over all due sessions — individual and group are both appointments now.
         var appointments = await _db.Appointments
+            .Include(a => a.Group!).ThenInclude(g => g.Members)
             .Where(a => a.Status == AppointmentStatus.Scheduled
                         && a.ReminderSentAt == null
                         && a.StartsAt > now && a.StartsAt <= windowEnd)
@@ -40,29 +42,22 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
 
         foreach (var a in appointments)
         {
-            var (title, body, data) = AppointmentHelper.Reminder(a);
-            await _push.SendToUserAsync(a.ClientId, title, body, data, cancellationToken);
+            if (a.IsGroup)
+            {
+                var members = a.Group?.Members ?? Enumerable.Empty<TrainingGroupMember>();
+                var memberIds = members.Select(m => m.ClientId).ToList();
+                var names = await _users.GetDisplayNamesAsync(memberIds, cancellationToken);
+                var memberNames = memberIds.Select(id => names.TryGetValue(id, out var n) ? n : "").ToList();
+                var (gtitle, gbody, gdata) = AppointmentHelper.GroupReminder(a, a.Group?.Name ?? "", memberNames);
+                foreach (var member in members)
+                    await _push.SendToUserAsync(member.ClientId, gtitle, gbody, gdata, cancellationToken);
+            }
+            else if (a.ClientId is not null)
+            {
+                var (title, body, data) = AppointmentHelper.Reminder(a);
+                await _push.SendToUserAsync(a.ClientId, title, body, data, cancellationToken);
+            }
             a.ReminderSentAt = now;
-            sent++;
-        }
-
-        var sessions = await _db.GroupSessions
-            .Include(s => s.Group!).ThenInclude(g => g.Members)
-            .Where(s => s.Status == AppointmentStatus.Scheduled
-                        && s.ReminderSentAt == null
-                        && s.StartsAt > now && s.StartsAt <= windowEnd)
-            .ToListAsync(cancellationToken);
-
-        foreach (var s in sessions)
-        {
-            var members = s.Group?.Members ?? Enumerable.Empty<TrainingGroupMember>();
-            var memberIds = members.Select(m => m.ClientId).ToList();
-            var names = await _users.GetDisplayNamesAsync(memberIds, cancellationToken);
-            var memberNames = memberIds.Select(id => names.TryGetValue(id, out var n) ? n : "").ToList();
-            var (title, body, data) = AppointmentHelper.GroupReminder(s, s.Group?.Name ?? "", memberNames);
-            foreach (var member in members)
-                await _push.SendToUserAsync(member.ClientId, title, body, data, cancellationToken);
-            s.ReminderSentAt = now;
             sent++;
         }
 

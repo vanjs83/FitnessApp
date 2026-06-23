@@ -63,7 +63,7 @@ public class CreateAppointmentCommandHandler : IRequestHandler<CreateAppointment
 
         // Best-effort push to the client; the service never throws (no tokens / Firebase off → no-op).
         var (title, body, data) = AppointmentHelper.Booked(appointment);
-        await _push.SendToUserAsync(appointment.ClientId, title, body, data, cancellationToken);
+        await _push.SendToUserAsync(appointment.ClientId!, title, body, data, cancellationToken);
 
         return Result<AppointmentDto>.Success(
             await AppointmentResolver.ToDtoAsync(appointment, trainerId, _users, cancellationToken));

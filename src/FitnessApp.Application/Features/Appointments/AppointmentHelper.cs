@@ -27,10 +27,10 @@ internal static class AppointmentHelper
 
     /// <summary>Trainer booked a group session — notifies every member, listing the whole group.</summary>
     public static (string Title, string Body, IDictionary<string, string> Data) GroupBooked(
-        GroupSession s, string groupName, IEnumerable<string> memberNames) =>
+        Appointment a, string groupName, IEnumerable<string> memberNames) =>
         ("Grupni trening",
-         WithMembers($"Zakazan je grupni trening '{groupName}' {When(s.StartsAt)}.", memberNames),
-         Data("groupSession", "booked", s.Id, s.StartsAt, groupName));
+         WithMembers($"Zakazan je grupni trening '{groupName}' {When(a.StartsAt)}.", memberNames),
+         Data("groupSession", "booked", a.Id, a.StartsAt, groupName));
 
     /// <summary>Reminder that an individual session starts soon — notifies the client.</summary>
     public static (string Title, string Body, IDictionary<string, string> Data) Reminder(Appointment a) =>
@@ -40,17 +40,17 @@ internal static class AppointmentHelper
 
     /// <summary>Reminder that a group session starts soon — notifies each member, listing the whole group.</summary>
     public static (string Title, string Body, IDictionary<string, string> Data) GroupReminder(
-        GroupSession s, string groupName, IEnumerable<string> memberNames) =>
+        Appointment a, string groupName, IEnumerable<string> memberNames) =>
         ("Podsjetnik na trening",
-         WithMembers($"Grupni trening '{groupName}' počinje uskoro — {When(s.StartsAt)}.", memberNames),
-         Data("groupSession", "reminder", s.Id, s.StartsAt, groupName));
+         WithMembers($"Grupni trening '{groupName}' počinje uskoro — {When(a.StartsAt)}.", memberNames),
+         Data("groupSession", "reminder", a.Id, a.StartsAt, groupName));
 
     /// <summary>Trainer cancelled a group session — notifies each member, listing the whole group.</summary>
     public static (string Title, string Body, IDictionary<string, string> Data) GroupCancelled(
-        GroupSession s, string groupName, IEnumerable<string> memberNames) =>
+        Appointment a, string groupName, IEnumerable<string> memberNames) =>
         ("Termin otkazan",
-         WithMembers($"Grupni trening '{groupName}' {When(s.StartsAt)} je otkazan.", memberNames),
-         Data("groupSession", "cancelled", s.Id, s.StartsAt, groupName));
+         WithMembers($"Grupni trening '{groupName}' {When(a.StartsAt)} je otkazan.", memberNames),
+         Data("groupSession", "cancelled", a.Id, a.StartsAt, groupName));
 
     // Appends the member roster to a group push body, e.g. "... Članovi: Ana, Ivan, Marko."
     private static string WithMembers(string body, IEnumerable<string> memberNames)

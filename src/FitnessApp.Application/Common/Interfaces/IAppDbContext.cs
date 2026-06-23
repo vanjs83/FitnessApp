@@ -30,7 +30,6 @@ public interface IAppDbContext
     DbSet<Appointment> Appointments { get; }
     DbSet<TrainingGroup> TrainingGroups { get; }
     DbSet<TrainingGroupMember> TrainingGroupMembers { get; }
-    DbSet<GroupSession> GroupSessions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

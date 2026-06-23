@@ -6,11 +6,17 @@ public class AppointmentDto
 {
     public int Id { get; set; }
     public string TrainerId { get; set; } = string.Empty;
-    public string ClientId { get; set; } = string.Empty;
+    public string? ClientId { get; set; }
 
     /// <summary>The other party from the caller's perspective (their client, or their trainer).</summary>
     public string CounterpartId { get; set; } = string.Empty;
     public string CounterpartName { get; set; } = string.Empty;
+
+    // Group sessions: GroupId set, ClientId null. CounterpartName carries the group name.
+    public bool IsGroup { get; set; }
+    public int? GroupId { get; set; }
+    public string? GroupName { get; set; }
+    public int MemberCount { get; set; }
 
     public DateTime StartsAt { get; set; }
     public int DurationMinutes { get; set; }

@@ -34,14 +34,19 @@ public class GetMyAppointmentsQueryHandler
         var to = request.To ?? from.AddMonths(3);
 
         var appointments = await _db.Appointments
-            .Where(a => (a.TrainerId == userId || a.ClientId == userId)
-                        && a.Status != AppointmentStatus.Cancelled
-                        && a.StartsAt >= from && a.StartsAt < to)
+            .Include(a => a.Group!).ThenInclude(g => g.Members)
+            .Where(a => a.Status != AppointmentStatus.Cancelled && a.StartsAt >= from && a.StartsAt < to)
+            // Caller is involved as trainer, as the individual client, or as a member of the group.
+            .Where(a => a.TrainerId == userId || a.ClientId == userId
+                        || (a.GroupId != null && a.Group!.Members.Any(m => m.ClientId == userId)))
             .OrderBy(a => a.StartsAt)
             .ToListAsync(cancellationToken);
 
+        // Only individual sessions need a counterpart name; group sessions use the group name.
         var counterpartIds = appointments
+            .Where(a => !a.IsGroup)
             .Select(a => a.TrainerId == userId ? a.ClientId : a.TrainerId)
+            .Where(id => id != null).Select(id => id!)
             .Distinct();
         var names = await _users.GetDisplayNamesAsync(counterpartIds, cancellationToken);
 

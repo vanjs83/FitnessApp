@@ -38,7 +38,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<TrainingGroup> TrainingGroups => Set<TrainingGroup>();
     public DbSet<TrainingGroupMember> TrainingGroupMembers => Set<TrainingGroupMember>();
-    public DbSet<GroupSession> GroupSessions => Set<GroupSession>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -302,19 +301,27 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
         builder.Entity<Appointment>(e =>
         {
             e.Property(x => x.TrainerId).IsRequired();
-            e.Property(x => x.ClientId).IsRequired();
             e.Property(x => x.Location).HasMaxLength(400);
             e.Property(x => x.Notes).HasMaxLength(2000);
             e.HasIndex(x => new { x.TrainerId, x.StartsAt });
             e.HasIndex(x => new { x.ClientId, x.StartsAt });
+            e.HasIndex(x => new { x.GroupId, x.StartsAt });
 
             e.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.TrainerId)
                 .OnDelete(DeleteBehavior.Restrict);
+            // Individual session → client (nullable for group sessions).
             e.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Group session → group (nullable for individual sessions).
+            e.HasOne(x => x.Group)
+                .WithMany()
+                .HasForeignKey(x => x.GroupId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -345,24 +352,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        builder.Entity<GroupSession>(e =>
-        {
-            e.Property(x => x.TrainerId).IsRequired();
-            e.Property(x => x.Location).HasMaxLength(400);
-            e.Property(x => x.Notes).HasMaxLength(2000);
-            e.HasIndex(x => new { x.TrainerId, x.StartsAt });
-            e.HasIndex(x => new { x.GroupId, x.StartsAt });
-
-            e.HasOne<ApplicationUser>()
-                .WithMany()
-                .HasForeignKey(x => x.TrainerId)
-                .OnDelete(DeleteBehavior.Restrict);
-            e.HasOne(x => x.Group)
-                .WithMany()
-                .HasForeignKey(x => x.GroupId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<RefreshToken>(e =>

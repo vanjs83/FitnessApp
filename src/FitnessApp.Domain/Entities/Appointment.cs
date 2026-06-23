@@ -16,13 +16,22 @@ public enum AppointmentType
 }
 
 /// <summary>
-/// A training session booked between a trainer and one of their clients.
+/// A training session booked by a trainer. It is either individual (<see cref="ClientId"/> set) or
+/// for a whole group (<see cref="GroupId"/> set) — never both.
 /// </summary>
 public class Appointment
 {
     public int Id { get; set; }
     public string TrainerId { get; set; } = string.Empty;
-    public string ClientId { get; set; } = string.Empty;
+
+    /// <summary>The client for an individual session; null for a group session.</summary>
+    public string? ClientId { get; set; }
+
+    /// <summary>The group for a group session; null for an individual session.</summary>
+    public int? GroupId { get; set; }
+    public TrainingGroup? Group { get; set; }
+
+    public bool IsGroup => GroupId.HasValue;
 
     public DateTime StartsAt { get; set; }
     public int DurationMinutes { get; set; } = 60;

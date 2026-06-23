@@ -28,23 +28,6 @@ public class AddGroupMemberRequest
     public string ClientId { get; set; } = string.Empty;
 }
 
-public class GroupSessionDto
-{
-    public int Id { get; set; }
-    public int GroupId { get; set; }
-    public string GroupName { get; set; } = string.Empty;
-    public int MemberCount { get; set; }
-
-    public DateTime StartsAt { get; set; }
-    public int DurationMinutes { get; set; }
-    public DateTime EndsAt { get; set; }
-
-    public string Status { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public string? Location { get; set; }
-    public string? Notes { get; set; }
-}
-
 /// <summary>Trainer books one session for a whole group (groupId comes from the route).</summary>
 public class CreateGroupSessionRequest
 {

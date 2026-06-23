@@ -29,9 +29,9 @@ public class CancelGroupSessionCommandHandler : IRequestHandler<CancelGroupSessi
 
     public async Task<Result> Handle(CancelGroupSessionCommand request, CancellationToken cancellationToken)
     {
-        var session = await _db.GroupSessions
-            .Include(s => s.Group!).ThenInclude(g => g.Members)
-            .FirstOrDefaultAsync(s => s.Id == request.SessionId, cancellationToken);
+        var session = await _db.Appointments
+            .Include(a => a.Group!).ThenInclude(g => g.Members)
+            .FirstOrDefaultAsync(a => a.Id == request.SessionId && a.GroupId != null, cancellationToken);
 
         if (session is null) return Result.NotFound();
         if (session.TrainerId != _currentUser.UserId) return Result.Forbidden();

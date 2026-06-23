@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using FitnessApp.Application.DTOs.Appointments;
 using FitnessApp.Application.DTOs.Groups;
 using FitnessApp.Domain.Entities;
 using FluentAssertions;
@@ -114,15 +115,17 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupSessionRequest { StartsAt = Tomorrow(10), DurationMinutes = 45, Type = AppointmentType.Online });
         session.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var created = await session.Content.ReadFromJsonAsync<GroupSessionDto>(JsonOptions);
+        var created = await session.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
         created!.Id.Should().BeGreaterThan(0);
+        created.IsGroup.Should().BeTrue();
         created.GroupName.Should().Be("HIIT");
         created.MemberCount.Should().Be(1);
         created.Status.Should().Be("Scheduled");
         created.Type.Should().Be("Online");
 
-        var list = await trainer.GetFromJsonAsync<List<GroupSessionDto>>("/api/v1/groups/sessions", JsonOptions);
-        list!.Should().ContainSingle(s => s.Id == created.Id);
+        // Group sessions surface through the normal calendar feed now.
+        var list = await trainer.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
+        list!.Should().ContainSingle(s => s.Id == created.Id && s.IsGroup);
     }
 
     [Fact]
@@ -159,7 +162,7 @@ public class GroupsEndpointsTests : IntegrationTestBase
         clash.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
-    // ===== Group sessions from the calendar feed (GET /groups/sessions is open to both roles) =====
+    // ===== Group sessions in the unified calendar feed (GET /appointments, both roles) =====
 
     [Fact]
     public async Task A_group_member_sees_the_group_session_in_their_calendar_feed()
@@ -172,11 +175,11 @@ public class GroupsEndpointsTests : IntegrationTestBase
 
         var session = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
             new CreateGroupSessionRequest { StartsAt = Tomorrow(10) });
-        var created = await session.Content.ReadFromJsonAsync<GroupSessionDto>(JsonOptions);
+        var created = await session.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
 
-        // The client (a member) reads it via the same endpoint the calendar uses.
-        var list = await client.GetFromJsonAsync<List<GroupSessionDto>>("/api/v1/groups/sessions", JsonOptions);
-        list!.Should().ContainSingle(s => s.Id == created!.Id && s.GroupName == "Calendar group");
+        // The client (a member) reads it via the normal appointments feed the calendar uses.
+        var list = await client.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
+        list!.Should().ContainSingle(s => s.Id == created!.Id && s.IsGroup && s.GroupName == "Calendar group");
     }
 
     [Fact]
@@ -191,9 +194,9 @@ public class GroupsEndpointsTests : IntegrationTestBase
 
         var session = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
             new CreateGroupSessionRequest { StartsAt = Tomorrow(11) });
-        var created = await session.Content.ReadFromJsonAsync<GroupSessionDto>(JsonOptions);
+        var created = await session.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
 
-        var list = await outsider.GetFromJsonAsync<List<GroupSessionDto>>("/api/v1/groups/sessions", JsonOptions);
+        var list = await outsider.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
         list!.Should().NotContain(s => s.Id == created!.Id);
     }
 

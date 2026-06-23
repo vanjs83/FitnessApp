@@ -10,11 +10,19 @@ namespace FitnessApp.Application.Features.Appointments;
 /// </summary>
 internal static class AppointmentResolver
 {
+    private static readonly IReadOnlyDictionary<string, string> NoNames = new Dictionary<string, string>();
+
     public static async Task<AppointmentDto> ToDtoAsync(
         Appointment appointment, string currentUserId, IUserDirectory users, CancellationToken cancellationToken)
     {
+        // A group session carries the group name (Group must be loaded); no user lookup needed.
+        if (appointment.IsGroup)
+            return AppointmentMapping.ToDto(appointment, currentUserId, NoNames);
+
         var counterpartId = appointment.TrainerId == currentUserId ? appointment.ClientId : appointment.TrainerId;
-        var names = await users.GetDisplayNamesAsync(new[] { counterpartId }, cancellationToken);
+        var names = counterpartId is null
+            ? NoNames
+            : await users.GetDisplayNamesAsync(new[] { counterpartId }, cancellationToken);
         return AppointmentMapping.ToDto(appointment, currentUserId, names);
     }
 }

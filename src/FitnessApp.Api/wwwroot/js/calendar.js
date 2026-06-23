@@ -89,27 +89,15 @@ const Calendar = {
         return { from: this.isoLocal(from), to: this.isoLocal(to) };
     },
 
-    // Loads individual appointments and group sessions for the month and merges them into one
-    // list. Group sessions are normalized to the appointment shape (with isGroup) so the grid and
-    // day panel render them uniformly; they carry no per-item actions for now.
+    // One feed for the month: /appointments returns both individual and group sessions (group ones
+    // carry isGroup + groupName + memberCount), so the grid and day panel render them uniformly.
     async loadMonth() {
         const { from, to } = this.monthRange();
-        const [appts, sessions] = await Promise.all([
-            API.get(`/appointments?from=${from}&to=${to}`).catch(() => []),
-            API.get(`/groups/sessions?from=${from}&to=${to}`).catch(() => [])
-        ]);
-        const groupItems = (sessions || []).map(s => ({
-            id: s.id,
-            startsAt: s.startsAt,
-            status: s.status,
-            type: s.type,
-            location: s.location,
-            notes: s.notes,
-            counterpartName: s.groupName,
-            memberCount: s.memberCount,
-            isGroup: true
-        }));
-        this.appointments = [...(appts || []), ...groupItems];
+        try {
+            this.appointments = await API.get(`/appointments?from=${from}&to=${to}`) || [];
+        } catch {
+            this.appointments = [];
+        }
     },
 
     async loadClients() {

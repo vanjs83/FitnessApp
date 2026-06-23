@@ -1,3 +1,4 @@
+using FitnessApp.Application.DTOs.Appointments;
 using FitnessApp.Application.DTOs.Groups;
 using FitnessApp.Application.Features.Groups.Commands;
 using FitnessApp.Application.Features.Groups.Queries;
@@ -46,18 +47,12 @@ public class GroupsController : ApiControllerBase
 
     // ===== Group sessions =====
 
+    // A group session is an Appointment with GroupId set; it shows up in the normal calendar feed.
     [HttpPost("{groupId:int}/sessions")]
     [Authorize(Roles = Roles.Trainer)]
-    public async Task<ActionResult<GroupSessionDto>> CreateSession(int groupId, CreateGroupSessionRequest request)
+    public async Task<ActionResult<AppointmentDto>> CreateSession(int groupId, CreateGroupSessionRequest request)
         => HandleCreated(await _sender.Send(new CreateGroupSessionCommand(
             groupId, request.StartsAt, request.DurationMinutes, request.Type, request.Location, request.Notes)));
-
-    // Both roles: trainer sees sessions they run, client sees sessions of their groups.
-    [HttpGet("sessions")]
-    [ResponseCache(CacheProfileName = "UserData")]
-    public async Task<ActionResult<IReadOnlyList<GroupSessionDto>>> GetSessions(
-        [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
-        => Ok(await _sender.Send(new GetMyGroupSessionsQuery(from, to)));
 
     [HttpPost("sessions/{sessionId:int}/cancel")]
     [Authorize(Roles = Roles.Trainer)]
