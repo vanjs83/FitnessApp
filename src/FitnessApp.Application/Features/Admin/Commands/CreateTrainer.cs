@@ -21,6 +21,7 @@ public class CreateTrainerCommandHandler : IRequestHandler<CreateTrainerCommand,
         var (succeeded, user, errors) = await _identity.CreateTrainerAsync(
             request.Email, request.FullName, request.Password, cancellationToken);
 
+
         if (!succeeded || user == null)
             return Result<TrainerAdminDto>.Fail(ResultError.Validation, string.Join(", ", errors));
 

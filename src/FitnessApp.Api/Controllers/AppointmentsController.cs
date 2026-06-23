@@ -38,7 +38,7 @@ public class AppointmentsController : ApiControllerBase
     [HttpPost]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<AppointmentDto>> Create(CreateAppointmentRequest request)
-        => HandleResult(await _sender.Send(new CreateAppointmentCommand(
+        => HandleCreated(await _sender.Send(new CreateAppointmentCommand(
             request.ClientId, request.StartsAt, request.DurationMinutes, request.Type, request.Location, request.Notes)));
 
     [HttpPut("{id:int}")]
@@ -67,6 +67,6 @@ public class AppointmentsController : ApiControllerBase
     [HttpPost("request")]
     [Authorize(Roles = Roles.Client)]
     public new async Task<ActionResult<AppointmentDto>> Request(RequestAppointmentRequest request)
-        => HandleResult(await _sender.Send(new RequestAppointmentCommand(
+        => HandleCreated(await _sender.Send(new RequestAppointmentCommand(
             request.StartsAt, request.DurationMinutes, request.Type, request.Location, request.Notes)));
 }

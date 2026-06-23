@@ -31,7 +31,7 @@ public class TrainersController : ApiControllerBase
     [HttpPost("me/clients")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<ClientListItemDto>> CreateClient(CreateClientRequest request)
-        => HandleResult(await _sender.Send(new CreateClientCommand(request.Email, request.FullName, request.Language, PublicBaseUrl())));
+        => HandleCreated(await _sender.Send(new CreateClientCommand(request.Email, request.FullName, request.Language, PublicBaseUrl())));
 
     [HttpGet("me/clients")]
     [Authorize(Roles = Roles.Trainer)]
@@ -78,7 +78,7 @@ public class TrainersController : ApiControllerBase
     [HttpPost("me/clients/{clientId}/workouts")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<WorkoutDetailDto>> CreateClientWorkout(string clientId, CreateWorkoutRequest request)
-        => HandleResult(await _sender.Send(new CreateClientWorkoutCommand(
+        => HandleCreated(await _sender.Send(new CreateClientWorkoutCommand(
             clientId, request.Name, request.PerformedAt, request.DurationMinutes, request.Notes)));
 
     [HttpGet("me/clients/{clientId}/workouts/{workoutId:int}")]
@@ -100,12 +100,12 @@ public class TrainersController : ApiControllerBase
     [HttpPost("me/clients/{clientId}/workouts/{workoutId:int}/exercises")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<IdResponse>> AddWorkoutExercise(string clientId, int workoutId, AddWorkoutExerciseRequest request)
-        => HandleResult(await _sender.Send(new AddClientWorkoutExerciseCommand(clientId, workoutId, request.ExerciseId, request.Order)));
+        => HandleCreated(await _sender.Send(new AddClientWorkoutExerciseCommand(clientId, workoutId, request.ExerciseId, request.Order)));
 
     [HttpPost("me/clients/{clientId}/workouts/{workoutId:int}/sets")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<IdResponse>> AddWorkoutSet(string clientId, int workoutId, AddWorkoutSetRequest request)
-        => HandleResult(await _sender.Send(new AddClientWorkoutSetCommand(
+        => HandleCreated(await _sender.Send(new AddClientWorkoutSetCommand(
             clientId, workoutId, request.WorkoutExerciseId, request.SetNumber, request.Weight, request.Reps)));
 
     [HttpDelete("me/clients/{clientId}/sets/{setId:int}")]

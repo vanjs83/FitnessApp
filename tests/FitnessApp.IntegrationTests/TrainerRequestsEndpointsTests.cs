@@ -51,7 +51,7 @@ public class TrainerRequestsEndpointsTests : IntegrationTestBase
         // Client sends the request.
         var send = await client.PostAsJsonAsync("/api/v1/trainer-requests",
             new CreateTrainerRequestRequest { TrainerId = trainerId });
-        send.StatusCode.Should().Be(HttpStatusCode.OK);
+        send.StatusCode.Should().Be(HttpStatusCode.Created);
         var mine = await send.Content.ReadFromJsonAsync<MyTrainerRequestDto>(JsonOptions);
         mine!.Status.Should().Be("Pending");
         mine.TrainerId.Should().Be(trainerId);
@@ -79,7 +79,7 @@ public class TrainerRequestsEndpointsTests : IntegrationTestBase
         var payload = new CreateTrainerRequestRequest { TrainerId = trainerId };
 
         var first = await client.PostAsJsonAsync("/api/v1/trainer-requests", payload);
-        first.StatusCode.Should().Be(HttpStatusCode.OK);
+        first.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var second = await client.PostAsJsonAsync("/api/v1/trainer-requests", payload);
         second.StatusCode.Should().Be(HttpStatusCode.BadRequest);

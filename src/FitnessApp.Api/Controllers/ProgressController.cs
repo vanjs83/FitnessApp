@@ -31,7 +31,7 @@ public class ProgressController : ApiControllerBase
         [FromForm] DateTime? takenOn,
         [FromForm] string? note,
         [FromForm] int? planId)
-        => HandleResult(await _sender.Send(new UploadProgressPhotoCommand(file, pose, takenOn, note, planId)));
+        => HandleCreated(await _sender.Send(new UploadProgressPhotoCommand(file, pose, takenOn, note, planId)));
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)

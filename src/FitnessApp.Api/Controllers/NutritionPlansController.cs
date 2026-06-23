@@ -40,7 +40,7 @@ public class NutritionPlansController : ApiControllerBase
     [HttpPost]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<NutritionPlanDetailDto>> Create(CreateNutritionPlanRequest request)
-        => HandleResult(await _sender.Send(new CreateNutritionPlanCommand(
+        => HandleCreated(await _sender.Send(new CreateNutritionPlanCommand(
             request.ClientId, request.Name, request.StartDate, request.EndDate, request.Notes, request.Price, request.Currency)));
 
     [HttpPut("{id:int}")]
@@ -80,7 +80,7 @@ public class NutritionPlansController : ApiControllerBase
     [HttpPost("templates")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<NutritionPlanDetailDto>> CreateTemplate(CreateNutritionTemplateRequest request)
-        => HandleResult(await _sender.Send(new CreateNutritionTemplateCommand(request.Name, request.Notes)));
+        => HandleCreated(await _sender.Send(new CreateNutritionTemplateCommand(request.Name, request.Notes)));
 
     [HttpPut("templates/{id:int}")]
     [Authorize(Roles = Roles.Trainer)]
@@ -90,20 +90,20 @@ public class NutritionPlansController : ApiControllerBase
     [HttpPost("templates/{templateId:int}/clone")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<NutritionPlanDetailDto>> CloneTemplate(int templateId, CloneNutritionTemplateRequest request)
-        => HandleResult(await _sender.Send(new CloneNutritionTemplateCommand(
+        => HandleCreated(await _sender.Send(new CloneNutritionTemplateCommand(
             templateId, request.ClientId, request.Name, request.StartDate, request.EndDate, request.Notes, request.Price, request.Currency)));
 
     [HttpPost("{planId:int}/save-as-template")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<NutritionPlanDetailDto>> SaveAsTemplate(int planId, CreateNutritionTemplateRequest request)
-        => HandleResult(await _sender.Send(new SaveNutritionPlanAsTemplateCommand(planId, request.Name, request.Notes)));
+        => HandleCreated(await _sender.Send(new SaveNutritionPlanAsTemplateCommand(planId, request.Name, request.Notes)));
 
     // ===== Days =====
 
     [HttpPost("{planId:int}/days")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<NutritionDayDto>> AddDay(int planId, AddNutritionDayRequest request)
-        => HandleResult(await _sender.Send(new AddNutritionDayCommand(
+        => HandleCreated(await _sender.Send(new AddNutritionDayCommand(
             planId, request.DayOfWeek, request.Label, request.TotalCaloriesTarget, request.Notes)));
 
     [HttpDelete("days/{dayId:int}")]
@@ -116,7 +116,7 @@ public class NutritionPlansController : ApiControllerBase
     [HttpPost("days/{dayId:int}/meals")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<MealDto>> AddMeal(int dayId, AddMealRequest request)
-        => HandleResult(await _sender.Send(new AddMealCommand(dayId, request.MealType, request.Time, request.Notes)));
+        => HandleCreated(await _sender.Send(new AddMealCommand(dayId, request.MealType, request.Time, request.Notes)));
 
     [HttpDelete("meals/{mealId:int}")]
     [Authorize(Roles = Roles.Trainer)]
@@ -128,7 +128,7 @@ public class NutritionPlansController : ApiControllerBase
     [HttpPost("meals/{mealId:int}/items")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<MealItemDto>> AddMealItem(int mealId, AddMealItemRequest request)
-        => HandleResult(await _sender.Send(new AddMealItemCommand(
+        => HandleCreated(await _sender.Send(new AddMealItemCommand(
             mealId, request.Description, request.Quantity, request.Calories, request.ProteinG, request.CarbsG, request.FatG)));
 
     [HttpDelete("items/{itemId:int}")]

@@ -33,7 +33,7 @@ public class AdminController : ApiControllerBase
 
     [HttpPost("trainers")]
     public async Task<ActionResult<TrainerAdminDto>> CreateTrainer(CreateTrainerRequest request)
-        => HandleResult(await _sender.Send(new CreateTrainerCommand(request.Email, request.FullName, request.Password)));
+        => HandleCreated(await _sender.Send(new CreateTrainerCommand(request.Email, request.FullName, request.Password)));
 
     [HttpGet("clients")]
     [ResponseCache(CacheProfileName = "UserData")]

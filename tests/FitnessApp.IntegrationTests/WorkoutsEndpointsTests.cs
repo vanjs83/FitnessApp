@@ -49,7 +49,7 @@ public class WorkoutsEndpointsTests : IntegrationTestBase
 
         var create = await client.PostAsJsonAsync("/api/v1/workouts",
             new CreateWorkoutRequest { Name = "Leg day", DurationMinutes = 60 });
-        create.StatusCode.Should().Be(HttpStatusCode.OK);
+        create.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var created = await create.Content.ReadFromJsonAsync<WorkoutDetailDto>(JsonOptions);
         created!.Id.Should().BeGreaterThan(0);

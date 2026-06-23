@@ -23,7 +23,7 @@ public class TrainerRequestsController : ApiControllerBase
     [HttpPost]
     [Authorize(Roles = Roles.Client)]
     public async Task<ActionResult<MyTrainerRequestDto>> SendRequest(CreateTrainerRequestRequest request)
-        => HandleResult(await _sender.Send(new SendTrainerRequestCommand(request.TrainerId, request.Language, PublicBaseUrl())));
+        => HandleCreated(await _sender.Send(new SendTrainerRequestCommand(request.TrainerId, request.Language, PublicBaseUrl())));
 
     [HttpGet("mine")]
     [Authorize(Roles = Roles.Client)]

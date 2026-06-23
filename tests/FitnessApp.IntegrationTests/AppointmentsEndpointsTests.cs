@@ -47,7 +47,7 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
             Type = AppointmentType.Online,
             Location = "https://meet.example/abc"
         });
-        create.StatusCode.Should().Be(HttpStatusCode.OK);
+        create.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var created = await create.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
         created!.Id.Should().BeGreaterThan(0);
@@ -103,7 +103,7 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
 
         var request = await client.PostAsJsonAsync("/api/v1/appointments/request",
             new RequestAppointmentRequest { StartsAt = Tomorrow(8), DurationMinutes = 60 });
-        request.StatusCode.Should().Be(HttpStatusCode.OK);
+        request.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var requested = await request.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
         requested!.Status.Should().Be("Requested");
@@ -159,7 +159,7 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
 
         var first = await trainer.PostAsJsonAsync("/api/v1/appointments",
             new CreateAppointmentRequest { ClientId = clientId, StartsAt = slot, DurationMinutes = 60 });
-        first.StatusCode.Should().Be(HttpStatusCode.OK);
+        first.StatusCode.Should().Be(HttpStatusCode.Created);
 
         // Overlapping slot (starts 30 min into the first session) must be refused.
         var clash = await trainer.PostAsJsonAsync("/api/v1/appointments",

@@ -24,7 +24,7 @@ public class WorkoutsController : ApiControllerBase
 
     [HttpPost]
     public async Task<ActionResult<WorkoutDetailDto>> Create(CreateWorkoutRequest request)
-        => HandleResult(await _sender.Send(new CreateWorkoutCommand(
+        => HandleCreated(await _sender.Send(new CreateWorkoutCommand(
             request.Name, request.PerformedAt, request.DurationMinutes, request.Notes)));
 
     [HttpGet("{workoutId:int}")]
@@ -34,7 +34,7 @@ public class WorkoutsController : ApiControllerBase
 
     [HttpPost("{workoutId:int}/exercises")]
     public async Task<ActionResult<IdResponse>> AddExercise(int workoutId, AddWorkoutExerciseRequest request)
-        => HandleResult(await _sender.Send(new AddWorkoutExerciseCommand(workoutId, request.ExerciseId, request.Order)));
+        => HandleCreated(await _sender.Send(new AddWorkoutExerciseCommand(workoutId, request.ExerciseId, request.Order)));
 
     [HttpDelete("exercises/{workoutExerciseId:int}")]
     public async Task<IActionResult> DeleteExercise(int workoutExerciseId)
@@ -46,7 +46,7 @@ public class WorkoutsController : ApiControllerBase
 
     [HttpPost("{workoutId:int}/sets")]
     public async Task<ActionResult<IdResponse>> AddSet(int workoutId, AddWorkoutSetRequest request)
-        => HandleResult(await _sender.Send(new AddWorkoutSetCommand(
+        => HandleCreated(await _sender.Send(new AddWorkoutSetCommand(
             workoutId, request.WorkoutExerciseId, request.SetNumber, request.Weight, request.Reps)));
 
     [HttpDelete("sets/{setId:int}")]

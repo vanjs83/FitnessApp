@@ -27,7 +27,7 @@ public class ChatController : ApiControllerBase
 
     [HttpPost("with/{partnerId}")]
     public async Task<ActionResult<ChatMessageDto>> Send(string partnerId, SendMessageRequest request)
-        => HandleResult(await _sender.Send(new SendMessageCommand(partnerId, request.Body)));
+        => HandleCreated(await _sender.Send(new SendMessageCommand(partnerId, request.Body)));
 
     [HttpPost("with/{partnerId}/read")]
     public async Task<IActionResult> MarkRead(string partnerId)

@@ -41,7 +41,7 @@ public class TrainingPlansController : ApiControllerBase
     [HttpPost]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<TrainingPlanDetailDto>> Create(CreateTrainingPlanRequest request)
-        => HandleResult(await _sender.Send(new CreateTrainingPlanCommand(
+        => HandleCreated(await _sender.Send(new CreateTrainingPlanCommand(
             request.ClientId, request.Name, request.StartDate, request.EndDate,
             request.TrainerExpectations, request.Price, request.Currency)));
 
@@ -83,7 +83,7 @@ public class TrainingPlansController : ApiControllerBase
     [HttpPost("templates")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<TrainingPlanDetailDto>> CreateTemplate(CreateTrainingPlanTemplateRequest request)
-        => HandleResult(await _sender.Send(new CreateTrainingTemplateCommand(request.Name, request.TrainerExpectations)));
+        => HandleCreated(await _sender.Send(new CreateTrainingTemplateCommand(request.Name, request.TrainerExpectations)));
 
     [HttpPut("templates/{id:int}")]
     [Authorize(Roles = Roles.Trainer)]
@@ -93,21 +93,21 @@ public class TrainingPlansController : ApiControllerBase
     [HttpPost("templates/{templateId:int}/clone")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<TrainingPlanDetailDto>> CloneTemplateToClient(int templateId, CloneTemplateToClientRequest request)
-        => HandleResult(await _sender.Send(new CloneTrainingTemplateToClientCommand(
+        => HandleCreated(await _sender.Send(new CloneTrainingTemplateToClientCommand(
             templateId, request.ClientId, request.Name, request.StartDate, request.EndDate,
             request.TrainerExpectations, request.Price, request.Currency)));
 
     [HttpPost("{planId:int}/save-as-template")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<TrainingPlanDetailDto>> SaveAsTemplate(int planId, CreateTrainingPlanTemplateRequest request)
-        => HandleResult(await _sender.Send(new SaveTrainingPlanAsTemplateCommand(planId, request.Name, request.TrainerExpectations)));
+        => HandleCreated(await _sender.Send(new SaveTrainingPlanAsTemplateCommand(planId, request.Name, request.TrainerExpectations)));
 
     // ===== Days =====
 
     [HttpPost("{planId:int}/days")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<TrainingDayDto>> AddDay(int planId, AddTrainingDayRequest request)
-        => HandleResult(await _sender.Send(new AddTrainingDayCommand(planId, request.DayOfWeek, request.Label, request.Notes)));
+        => HandleCreated(await _sender.Send(new AddTrainingDayCommand(planId, request.DayOfWeek, request.Label, request.Notes)));
 
     [HttpDelete("days/{dayId:int}")]
     [Authorize(Roles = Roles.Trainer)]
@@ -119,7 +119,7 @@ public class TrainingPlansController : ApiControllerBase
     [HttpPost("days/{dayId:int}/exercises")]
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<PlannedExerciseDto>> AddPlannedExercise(int dayId, AddPlannedExerciseRequest request)
-        => HandleResult(await _sender.Send(new AddPlannedExerciseCommand(
+        => HandleCreated(await _sender.Send(new AddPlannedExerciseCommand(
             dayId, request.ExerciseId, request.Order, request.TargetSets, request.TargetReps,
             request.TargetWeightKg, request.TargetDurationSeconds, request.RestSeconds, request.Notes)));
 
