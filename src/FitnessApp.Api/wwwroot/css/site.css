@@ -1097,34 +1097,46 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 }
 .cal-cell {
     position: relative;
-    min-height: 56px;
+    min-height: 64px;
     background: #1a2028;
     border: 1px solid #2a3340;
-    border-radius: 8px;
-    padding: 4px 6px;
+    border-radius: 10px;
+    padding: 5px 7px;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
-.cal-cell:hover { background: #222a34; }
+.cal-cell:hover { background: #222a34; transform: translateY(-1px); }
 .cal-cell.empty { background: none; border: none; cursor: default; }
+.cal-cell.has-appts { background: #1d2530; }
 .cal-cell.today { border-color: #4dabf7; }
-.cal-cell.selected { background: #2a3340; border-color: #4dabf7; }
+.cal-cell.today .cal-num { color: #4dabf7; font-weight: 700; }
+.cal-cell.selected { background: #2a3340; border-color: #4dabf7; box-shadow: 0 0 0 1px #4dabf7 inset; }
 .cal-num { font-size: 0.85rem; color: #e6e8eb; }
-.cal-badge {
+/* Per-day session preview: small status-colored dots along the bottom of the cell. */
+.cal-dots {
     position: absolute;
+    left: 7px;
+    right: 7px;
     bottom: 6px;
-    right: 6px;
-    background: #4dabf7;
-    color: #fff;
-    font-size: 0.7rem;
-    min-width: 18px;
-    height: 18px;
-    line-height: 18px;
-    text-align: center;
-    border-radius: 9px;
-    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: wrap;
 }
-.cal-item { margin-bottom: 8px; }
+.cal-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex: none;
+}
+.cal-more { font-size: 0.6rem; line-height: 7px; color: #8b95a3; }
+.cal-item { margin-bottom: 8px; border-left: 3px solid #2a3340; }
+/* Left accent in the session's status color, matching the calendar dots. */
+.cal-edge-Requested { border-left-color: #ffd66b; }
+.cal-edge-Scheduled { border-left-color: #74c0fc; }
+.cal-edge-Completed { border-left-color: #69db7c; }
+.cal-edge-Cancelled { border-left-color: #ff8787; }
+.cal-edge-NoShow { border-left-color: #d8a7e6; }
 .cal-status {
     display: inline-block;
     font-size: 0.7rem;

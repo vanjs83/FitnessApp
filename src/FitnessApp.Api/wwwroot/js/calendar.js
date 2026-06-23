@@ -133,11 +133,11 @@ const Calendar = {
         this.el('monthLabel').textContent =
             this.ref.toLocaleDateString(I18n.lang, { month: 'long', year: 'numeric' });
 
-        // Count appointments per day key.
-        const counts = {};
+        // Group appointments per day so each cell can preview them as colored status dots.
+        const byDay = {};
         for (const a of this.appointments) {
             const key = a.startsAt.slice(0, 10);
-            counts[key] = (counts[key] || 0) + 1;
+            (byDay[key] = byDay[key] || []).push(a);
         }
 
         const weekdays = ['day.monday', 'day.tuesday', 'day.wednesday', 'day.thursday', 'day.friday', 'day.saturday', 'day.sunday'];
@@ -151,13 +151,19 @@ const Calendar = {
         for (let i = 0; i < lead; i++) html += `<div class="cal-cell empty"></div>`;
         for (let d = 1; d <= daysInMonth; d++) {
             const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const n = counts[key] || 0;
+            const appts = (byDay[key] || []).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+            const n = appts.length;
             const cls = ['cal-cell'];
+            if (n) cls.push('has-appts');
             if (key === todayKey) cls.push('today');
             if (key === this.selected) cls.push('selected');
+            // Preview the day's sessions as status-colored dots (up to 3, then "+N").
+            const dots = appts.slice(0, 3).map(a =>
+                `<span class="cal-dot cal-${a.status}" title="${a.startsAt.slice(11, 16)} · ${this.esc(a.counterpartName)}"></span>`).join('');
+            const more = n > 3 ? `<span class="cal-more">+${n - 3}</span>` : '';
             html += `<div class="${cls.join(' ')}" data-day="${key}">
                 <span class="cal-num">${d}</span>
-                ${n ? `<span class="cal-badge">${n}</span>` : ''}
+                ${n ? `<div class="cal-dots">${dots}${more}</div>` : ''}
             </div>`;
         }
 
@@ -193,7 +199,7 @@ const Calendar = {
         list.innerHTML = dayAppts.map(a => {
             const time = a.startsAt.slice(11, 16);
             const typeLabel = I18n.t('calendar.' + (a.type === 'Online' ? 'online' : 'inPerson'));
-            return `<div class="card-inset cal-item">
+            return `<div class="card-inset cal-item cal-edge-${a.status}">
                 <div class="row" style="justify-content:space-between;align-items:center">
                     <div>
                         <strong>${time}</strong> · ${a.isGroup ? '👥 ' : ''}${this.esc(a.counterpartName)}${a.isGroup ? ` (${a.memberCount})` : ''}
