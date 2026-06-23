@@ -1151,6 +1151,8 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 }
 .group-check { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
 .group-card { margin-bottom: 12px; }
+.group-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.group-head button { flex: 0 0 auto; }
 .group-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .group-chip {
     display: inline-flex;

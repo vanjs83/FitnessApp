@@ -121,7 +121,7 @@ const Groups = {
             .slice(0, 8);
 
         box.innerHTML = results.length
-            ? results.map(c => `<button class="group-add-result" data-action="add-member" data-client-id="${c.id}">${this.esc(c.fullName || c.email)}</button>`).join('')
+            ? results.map(c => `<button class="group-add-result" data-action="add-member" data-client-id="${c.id}">+ ${this.esc(c.fullName || c.email)}</button>`).join('')
             : `<span class="muted small">${I18n.t('groups.noMatches', 'Nema rezultata.')}</span>`;
     },
 
@@ -139,7 +139,7 @@ const Groups = {
                 : `<span class="muted small">${I18n.t('groups.noMembers', 'Bez članova.')}</span>`;
 
             return `<div class="card group-card" data-group-id="${g.id}">
-                <div class="row" style="justify-content:space-between;align-items:center">
+                <div class="group-head">
                     <strong>${this.esc(g.name)} <span class="muted small">(${g.memberCount})</span></strong>
                     <button class="secondary danger" data-action="delete" data-i18n="common.delete">Obriši</button>
                 </div>
