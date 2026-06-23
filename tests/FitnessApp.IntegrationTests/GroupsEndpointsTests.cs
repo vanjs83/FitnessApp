@@ -158,4 +158,57 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupSessionRequest { StartsAt = slot.AddMinutes(30), DurationMinutes = 60 });
         clash.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
+
+    // ===== Group sessions from the calendar feed (GET /groups/sessions is open to both roles) =====
+
+    [Fact]
+    public async Task A_group_member_sees_the_group_session_in_their_calendar_feed()
+    {
+        var (client, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Calendar group", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+
+        var session = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
+            new CreateGroupSessionRequest { StartsAt = Tomorrow(10) });
+        var created = await session.Content.ReadFromJsonAsync<GroupSessionDto>(JsonOptions);
+
+        // The client (a member) reads it via the same endpoint the calendar uses.
+        var list = await client.GetFromJsonAsync<List<GroupSessionDto>>("/api/v1/groups/sessions", JsonOptions);
+        list!.Should().ContainSingle(s => s.Id == created!.Id && s.GroupName == "Calendar group");
+    }
+
+    [Fact]
+    public async Task A_client_who_is_not_a_member_does_not_see_the_group_session()
+    {
+        var (_, memberId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+        var (outsider, _, _) = await RegisterUserAsync("Client");
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Private group", ClientIds = new() { memberId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+
+        var session = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
+            new CreateGroupSessionRequest { StartsAt = Tomorrow(11) });
+        var created = await session.Content.ReadFromJsonAsync<GroupSessionDto>(JsonOptions);
+
+        var list = await outsider.GetFromJsonAsync<List<GroupSessionDto>>("/api/v1/groups/sessions", JsonOptions);
+        list!.Should().NotContain(s => s.Id == created!.Id);
+    }
+
+    [Fact]
+    public async Task A_client_cannot_book_a_group_session_returns_403()
+    {
+        var (client, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Trainer only booking", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+
+        var response = await client.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
+            new CreateGroupSessionRequest { StartsAt = Tomorrow() });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 }
