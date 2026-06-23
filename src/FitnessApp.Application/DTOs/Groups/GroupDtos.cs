@@ -1,5 +1,3 @@
-using FitnessApp.Domain.Entities;
-
 namespace FitnessApp.Application.DTOs.Groups;
 
 public class TrainingGroupDto
@@ -26,14 +24,4 @@ public class CreateGroupRequest
 public class AddGroupMemberRequest
 {
     public string ClientId { get; set; } = string.Empty;
-}
-
-/// <summary>Trainer books one session for a whole group (groupId comes from the route).</summary>
-public class CreateGroupSessionRequest
-{
-    public DateTime StartsAt { get; set; }
-    public int DurationMinutes { get; set; } = 60;
-    public AppointmentType Type { get; set; } = AppointmentType.InPerson;
-    public string? Location { get; set; }
-    public string? Notes { get; set; }
 }

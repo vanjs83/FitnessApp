@@ -28,10 +28,14 @@ public class AppointmentDto
     public string? Notes { get; set; }
 }
 
-/// <summary>Trainer books a session for one of their clients.</summary>
+/// <summary>
+/// Trainer books a session: individual (set <see cref="ClientId"/>) or for a whole group
+/// (set <see cref="GroupId"/> instead). Exactly one of the two is provided.
+/// </summary>
 public class CreateAppointmentRequest
 {
-    public string ClientId { get; set; } = string.Empty;
+    public string? ClientId { get; set; }
+    public int? GroupId { get; set; }
     public DateTime StartsAt { get; set; }
     public int DurationMinutes { get; set; } = 60;
     public AppointmentType Type { get; set; } = AppointmentType.InPerson;

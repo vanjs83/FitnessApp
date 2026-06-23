@@ -7,7 +7,8 @@ public class CreateAppointmentRequestValidator : AbstractValidator<CreateAppoint
 {
     public CreateAppointmentRequestValidator()
     {
-        RuleFor(x => x.ClientId).NotEmpty();
+        // Individual booking needs a client; a group booking provides GroupId instead.
+        RuleFor(x => x.ClientId).NotEmpty().When(x => !x.GroupId.HasValue);
         RuleFor(x => x.StartsAt).NotEmpty();
         RuleFor(x => x.DurationMinutes).InclusiveBetween(5, 480);
         RuleFor(x => x.Type).IsInEnum();

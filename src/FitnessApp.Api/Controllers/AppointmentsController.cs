@@ -39,7 +39,7 @@ public class AppointmentsController : ApiControllerBase
     [Authorize(Roles = Roles.Trainer)]
     public async Task<ActionResult<AppointmentDto>> Create(CreateAppointmentRequest request)
         => HandleCreated(await _sender.Send(new CreateAppointmentCommand(
-            request.ClientId, request.StartsAt, request.DurationMinutes, request.Type, request.Location, request.Notes)));
+            request.ClientId, request.GroupId, request.StartsAt, request.DurationMinutes, request.Type, request.Location, request.Notes)));
 
     [HttpPut("{id:int}")]
     [Authorize(Roles = Roles.Trainer)]

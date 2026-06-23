@@ -96,8 +96,8 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupRequest { Name = "A's group", ClientIds = new() { clientId } });
         var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
 
-        var response = await trainerB.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
-            new CreateGroupSessionRequest { StartsAt = Tomorrow() });
+        var response = await trainerB.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = group!.Id, StartsAt = Tomorrow() });
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -111,8 +111,8 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupRequest { Name = "HIIT", ClientIds = new() { clientId } });
         var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
 
-        var session = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
-            new CreateGroupSessionRequest { StartsAt = Tomorrow(10), DurationMinutes = 45, Type = AppointmentType.Online });
+        var session = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = group!.Id, StartsAt = Tomorrow(10), DurationMinutes = 45, Type = AppointmentType.Online });
         session.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var created = await session.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
@@ -137,8 +137,8 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupRequest { Name = "Past", ClientIds = new() { clientId } });
         var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
 
-        var response = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
-            new CreateGroupSessionRequest { StartsAt = DateTime.UtcNow.Date.AddDays(-1) });
+        var response = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = group!.Id, StartsAt = DateTime.UtcNow.Date.AddDays(-1) });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -153,12 +153,12 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupRequest { Name = "Clash", ClientIds = new() { clientId } });
         var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
 
-        var first = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
-            new CreateGroupSessionRequest { StartsAt = slot, DurationMinutes = 60 });
+        var first = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = group!.Id, StartsAt = slot, DurationMinutes = 60 });
         first.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var clash = await trainer.PostAsJsonAsync($"/api/v1/groups/{group.Id}/sessions",
-            new CreateGroupSessionRequest { StartsAt = slot.AddMinutes(30), DurationMinutes = 60 });
+        var clash = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = group.Id, StartsAt = slot.AddMinutes(30), DurationMinutes = 60 });
         clash.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
@@ -173,8 +173,8 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupRequest { Name = "Calendar group", ClientIds = new() { clientId } });
         var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
 
-        var session = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
-            new CreateGroupSessionRequest { StartsAt = Tomorrow(10) });
+        var session = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = group!.Id, StartsAt = Tomorrow(10) });
         var created = await session.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
 
         // The client (a member) reads it via the normal appointments feed the calendar uses.
@@ -192,8 +192,8 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupRequest { Name = "Private group", ClientIds = new() { memberId } });
         var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
 
-        var session = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
-            new CreateGroupSessionRequest { StartsAt = Tomorrow(11) });
+        var session = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = group!.Id, StartsAt = Tomorrow(11) });
         var created = await session.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
 
         var list = await outsider.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
@@ -209,8 +209,8 @@ public class GroupsEndpointsTests : IntegrationTestBase
             new CreateGroupRequest { Name = "Trainer only booking", ClientIds = new() { clientId } });
         var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
 
-        var response = await client.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/sessions",
-            new CreateGroupSessionRequest { StartsAt = Tomorrow() });
+        var response = await client.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = group!.Id, StartsAt = Tomorrow() });
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }

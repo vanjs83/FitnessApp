@@ -216,7 +216,7 @@ const Calendar = {
             `<button class="${cls}" data-act="${act}" data-id="${a.id}">${I18n.t('calendar.' + key)}</button>`;
         // Group session: only the owning trainer can cancel it, straight from the calendar.
         if (a.isGroup)
-            return (this.mode === 'trainer' && a.status === 'Scheduled') ? btn('group-cancel', 'cancel') : '';
+            return (this.mode === 'trainer' && a.status === 'Scheduled') ? btn('cancel', 'cancel') : '';
         // Clients can only cancel their own pending/booked sessions; the rest is trainer-driven.
         if (this.mode === 'client')
             return (a.status === 'Requested' || a.status === 'Scheduled') ? btn('cancel', 'cancel') : '';
@@ -226,9 +226,8 @@ const Calendar = {
     },
 
     async act(action, id) {
-        // Group sessions cancel via the groups endpoint; individual appointments via /appointments.
-        if (action === 'group-cancel') await API.post(`/groups/sessions/${id}/cancel`);
-        else await API.post(`/appointments/${id}/${action}`);
+        // Both individual and group sessions act through /appointments now.
+        await API.post(`/appointments/${id}/${action}`);
         await this.loadMonth();
         this.renderGrid();
         this.renderDay();
@@ -270,8 +269,9 @@ const Calendar = {
             notes: this.el('notes').value || null
         };
         try {
-            // Group session (push to all members), trainer individual booking, or client proposal.
-            if (isGroup) await API.post(`/groups/${groupId}/sessions`, body);
+            // All bookings go through /appointments: group (GroupId), trainer individual (ClientId),
+            // or client proposal (/request).
+            if (isGroup) await API.post('/appointments', { groupId: Number(groupId), ...body });
             else if (this.mode === 'trainer') await API.post('/appointments', { clientId, ...body });
             else await API.post('/appointments/request', body);
             this.toggleForm(false);

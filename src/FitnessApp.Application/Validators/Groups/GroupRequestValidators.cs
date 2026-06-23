@@ -20,15 +20,3 @@ public class AddGroupMemberRequestValidator : AbstractValidator<AddGroupMemberRe
         RuleFor(x => x.ClientId).NotEmpty();
     }
 }
-
-public class CreateGroupSessionRequestValidator : AbstractValidator<CreateGroupSessionRequest>
-{
-    public CreateGroupSessionRequestValidator()
-    {
-        RuleFor(x => x.StartsAt).NotEmpty();
-        RuleFor(x => x.DurationMinutes).InclusiveBetween(5, 480);
-        RuleFor(x => x.Type).IsInEnum();
-        RuleFor(x => x.Location).MaximumLength(400);
-        RuleFor(x => x.Notes).MaximumLength(2000);
-    }
-}

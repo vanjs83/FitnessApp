@@ -1,5 +1,6 @@
 using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
+using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -45,25 +46,54 @@ public class CancelAppointmentCommandHandler : IRequestHandler<CancelAppointment
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly IPushNotificationService _push;
+    private readonly IUserDirectory _users;
 
-    public CancelAppointmentCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CancelAppointmentCommandHandler(
+        IAppDbContext db, ICurrentUserService currentUser, IPushNotificationService push, IUserDirectory users)
     {
         _db = db;
         _currentUser = currentUser;
+        _push = push;
+        _users = users;
     }
 
     public async Task<Result> Handle(CancelAppointmentCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId;
-        var appointment = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
+        var appointment = await _db.Appointments
+            .Include(a => a.Group!).ThenInclude(g => g.Members)
+            .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
         if (appointment == null) return Result.NotFound();
-        if (appointment.TrainerId != userId && appointment.ClientId != userId) return Result.Forbidden();
+
+        // A group session is the trainer's to cancel; an individual one, either participant's.
+        var allowed = appointment.IsGroup
+            ? appointment.TrainerId == userId
+            : appointment.TrainerId == userId || appointment.ClientId == userId;
+        if (!allowed) return Result.Forbidden();
+
         if (appointment.Status is not (AppointmentStatus.Requested or AppointmentStatus.Scheduled))
             return Result.Fail(ResultError.Validation, "Only an open appointment can be cancelled.");
+
+        // Snapshot members before removal so a cancelled group session can still notify them.
+        var members = (appointment.Group?.Members ?? Enumerable.Empty<TrainingGroupMember>()).ToList();
+        var groupName = appointment.Group?.Name ?? "";
+        var isGroup = appointment.IsGroup;
 
         // Cancelling removes the appointment entirely (no soft-cancel state kept).
         _db.Appointments.Remove(appointment);
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (isGroup)
+        {
+            var memberIds = members.Select(m => m.ClientId).ToList();
+            var names = await _users.GetDisplayNamesAsync(memberIds, cancellationToken);
+            var memberNames = memberIds.Select(id => names.TryGetValue(id, out var n) ? n : "").ToList();
+            var (title, body, data) = AppointmentHelper.GroupCancelled(appointment, groupName, memberNames);
+            foreach (var member in members)
+                await _push.SendToUserAsync(member.ClientId, title, body, data, cancellationToken);
+        }
+
         return Result.Success();
     }
 }
