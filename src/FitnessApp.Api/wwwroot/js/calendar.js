@@ -71,13 +71,27 @@ const Calendar = {
         return { from: this.isoLocal(from), to: this.isoLocal(to) };
     },
 
+    // Loads individual appointments and group sessions for the month and merges them into one
+    // list. Group sessions are normalized to the appointment shape (with isGroup) so the grid and
+    // day panel render them uniformly; they carry no per-item actions for now.
     async loadMonth() {
         const { from, to } = this.monthRange();
-        try {
-            this.appointments = await API.get(`/appointments?from=${from}&to=${to}`) || [];
-        } catch (e) {
-            this.appointments = [];
-        }
+        const [appts, sessions] = await Promise.all([
+            API.get(`/appointments?from=${from}&to=${to}`).catch(() => []),
+            API.get(`/groups/sessions?from=${from}&to=${to}`).catch(() => [])
+        ]);
+        const groupItems = (sessions || []).map(s => ({
+            id: s.id,
+            startsAt: s.startsAt,
+            status: s.status,
+            type: s.type,
+            location: s.location,
+            notes: s.notes,
+            counterpartName: s.groupName,
+            memberCount: s.memberCount,
+            isGroup: true
+        }));
+        this.appointments = [...(appts || []), ...groupItems];
     },
 
     async loadClients() {
@@ -164,7 +178,7 @@ const Calendar = {
             return `<div class="card-inset cal-item">
                 <div class="row" style="justify-content:space-between;align-items:center">
                     <div>
-                        <strong>${time}</strong> · ${this.esc(a.counterpartName)}
+                        <strong>${time}</strong> · ${a.isGroup ? '👥 ' : ''}${this.esc(a.counterpartName)}${a.isGroup ? ` (${a.memberCount})` : ''}
                         <span class="cal-status cal-${a.status}">${I18n.t('calendar.status.' + a.status, a.status)}</span>
                     </div>
                     <span class="muted small">${typeLabel}${a.location ? ' · ' + this.esc(a.location) : ''}</span>
@@ -180,6 +194,8 @@ const Calendar = {
     },
 
     actions(a) {
+        // Group sessions are display-only in the calendar (managed from the Groups view).
+        if (a.isGroup) return '';
         const btn = (act, key, cls = 'secondary') =>
             `<button class="${cls}" data-act="${act}" data-id="${a.id}">${I18n.t('calendar.' + key)}</button>`;
         // Clients can only cancel their own pending/booked sessions; the rest is trainer-driven.

@@ -235,11 +235,14 @@ const App = {
         if (nutView) nutView.classList.toggle('hidden', view !== 'nutrition');
         const calView = document.getElementById('calendarView');
         if (calView) calView.classList.toggle('hidden', view !== 'calendar');
+        const groupsV = document.getElementById('groupsView');
+        if (groupsV) groupsV.classList.toggle('hidden', view !== 'groups');
         document.getElementById('profileView').classList.toggle('hidden', view !== 'profile');
         document.getElementById('chatView').classList.toggle('hidden', view !== 'chat');
 
         if (view === 'chat') Chat.load();
         if (view === 'calendar') Calendar.load();
+        if (view === 'groups') Groups.load();
         if (view === 'clients') Trainers.load();
         if (view === 'plans') {
             Exercises.load();

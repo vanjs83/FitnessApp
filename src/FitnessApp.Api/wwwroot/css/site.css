@@ -1140,3 +1140,37 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 .cal-Cancelled { background: #4a1d1d; color: #ff8787; }
 .cal-NoShow { background: #3a2440; color: #d8a7e6; }
 
+/* Groups */
+.group-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 6px 0 10px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.group-check { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+.group-card { margin-bottom: 12px; }
+.group-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.group-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #2a3340;
+    color: #c4ccd6;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+.group-chip button {
+    background: none;
+    border: none;
+    color: #ff8787;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+.group-add { gap: 6px; margin-bottom: 6px; }
+.group-book-form { margin-top: 10px; }
+
