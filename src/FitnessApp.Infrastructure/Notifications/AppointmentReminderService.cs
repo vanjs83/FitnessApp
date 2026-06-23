@@ -44,7 +44,8 @@ public class AppointmentReminderService : BackgroundService
             {
                 using var scope = _scopeFactory.CreateScope();
                 var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-                var sent = await sender.Send(new SendDueAppointmentRemindersCommand(_settings.LeadMinutes), stoppingToken);
+                var sent = await sender.Send(
+                    new SendDueAppointmentRemindersCommand(_settings.LeadMinutes, _settings.TimeZoneId), stoppingToken);
                 if (sent > 0) _logger.LogInformation("Sent {Count} appointment reminder(s).", sent);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

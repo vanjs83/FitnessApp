@@ -10,8 +10,13 @@ namespace FitnessApp.Application.Features.Appointments.Commands;
 /// Sends a one-off push reminder for every scheduled session (individual or group) starting within
 /// the next <paramref name="LeadMinutes"/> that hasn't been reminded yet. Driven by a background
 /// worker; returns how many sessions were reminded.
+/// <para>
+/// StartsAt is stored as the user's naive wall-clock time, so "now" must be evaluated in that same
+/// frame: <paramref name="TimeZoneId"/> (e.g. "Central European Standard Time") converts UtcNow to
+/// the app's local time. Null = compare against UtcNow (used by tests, which store UTC StartsAt).
+/// </para>
 /// </summary>
-public record SendDueAppointmentRemindersCommand(int LeadMinutes) : IRequest<int>;
+public record SendDueAppointmentRemindersCommand(int LeadMinutes, string? TimeZoneId = null) : IRequest<int>;
 
 public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDueAppointmentRemindersCommand, int>
 {
@@ -28,7 +33,7 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
 
     public async Task<int> Handle(SendDueAppointmentRemindersCommand request, CancellationToken cancellationToken)
     {
-        var now = DateTime.UtcNow;
+        var now = LocalNow(request.TimeZoneId);
         var windowEnd = now.AddMinutes(request.LeadMinutes);
         var sent = 0;
 
@@ -63,5 +68,20 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
 
         if (sent > 0) await _db.SaveChangesAsync(cancellationToken);
         return sent;
+    }
+
+    // UtcNow converted to the app's wall-clock timezone (StartsAt is stored as naive local time).
+    private static DateTime LocalNow(string? timeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(timeZoneId)) return DateTime.UtcNow;
+        try
+        {
+            var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
+        }
+        catch
+        {
+            return DateTime.UtcNow;
+        }
     }
 }

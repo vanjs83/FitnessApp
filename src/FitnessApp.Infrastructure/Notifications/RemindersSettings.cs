@@ -10,4 +10,10 @@ public class RemindersSettings
 
     /// <summary>How often the worker scans for due reminders.</summary>
     public int PollMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Timezone for evaluating "now" against the naive wall-clock StartsAt. Windows id, e.g.
+    /// "Central European Standard Time". Empty = compare against UTC.
+    /// </summary>
+    public string? TimeZoneId { get; set; } = "Central European Standard Time";
 }

@@ -94,7 +94,9 @@ const Calendar = {
     async loadMonth() {
         const { from, to } = this.monthRange();
         try {
-            this.appointments = await API.get(`/appointments?from=${from}&to=${to}`) || [];
+            // Cache-buster: GET /appointments is client-cached 5 min, so a freshly booked session
+            // wouldn't show on reload without a unique URL.
+            this.appointments = await API.get(`/appointments?from=${from}&to=${to}&_=${Date.now()}`) || [];
         } catch {
             this.appointments = [];
         }

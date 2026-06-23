@@ -38,7 +38,7 @@ public class ConfirmAppointmentCommandHandler : IRequestHandler<ConfirmAppointme
     }
 }
 
-// ===== Either participant cancels an open appointment =====
+// ===== Either participant cancels an open appointment (removes it entirely) =====
 public record CancelAppointmentCommand(int Id) : IRequest<Result>;
 
 public class CancelAppointmentCommandHandler : IRequestHandler<CancelAppointmentCommand, Result>
@@ -61,7 +61,8 @@ public class CancelAppointmentCommandHandler : IRequestHandler<CancelAppointment
         if (appointment.Status is not (AppointmentStatus.Requested or AppointmentStatus.Scheduled))
             return Result.Fail(ResultError.Validation, "Only an open appointment can be cancelled.");
 
-        appointment.Status = AppointmentStatus.Cancelled;
+        // Cancelling removes the appointment entirely (no soft-cancel state kept).
+        _db.Appointments.Remove(appointment);
         await _db.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

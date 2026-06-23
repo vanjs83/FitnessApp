@@ -38,11 +38,14 @@ public class CancelGroupSessionCommandHandler : IRequestHandler<CancelGroupSessi
         if (session.Status != AppointmentStatus.Scheduled)
             return Result.Fail(ResultError.Validation, "Only a scheduled session can be cancelled.");
 
-        session.Status = AppointmentStatus.Cancelled;
+        // Snapshot members before removal so we can still notify them.
+        var members = (session.Group?.Members ?? Enumerable.Empty<TrainingGroupMember>()).ToList();
+
+        // Cancelling removes the session entirely.
+        _db.Appointments.Remove(session);
         await _db.SaveChangesAsync(cancellationToken);
 
         // Best-effort push fan-out so members know the session is off, listing the whole roster.
-        var members = session.Group?.Members ?? Enumerable.Empty<TrainingGroupMember>();
         var memberIds = members.Select(m => m.ClientId).ToList();
         var names = await _users.GetDisplayNamesAsync(memberIds, cancellationToken);
         var memberNames = memberIds.Select(id => names.TryGetValue(id, out var n) ? n : "").ToList();

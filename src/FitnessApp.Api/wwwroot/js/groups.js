@@ -52,7 +52,8 @@ const Groups = {
 
     async loadGroups() {
         try {
-            this.groups = await API.get('/groups') || [];
+            // Cache-buster: GET /groups is client-cached, so member/group edits show immediately.
+            this.groups = await API.get(`/groups?_=${Date.now()}`) || [];
         } catch {
             this.groups = [];
         }

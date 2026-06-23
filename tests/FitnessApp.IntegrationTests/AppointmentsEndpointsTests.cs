@@ -132,7 +132,7 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task A_client_cancels_their_own_appointment()
+    public async Task A_client_cancels_their_own_appointment_and_it_is_deleted()
     {
         var (client, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
 
@@ -143,10 +143,10 @@ public class AppointmentsEndpointsTests : IntegrationTestBase
         var cancel = await client.PostAsync($"/api/v1/appointments/{created!.Id}/cancel", null);
         cancel.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var after = await client.GetFromJsonAsync<AppointmentDto>($"/api/v1/appointments/{created.Id}", JsonOptions);
-        after!.Status.Should().Be("Cancelled");
+        // Cancelling deletes the appointment outright — it's gone, not just hidden.
+        var after = await client.GetAsync($"/api/v1/appointments/{created.Id}");
+        after.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
-        // A cancelled session drops out of the calendar list (but is still fetchable by id).
         var list = await client.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
         list!.Should().NotContain(a => a.Id == created.Id);
     }
