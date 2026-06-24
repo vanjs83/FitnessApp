@@ -151,7 +151,9 @@ main {
     height: 1px;
     background: #2a3340;
 }
-.google-btn-wrap { display: flex; justify-content: center; min-height: 40px; }
+.google-btn-wrap { display: flex; justify-content: center; min-height: 40px; width: 100%; }
+/* GSI renderira gumb kao iframe fiksne širine — ne daj da prelije usku formu. */
+.google-btn-wrap > div, .google-btn-wrap iframe { max-width: 100% !important; }
 /* When Google is not configured the button never renders — hide the divider too. */
 .google-btn-wrap:empty { display: none; }
 .auth-or:has(+ .google-btn-wrap:empty) { display: none; }
@@ -1223,21 +1225,37 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 
     main { padding: 1rem 0.8rem; }
 
-    /* Tab-navigacija: jedan red koji se može horizontalno skrolati,
-       umjesto da se tabovi prelijevaju i lome layout. */
+    /* Tab-navigacija: čvrsta MREŽA gumba (3 stupca) umjesto flexa. Flex je
+       dopuštao da se gumbi naguraju/preklope; grid ćelije se fizički ne mogu
+       preklapati, pa su svi tabovi (uklj. Kalendar) uredni i vidljivi, a
+       sadržaj (kalendar/prehrana) stoji čisto ispod. Vrijedi za klijent i
+       trener navigaciju (.nav-btn i .trainer-nav-btn). */
     .app-nav {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.35rem;
+        border-bottom: none;
+        margin-bottom: 1rem;
     }
-    .app-nav::-webkit-scrollbar { height: 3px; }
-    .app-nav::-webkit-scrollbar-thumb { background: #2a3340; border-radius: 3px; }
-    .nav-btn {
-        flex: 0 0 auto;
-        white-space: nowrap;
-        padding: 0.6rem 0.8rem;
+    .nav-btn,
+    .trainer-nav-btn {
+        background: none;
+        color: #a0a8b0;
+        border: 1px solid #2a3340;
+        border-radius: 8px;
+        text-align: center;
+        white-space: normal;
+        line-height: 1.2;
+        padding: 0.55rem 0.35rem;
+        font-size: 0.8rem;
     }
+    .nav-btn.active,
+    .trainer-nav-btn.active {
+        background: #16314a;
+        border-color: #4dabf7;
+        color: #4dabf7;
+    }
+    .app-nav .nav-badge { margin-left: 4px; }
 
     /* Naslov + akcijski gumb: dopusti lomljenje umjesto stiskanja. */
     .view-header { flex-wrap: wrap; gap: 0.5rem; }

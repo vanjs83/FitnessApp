@@ -75,10 +75,16 @@ const Auth = {
         });
 
         const locale = (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr';
-        // Rectangular + fixed width so both buttons match each other and the app's own buttons.
-        const common = { theme: 'filled_blue', size: 'large', shape: 'rectangular', width: 336, locale };
         const loginEl = document.getElementById('googleLoginBtn');
         const regEl = document.getElementById('googleRegisterBtn');
+        // Match the button to the form width instead of a fixed 336px (which overflowed
+        // narrow phones). GSI only accepts 200–400px, so clamp to that range. The login
+        // form is the visible one at init, so measure it and use the same width for both.
+        const refEl = loginEl || regEl;
+        const containerWidth = (refEl && (refEl.clientWidth || (refEl.parentElement && refEl.parentElement.clientWidth))) || 336;
+        const width = Math.round(Math.min(400, Math.max(200, containerWidth)));
+        // Rectangular so both buttons match each other and the app's own buttons.
+        const common = { theme: 'filled_blue', size: 'large', shape: 'rectangular', width, locale };
         if (loginEl) google.accounts.id.renderButton(loginEl, { ...common, text: 'signin_with' });
         if (regEl) google.accounts.id.renderButton(regEl, { ...common, text: 'signup_with' });
     },
