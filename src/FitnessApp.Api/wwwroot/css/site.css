@@ -1199,3 +1199,81 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
 }
 .group-add-result:hover { background: #245379; }
 
+/* ============================================================
+   Mobilni prikaz (telefoni). Glavni layout je dizajniran za
+   ~800px; ovdje se header, tab-navigacija i višestupčane forme
+   prilagode uskom ekranu. Ne mijenja DOM — samo raspored.
+   ============================================================ */
+@media (max-width: 640px) {
+    /* Header: pusti da se lomi u dva reda umjesto da se gura van ekrana. */
+    header {
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        padding: 0.7rem 0.9rem;
+    }
+    header h1 { font-size: 1.1rem; }
+    .header-right {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: space-between;
+    }
+    #userInfo { gap: 0.5rem; }
+    #userEmail { display: none; }              /* predugačak za mobitel; avatar + rola dovoljni */
+
+    main { padding: 1rem 0.8rem; }
+
+    /* Tab-navigacija: jedan red koji se može horizontalno skrolati,
+       umjesto da se tabovi prelijevaju i lome layout. */
+    .app-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .app-nav::-webkit-scrollbar { height: 3px; }
+    .app-nav::-webkit-scrollbar-thumb { background: #2a3340; border-radius: 3px; }
+    .nav-btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        padding: 0.6rem 0.8rem;
+    }
+
+    /* Naslov + akcijski gumb: dopusti lomljenje umjesto stiskanja. */
+    .view-header { flex-wrap: wrap; gap: 0.5rem; }
+
+    .card { padding: 1rem; }
+
+    /* Višestupčane forme se na mobitelu skupe u 2 stupca. */
+    .add-set-form { grid-template-columns: 1fr 1fr; }
+    .add-pe-form { grid-template-columns: 1fr 1fr !important; }
+    .add-pe-form .day-exercise-select { min-width: 0; grid-column: 1 / -1; }
+    .add-pe-form .pe-reps,
+    .add-pe-form .pe-duration { grid-column: auto; grid-row: auto; }
+
+    /* Profil: ključ iznad vrijednosti umjesto fiksna 180px kolona. */
+    .profile-row { grid-template-columns: 1fr; gap: 0.15rem; }
+
+    /* Kalendar: kompaktnije ćelije da stane 7 kolona bez horizontalnog skrola. */
+    .cal-header strong { min-width: 0; font-size: 0.95rem; }
+    .cal-grid { gap: 3px; }
+    .cal-cell { min-height: 50px; padding: 3px 4px; border-radius: 7px; }
+    .cal-num { font-size: 0.78rem; }
+    .cal-dots { left: 4px; right: 4px; bottom: 4px; gap: 2px; }
+
+    /* Tablica namirnica u planu prehrane: sitniji font da stane. */
+    .meal-items { font-size: 0.78rem; }
+
+    /* Modali: poravnaj na vrh (da tipkovnica ne gura sadržaj), manje vanjske
+       margine i unutarnjeg paddinga = više korisne širine. */
+    .modal { padding: 0.6rem; align-items: flex-start; }
+    .modal-content {
+        padding: 1.3rem 1.1rem;
+        max-height: 94vh;
+    }
+    /* Da dugačak naslov ne sklizne ispod "×" gumba u gornjem desnom kutu. */
+    .modal-content h2 { padding-right: 1.75rem; }
+    /* Akcijski redovi u modalu se lome umjesto stiskanja. */
+    .modal-content .row { flex-wrap: wrap; }
+}
+
