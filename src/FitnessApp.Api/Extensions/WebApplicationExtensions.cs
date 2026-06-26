@@ -3,6 +3,7 @@ using FitnessApp.Api.Hubs;
 using FitnessApp.Application.Storage;
 using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -49,6 +50,12 @@ public static class WebApplicationExtensions
 
         app.MapControllers();
         app.MapHub<ChatHub>("/hubs/chat");
+
+        // Full readiness probe: runs all checks (incl. DbContext connectivity).
+        app.MapHealthChecks("/health");
+        // Liveness probe: no checks, just confirms the process is responding — a DB
+        // blip shouldn't make an orchestrator kill an otherwise-healthy container.
+        app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 
         return app;
     }

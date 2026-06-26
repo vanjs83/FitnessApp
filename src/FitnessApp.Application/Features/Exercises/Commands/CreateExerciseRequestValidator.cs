@@ -1,11 +1,11 @@
 using FitnessApp.Application.DTOs.Exercises;
 using FluentValidation;
 
-namespace FitnessApp.Application.Validators.Exercises;
+namespace FitnessApp.Application.Features.Exercises.Commands;
 
-public class UpdateExerciseRequestValidator : AbstractValidator<UpdateExerciseRequest>
+public class CreateExerciseRequestValidator : AbstractValidator<CreateExerciseRequest>
 {
-    public UpdateExerciseRequestValidator()
+    public CreateExerciseRequestValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(120);
         RuleFor(x => x.Description).MaximumLength(500);

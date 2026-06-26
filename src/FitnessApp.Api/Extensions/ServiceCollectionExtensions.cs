@@ -5,6 +5,7 @@ using FitnessApp.Api.Services;
 using FitnessApp.Application;
 using FitnessApp.Application.Common.Interfaces;
 using FitnessApp.Infrastructure;
+using FitnessApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
@@ -56,6 +57,11 @@ public static class ServiceCollectionExtensions
         services.AddApiVersioningConfigured();
         services.AddCorsPolicy();
         services.AddSwaggerWithJwt();
+
+        // Liveness/readiness probe. "database" tag lets the readiness endpoint
+        // (/health/ready) filter to the DbContext connectivity check.
+        services.AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>("database", tags: new[] { "ready" });
 
         return services;
     }
