@@ -1282,6 +1282,43 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
     /* Tablica namirnica u planu prehrane: sitniji font da stane. */
     .meal-items { font-size: 0.78rem; }
 
+    /* Klijentski pregled plana prehrane: 6-stupčana tablica namirnica se na
+       mobitelu prelijeva. Zato svaki red slažemo u karticu — naziv namirnice na
+       vrhu (istaknut), ispod "oznaka → vrijednost" redovi (Količina/kcal/P/UH/M).
+       Scope na #myNutritionDays da trenerski editor (nutrition.js) ostane tablica. */
+    #myNutritionDays .meal-items thead { display: none; }
+    #myNutritionDays .meal-items,
+    #myNutritionDays .meal-items tbody,
+    #myNutritionDays .meal-items tr,
+    #myNutritionDays .meal-items td { display: block; }
+    #myNutritionDays .meal-items tr {
+        border: 1px solid #2a3340;
+        border-radius: 8px;
+        padding: 0.4rem 0.6rem;
+        margin-top: 0.45rem;
+    }
+    #myNutritionDays .meal-items td {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.12rem 0;
+        font-size: 0.85rem;
+    }
+    #myNutritionDays .meal-items td::before {
+        content: attr(data-label);
+        color: #a0a8b0;
+    }
+    /* Namirnica bez upisane vrijednosti (prazna ćelija): ne prikazuj praznu liniju. */
+    #myNutritionDays .meal-items td:empty { display: none; }
+    /* Naziv namirnice: pun red, istaknut, bez oznake. */
+    #myNutritionDays .meal-items td:first-child {
+        font-weight: 600;
+        border-bottom: 1px solid rgba(42, 51, 64, 0.5);
+        padding-bottom: 0.3rem;
+        margin-bottom: 0.25rem;
+    }
+    #myNutritionDays .meal-items td:first-child::before { content: none; }
+
     /* Modali: poravnaj na vrh (da tipkovnica ne gura sadržaj), manje vanjske
        margine i unutarnjeg paddinga = više korisne širine. */
     .modal { padding: 0.6rem; align-items: flex-start; }

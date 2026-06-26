@@ -214,12 +214,12 @@ const MyNutrition = {
                         <tbody>
                             ${m.items.map(it => `
                                 <tr>
-                                    <td>${this.escape(it.description)}</td>
-                                    <td>${this.escape(it.quantity || '')}</td>
-                                    <td>${it.calories ?? ''}</td>
-                                    <td>${it.proteinG ?? ''}</td>
-                                    <td>${it.carbsG ?? ''}</td>
-                                    <td>${it.fatG ?? ''}</td>
+                                    <td data-label="${I18n.t('nutrition.col.food')}">${this.escape(it.description)}</td>
+                                    <td data-label="${I18n.t('nutrition.col.amount')}">${this.escape(it.quantity || '')}</td>
+                                    <td data-label="${I18n.t('nutrition.col.kcal')}">${it.calories ?? ''}</td>
+                                    <td data-label="${P}">${it.proteinG ?? ''}</td>
+                                    <td data-label="${C}">${it.carbsG ?? ''}</td>
+                                    <td data-label="${F}">${it.fatG ?? ''}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
