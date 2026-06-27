@@ -1332,5 +1332,20 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
     .modal-content h2 { padding-right: 1.75rem; }
     /* Akcijski redovi u modalu se lome umjesto stiskanja. */
     .modal-content .row { flex-wrap: wrap; }
+
+    /* Akcijski gumbi na detalju prehrane: uredna 2-stupčana mreža punih
+       širina umjesto zbijenog flex reda (isti princip kao tab-navigacija). */
+    #nutritionDetailActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    #nutritionDetailActions > button {
+        flex: none;
+        width: 100%;
+        margin: 0;
+        white-space: normal;
+        line-height: 1.2;
+    }
 }
 
