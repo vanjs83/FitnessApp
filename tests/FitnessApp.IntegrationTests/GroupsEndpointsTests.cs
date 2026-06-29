@@ -297,4 +297,93 @@ public class GroupsEndpointsTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    // ===== Group session attendance (POST/DELETE /appointments/{id}/attend) =====
+
+    /// <summary>Books a future group session for the given trainer/group and returns its id.</summary>
+    private async Task<int> BookGroupSessionAsync(HttpClient trainer, int groupId, int hour = 10)
+    {
+        var session = await trainer.PostAsJsonAsync("/api/v1/appointments",
+            new CreateAppointmentRequest { GroupId = groupId, StartsAt = Tomorrow(hour) });
+        session.StatusCode.Should().Be(HttpStatusCode.Created);
+        var dto = await session.Content.ReadFromJsonAsync<AppointmentDto>(JsonOptions);
+        return dto!.Id;
+    }
+
+    [Fact]
+    public async Task A_member_confirms_attendance_and_the_trainer_sees_the_count()
+    {
+        var (client, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "RSVP", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+        var sessionId = await BookGroupSessionAsync(trainer, group!.Id);
+
+        var attend = await client.PostAsync($"/api/v1/appointments/{sessionId}/attend", null);
+        attend.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        // Trainer sees one confirmed attendee out of one member.
+        var trainerFeed = await trainer.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
+        var asTrainer = trainerFeed!.Single(a => a.Id == sessionId);
+        asTrainer.ConfirmedCount.Should().Be(1);
+        asTrainer.MemberCount.Should().Be(1);
+
+        // The member sees their own confirmed state.
+        var clientFeed = await client.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
+        clientFeed!.Single(a => a.Id == sessionId).IsAttending.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Confirming_attendance_twice_is_idempotent()
+    {
+        var (client, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Twice", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+        var sessionId = await BookGroupSessionAsync(trainer, group!.Id);
+
+        (await client.PostAsync($"/api/v1/appointments/{sessionId}/attend", null)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await client.PostAsync($"/api/v1/appointments/{sessionId}/attend", null)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var feed = await trainer.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
+        feed!.Single(a => a.Id == sessionId).ConfirmedCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task A_member_withdraws_attendance_and_the_count_drops()
+    {
+        var (client, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Withdraw", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+        var sessionId = await BookGroupSessionAsync(trainer, group!.Id);
+
+        await client.PostAsync($"/api/v1/appointments/{sessionId}/attend", null);
+        var withdraw = await client.DeleteAsync($"/api/v1/appointments/{sessionId}/attend");
+        withdraw.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var feed = await trainer.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions);
+        feed!.Single(a => a.Id == sessionId).ConfirmedCount.Should().Be(0);
+        (await client.GetFromJsonAsync<List<AppointmentDto>>("/api/v1/appointments", JsonOptions))!
+            .Single(a => a.Id == sessionId).IsAttending.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task A_non_member_cannot_confirm_attendance_returns_403()
+    {
+        var (_, memberId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+        var (outsider, _, _) = await RegisterUserAsync("Client");
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Members only", ClientIds = new() { memberId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+        var sessionId = await BookGroupSessionAsync(trainer, group!.Id);
+
+        var response = await outsider.PostAsync($"/api/v1/appointments/{sessionId}/attend", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 }

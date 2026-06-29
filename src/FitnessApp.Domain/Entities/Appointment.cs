@@ -48,5 +48,8 @@ public class Appointment
     /// <summary>Set once the pre-session reminder push has been sent, so it fires only once.</summary>
     public DateTime? ReminderSentAt { get; set; }
 
+    /// <summary>Group members who confirmed attendance (group sessions only).</summary>
+    public ICollection<GroupAttendance> Attendances { get; set; } = new List<GroupAttendance>();
+
     public DateTime EndsAt => StartsAt.AddMinutes(DurationMinutes);
 }

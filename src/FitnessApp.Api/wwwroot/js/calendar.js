@@ -202,7 +202,7 @@ const Calendar = {
             return `<div class="card-inset cal-item cal-edge-${a.status}">
                 <div class="row" style="justify-content:space-between;align-items:center">
                     <div>
-                        <strong>${time}</strong> · ${a.isGroup ? '👥 ' : ''}${this.esc(a.counterpartName)}${a.isGroup ? ` (${a.memberCount})` : ''}
+                        <strong>${time}</strong> · ${a.isGroup ? '👥 ' : ''}${this.esc(a.counterpartName)}${a.isGroup ? ` (${a.confirmedCount}/${a.memberCount})` : ''}
                         <span class="cal-status cal-${a.status}">${I18n.t('calendar.status.' + a.status, a.status)}</span>
                     </div>
                     <span class="muted small">${typeLabel}${a.location ? ' · ' + this.esc(a.location) : ''}</span>
@@ -220,9 +220,14 @@ const Calendar = {
     actions(a) {
         const btn = (act, key, cls = 'secondary') =>
             `<button class="${cls}" data-act="${act}" data-id="${a.id}">${I18n.t('calendar.' + key)}</button>`;
-        // Group session: only the owning trainer can cancel it, straight from the calendar.
-        if (a.isGroup)
-            return (this.mode === 'trainer' && a.status === 'Scheduled') ? btn('cancel', 'cancel') : '';
+        // Group session: the owning trainer can cancel it; a member confirms/withdraws attendance.
+        if (a.isGroup) {
+            if (this.mode === 'trainer')
+                return a.status === 'Scheduled' ? btn('cancel', 'cancel') : '';
+            if (a.status === 'Scheduled' && a.isAttending === false) return btn('attend', 'attend', '');
+            if (a.status === 'Scheduled' && a.isAttending === true) return btn('unattend', 'unattend');
+            return '';
+        }
         // Clients can only cancel their own pending/booked sessions; the rest is trainer-driven.
         if (this.mode === 'client')
             return (a.status === 'Requested' || a.status === 'Scheduled') ? btn('cancel', 'cancel') : '';
@@ -232,8 +237,10 @@ const Calendar = {
     },
 
     async act(action, id) {
-        // Both individual and group sessions act through /appointments now.
-        await API.post(`/appointments/${id}/${action}`);
+        // Attendance toggle uses POST/DELETE on the same /attend resource; the rest are POST actions.
+        if (action === 'attend') await API.post(`/appointments/${id}/attend`);
+        else if (action === 'unattend') await API.delete(`/appointments/${id}/attend`);
+        else await API.post(`/appointments/${id}/${action}`);
         await this.loadMonth();
         this.renderGrid();
         this.renderDay();

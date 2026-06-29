@@ -38,6 +38,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<TrainingGroup> TrainingGroups => Set<TrainingGroup>();
     public DbSet<TrainingGroupMember> TrainingGroupMembers => Set<TrainingGroupMember>();
+    public DbSet<GroupAttendance> GroupAttendances => Set<GroupAttendance>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)

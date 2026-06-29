@@ -18,6 +18,12 @@ public class AppointmentDto
     public string? GroupName { get; set; }
     public int MemberCount { get; set; }
 
+    /// <summary>Group sessions: how many members confirmed they will attend.</summary>
+    public int ConfirmedCount { get; set; }
+
+    /// <summary>Group sessions: has the calling member confirmed? Null for the trainer / non-group sessions.</summary>
+    public bool? IsAttending { get; set; }
+
     public DateTime StartsAt { get; set; }
     public int DurationMinutes { get; set; }
     public DateTime EndsAt { get; set; }

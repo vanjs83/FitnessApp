@@ -89,6 +89,8 @@
   "calendar.complete": "Complete",
   "calendar.noShow": "No-show",
   "calendar.cancel": "Cancel",
+  "calendar.attend": "Confirm attendance",
+  "calendar.unattend": "Cancel attendance",
   "calendar.propose": "+ Propose session",
   "calendar.proposeTitle": "Propose a session",
   "calendar.send": "Send proposal",

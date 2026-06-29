@@ -69,4 +69,15 @@ public class AppointmentsController : ApiControllerBase
     public new async Task<ActionResult<AppointmentDto>> Request(RequestAppointmentRequest request)
         => HandleCreated(await _sender.Send(new RequestAppointmentCommand(
             request.StartsAt, request.DurationMinutes, request.Type, request.Location, request.Notes)));
+
+    // A group member confirms / withdraws attendance for a group session.
+    [HttpPost("{id:int}/attend")]
+    [Authorize(Roles = Roles.Client)]
+    public async Task<IActionResult> Attend(int id)
+        => HandleResult(await _sender.Send(new ConfirmGroupAttendanceCommand(id)));
+
+    [HttpDelete("{id:int}/attend")]
+    [Authorize(Roles = Roles.Client)]
+    public async Task<IActionResult> Unattend(int id)
+        => HandleResult(await _sender.Send(new CancelGroupAttendanceCommand(id)));
 }

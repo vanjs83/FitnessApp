@@ -35,6 +35,7 @@ public class GetMyAppointmentsQueryHandler
 
         var appointments = await _db.Appointments
             .Include(a => a.Group!).ThenInclude(g => g.Members)
+            .Include(a => a.Attendances)
             .Where(a => a.Status != AppointmentStatus.Cancelled && a.StartsAt >= from && a.StartsAt < to)
             // Caller is involved as trainer, as the individual client, or as a member of the group.
             .Where(a => a.TrainerId == userId || a.ClientId == userId
