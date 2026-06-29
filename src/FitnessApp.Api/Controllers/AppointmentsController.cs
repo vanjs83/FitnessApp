@@ -11,11 +11,9 @@ namespace FitnessApp.Api.Controllers;
 
 [Authorize]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class AppointmentsController : ApiControllerBase
+public class AppointmentsController(ISender sender) : ApiControllerBase
 {
-    private readonly ISender _sender;
-
-    public AppointmentsController(ISender sender) => _sender = sender;
+    private readonly ISender _sender = sender;
 
     // ===== Shared (trainer or client) =====
 
