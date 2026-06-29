@@ -33,7 +33,7 @@ jobs:
 
       # 6. Publish (BITNO - ovo stvara deploy folder)
       - name: Publish application
-        run: dotnet publish FitnessApp.sln -c Release -o publish
+        run: dotnet publish src/FitnessApp.Api/FitnessApp.Api.csproj -c Release -o publish
 
       # 7. Check publish folder (debug)
       - name: Verify publish output
