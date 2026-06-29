@@ -3,7 +3,9 @@ using System.Net.Http.Json;
 using FitnessApp.Application.DTOs.Appointments;
 using FitnessApp.Application.DTOs.Groups;
 using FitnessApp.Domain.Entities;
+using FitnessApp.Infrastructure.Persistence;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace FitnessApp.IntegrationTests;
@@ -385,5 +387,54 @@ public class GroupsEndpointsTests : IntegrationTestBase
         var response = await outsider.PostAsync($"/api/v1/appointments/{sessionId}/attend", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    /// <summary>
+    /// Inserts a group session that already started, straight through the DbContext —
+    /// the API rejects booking in the past, so attendance locking can't be exercised via HTTP.
+    /// </summary>
+    private async Task<int> SeedStartedGroupSessionAsync(string trainerId, int groupId)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var appt = new Appointment
+        {
+            TrainerId = trainerId,
+            GroupId = groupId,
+            StartsAt = DateTime.UtcNow.AddMinutes(-30),
+            DurationMinutes = 60,
+            Status = AppointmentStatus.Scheduled
+        };
+        db.Appointments.Add(appt);
+        await db.SaveChangesAsync();
+        return appt.Id;
+    }
+
+    [Fact]
+    public async Task A_member_cannot_confirm_attendance_once_the_session_has_started()
+    {
+        var (client, clientId, trainer, trainerId) = await CreateLinkedClientAndTrainerAsync();
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "In progress", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+        var sessionId = await SeedStartedGroupSessionAsync(trainerId, group!.Id);
+
+        var response = await client.PostAsync($"/api/v1/appointments/{sessionId}/attend", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_member_cannot_withdraw_attendance_once_the_session_has_started()
+    {
+        var (client, clientId, trainer, trainerId) = await CreateLinkedClientAndTrainerAsync();
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Locked", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+        var sessionId = await SeedStartedGroupSessionAsync(trainerId, group!.Id);
+
+        var response = await client.DeleteAsync($"/api/v1/appointments/{sessionId}/attend");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

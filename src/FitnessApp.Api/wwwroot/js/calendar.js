@@ -224,8 +224,10 @@ const Calendar = {
         if (a.isGroup) {
             if (this.mode === 'trainer')
                 return a.status === 'Scheduled' ? btn('cancel', 'cancel') : '';
-            if (a.status === 'Scheduled' && a.isAttending === false) return btn('attend', 'attend', '');
-            if (a.status === 'Scheduled' && a.isAttending === true) return btn('unattend', 'unattend');
+            // RSVP is open only for a scheduled session that hasn't started yet.
+            const open = a.status === 'Scheduled' && new Date(a.startsAt) > new Date();
+            if (open && a.isAttending === false) return btn('attend', 'attend', '');
+            if (open && a.isAttending === true) return btn('unattend', 'unattend');
             return '';
         }
         // Clients can only cancel their own pending/booked sessions; the rest is trainer-driven.

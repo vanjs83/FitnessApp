@@ -73,6 +73,9 @@ public class CancelGroupAttendanceCommandHandler : IRequestHandler<CancelGroupAt
 
         if (appointment is null) return Result.NotFound();
         if (!appointment.IsGroup) return Result.Fail(ResultError.Validation, "This is not a group session.");
+        // Once the session starts the attendee count is final — no withdrawing after the fact.
+        if (appointment.StartsAt <= DateTime.UtcNow)
+            return Result.Fail(ResultError.Validation, "This session has already started.");
 
         // Idempotent: withdrawing when not confirmed is a no-op.
         var attendance = appointment.Attendances.FirstOrDefault(at => at.ClientId == userId);
