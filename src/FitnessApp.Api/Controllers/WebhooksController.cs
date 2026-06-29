@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using FitnessApp.Application.Storage;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -26,6 +27,8 @@ public class WebhooksController : ApiControllerBase
     /// capture a real "Send test" event we map it to a Donation entity and persist it.
     /// </summary>
     [HttpPost("buymeacoffee")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> BuyMeACoffee()
     {
         string rawBody;
