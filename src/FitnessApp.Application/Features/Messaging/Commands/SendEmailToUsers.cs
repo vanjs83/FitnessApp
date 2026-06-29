@@ -5,7 +5,7 @@ using FitnessApp.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace FitnessApp.Application.Features.Admin.Commands;
+namespace FitnessApp.Application.Features.Messaging.Commands;
 
 public record SendEmailToUsersCommand(
     IReadOnlyList<string> UserIds,

@@ -1136,6 +1136,28 @@
         </div>
     </div>
 
+    <!-- Broadcast a message (email and/or push) to all members of a group -->
+    <div id="groupMessageModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeGroupMsgBtn" class="modal-close">×</button>
+            <h2 data-i18n="groups.msg.title">✉️ Pošalji poruku grupi</h2>
+            <p class="muted small" id="groupMsgTo"></p>
+            <label class="muted small" data-i18n="admin.mail.subject">Predmet</label>
+            <input type="text" id="groupMsgSubject" data-i18n-ph="groups.msg.subjectPh" placeholder="npr. Trening je pomaknut">
+            <label class="muted small" data-i18n="admin.mail.body">Poruka</label>
+            <textarea id="groupMsgBody" rows="8" data-i18n-ph="groups.msg.bodyPh" placeholder="Bok ekipo,&#10;&#10;..."></textarea>
+            <div class="row">
+                <label class="check"><input type="checkbox" id="groupMsgEmail" checked> <span data-i18n="groups.msg.email">Email</span></label>
+                <label class="check"><input type="checkbox" id="groupMsgPush" checked> <span data-i18n="groups.msg.push">Push obavijest</span></label>
+            </div>
+            <div class="row">
+                <button id="sendGroupMsgBtn" data-i18n="admin.mail.send">Pošalji</button>
+                <button id="cancelGroupMsgBtn" class="secondary" data-i18n="common.cancel">Otkaži</button>
+            </div>
+            <div class="error" id="groupMsgResult"></div>
+        </div>
+    </div>
+
     <!-- Edit plan modal (shared for training + nutrition) -->
     <div id="editPlanModal" class="modal hidden">
         <div class="modal-content">

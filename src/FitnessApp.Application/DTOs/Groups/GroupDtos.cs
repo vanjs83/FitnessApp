@@ -1,3 +1,5 @@
+using FitnessApp.Application.DTOs.Email;
+
 namespace FitnessApp.Application.DTOs.Groups;
 
 public class TrainingGroupDto
@@ -24,4 +26,20 @@ public class CreateGroupRequest
 public class AddGroupMemberRequest
 {
     public string ClientId { get; set; } = string.Empty;
+}
+
+/// <summary>Trainer broadcasts a message to all members of a group over the chosen channels.</summary>
+public class SendMessageToGroupRequest
+{
+    public string Subject { get; set; } = string.Empty; // email subject / push title
+    public string Body { get; set; } = string.Empty;
+    public bool Email { get; set; } = true;
+    public bool Push { get; set; } = true;
+}
+
+/// <summary>Per-channel delivery outcome; a channel is null when it wasn't requested.</summary>
+public class GroupMessageResultDto
+{
+    public MessageSendResultDto? Email { get; set; }
+    public MessageSendResultDto? Push { get; set; }
 }

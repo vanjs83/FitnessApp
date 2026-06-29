@@ -6,6 +6,7 @@ using FitnessApp.Application.DTOs.Email;
 using FitnessApp.Application.Features.Admin.Commands;
 using FitnessApp.Application.Features.Admin.Queries;
 using FitnessApp.Application.Features.Email.Queries;
+using FitnessApp.Application.Features.Messaging.Commands;
 using FitnessApp.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

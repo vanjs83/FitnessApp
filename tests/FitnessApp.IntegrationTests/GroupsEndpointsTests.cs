@@ -214,4 +214,87 @@ public class GroupsEndpointsTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    // ===== Messaging a group (POST /groups/{id}/message — email and/or push to all members) =====
+
+    [Fact]
+    public async Task A_trainer_messages_their_group_and_it_reaches_the_members()
+    {
+        var (_, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Broadcast", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+
+        var response = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/message",
+            new SendMessageToGroupRequest { Subject = "Session moved", Body = "We start at 8.", Email = true, Push = true });
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Push is a no-op without Firebase credentials but still reports each member as reached;
+        // the per-channel result confirms the member was resolved and targeted.
+        var result = await response.Content.ReadFromJsonAsync<GroupMessageResultDto>(JsonOptions);
+        result!.Push.Should().NotBeNull();
+        result.Push!.Sent.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task Messaging_a_group_with_no_channel_selected_returns_400()
+    {
+        var (_, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "No channel", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+
+        var response = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/message",
+            new SendMessageToGroupRequest { Subject = "Hi", Body = "There", Email = false, Push = false });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Messaging_an_empty_group_returns_400()
+    {
+        var trainer = await CreateAuthenticatedClientAsync("Trainer");
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Empty", ClientIds = new() });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+
+        var response = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/message",
+            new SendMessageToGroupRequest { Subject = "Anyone?", Body = "Hello", Push = true });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_trainer_cannot_message_another_trainers_group_returns_403()
+    {
+        var (_, clientId, trainerA, _) = await CreateLinkedClientAndTrainerAsync();
+        var trainerB = await CreateAuthenticatedClientAsync("Trainer");
+
+        var create = await trainerA.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "A's only", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+
+        var response = await trainerB.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/message",
+            new SendMessageToGroupRequest { Subject = "Sneaky", Body = "Hi", Push = true });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task A_client_cannot_message_a_group_returns_403()
+    {
+        var (client, clientId, trainer, _) = await CreateLinkedClientAndTrainerAsync();
+
+        var create = await trainer.PostAsJsonAsync("/api/v1/groups",
+            new CreateGroupRequest { Name = "Trainer only msg", ClientIds = new() { clientId } });
+        var group = await create.Content.ReadFromJsonAsync<TrainingGroupDto>(JsonOptions);
+
+        var response = await client.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/message",
+            new SendMessageToGroupRequest { Subject = "Nope", Body = "Hi", Push = true });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 }

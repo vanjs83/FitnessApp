@@ -6,7 +6,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FitnessApp.Application.Features.Admin.Commands;
+namespace FitnessApp.Application.Features.Messaging.Commands;
 
 public record SendPushToUsersCommand(
     IReadOnlyList<string> UserIds,

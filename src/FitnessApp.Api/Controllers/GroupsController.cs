@@ -38,4 +38,10 @@ public class GroupsController : ApiControllerBase
     [HttpDelete("{groupId:int}")]
     public async Task<IActionResult> Delete(int groupId)
         => HandleResult(await _sender.Send(new DeleteGroupCommand(groupId)));
+
+    // Broadcast an email and/or push to every member of the group.
+    [HttpPost("{groupId:int}/message")]
+    public async Task<ActionResult<GroupMessageResultDto>> SendMessage(int groupId, SendMessageToGroupRequest request)
+        => HandleResult(await _sender.Send(new SendMessageToGroupCommand(
+            groupId, request.Subject, request.Body, request.Email, request.Push)));
 }

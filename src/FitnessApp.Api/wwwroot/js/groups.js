@@ -29,7 +29,13 @@ const Groups = {
             if (action === 'delete') this.del(groupId);
             else if (action === 'remove-member') this.removeMember(groupId, btn.dataset.clientId);
             else if (action === 'add-member') this.addMember(groupId, btn.dataset.clientId);
+            else if (action === 'message') this.openMessage(groupId);
         });
+
+        // Group message modal.
+        document.getElementById('closeGroupMsgBtn').addEventListener('click', () => this.closeMessage());
+        document.getElementById('cancelGroupMsgBtn').addEventListener('click', () => this.closeMessage());
+        document.getElementById('sendGroupMsgBtn').addEventListener('click', () => this.sendMessage());
         // Live client search inside each card's "add member" box.
         list.addEventListener('input', e => {
             const search = e.target.closest('.group-add-search');
@@ -106,6 +112,52 @@ const Groups = {
         } catch (e) { alert((e && e.message) || I18n.t('common.error', 'Greška.')); }
     },
 
+    openMessage(groupId) {
+        const group = this.groups.find(g => g.id === groupId);
+        if (!group) return;
+        this.msgGroupId = groupId;
+        document.getElementById('groupMsgTo').textContent =
+            `${group.name} · ${group.memberCount} ${I18n.t('groups.msg.members', 'članova')}`;
+        document.getElementById('groupMsgSubject').value = '';
+        document.getElementById('groupMsgBody').value = '';
+        document.getElementById('groupMsgEmail').checked = true;
+        document.getElementById('groupMsgPush').checked = true;
+        document.getElementById('groupMsgResult').textContent = '';
+        document.getElementById('groupMessageModal').classList.remove('hidden');
+    },
+
+    closeMessage() {
+        document.getElementById('groupMessageModal').classList.add('hidden');
+        this.msgGroupId = null;
+    },
+
+    async sendMessage() {
+        const result = document.getElementById('groupMsgResult');
+        result.textContent = '';
+        const subject = document.getElementById('groupMsgSubject').value.trim();
+        const body = document.getElementById('groupMsgBody').value.trim();
+        const email = document.getElementById('groupMsgEmail').checked;
+        const push = document.getElementById('groupMsgPush').checked;
+
+        if (!subject || !body) { result.textContent = I18n.t('groups.msg.required', 'Unesi predmet i poruku.'); return; }
+        if (!email && !push) { result.textContent = I18n.t('groups.msg.channelRequired', 'Odaberi barem jedan kanal.'); return; }
+
+        const btn = document.getElementById('sendGroupMsgBtn');
+        btn.disabled = true;
+        try {
+            const res = await API.post(`/groups/${this.msgGroupId}/message`, { subject, body, email, push });
+            const parts = [];
+            if (res.email) parts.push(`Email: ${res.email.sent.length} ✓, ${res.email.failed.length} ✗`);
+            if (res.push) parts.push(`Push: ${res.push.sent.length} ✓, ${res.push.failed.length} ✗`);
+            alert(`${I18n.t('groups.msg.sent', 'Poslano.')} ${parts.join(' · ')}`);
+            this.closeMessage();
+        } catch (e) {
+            result.textContent = (e && e.message) || I18n.t('common.error', 'Greška.');
+        } finally {
+            btn.disabled = false;
+        }
+    },
+
     // Filtered list of the trainer's clients not yet in the group, matching the search text.
     renderAddResults(card, query) {
         const groupId = Number(card.dataset.groupId);
@@ -142,7 +194,10 @@ const Groups = {
             return `<div class="card group-card" data-group-id="${g.id}">
                 <div class="group-head">
                     <strong>${this.esc(g.name)} <span class="muted small">(${g.memberCount})</span></strong>
-                    <button class="secondary danger" data-action="delete" data-i18n="common.delete">Obriši</button>
+                    <span class="row">
+                        <button class="secondary" data-action="message" data-i18n="groups.msg.btn">✉️ Poruka</button>
+                        <button class="secondary danger" data-action="delete" data-i18n="common.delete">Obriši</button>
+                    </span>
                 </div>
                 <div class="group-chips">${chips}</div>
                 <div class="group-add">

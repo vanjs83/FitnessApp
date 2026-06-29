@@ -18,8 +18,9 @@ public class ModuleDependencyTests : ArchitectureTestBase
     private static readonly Dictionary<string, string[]> Allowed = new()
     {
         ["Trainers"] = new[] { "Workouts", "Progress" },
-        ["Groups"] = new[] { "Trainers" },
+        ["Groups"] = new[] { "Trainers", "Messaging" },
         ["Appointments"] = new[] { "Trainers", "Groups" },
+        ["Admin"] = new[] { "Messaging" },
     };
 
     [Fact]
