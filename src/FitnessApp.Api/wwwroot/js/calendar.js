@@ -104,16 +104,21 @@ const Calendar = {
 
     async loadClients() {
         this.clients = [];
-        let page = 1;
-        // Clients are paged at 25; pull every page so the dropdown is complete.
-        for (;;) {
-            const res = await API.get(`/trainers/me/clients?page=${page}`);
-            const items = res.items || [];
-            this.clients.push(...items);
-            if (items.length < 25) break;
-            page++;
+        try {
+            let page = 1;
+            // Clients are paged at 25; pull every page so the dropdown is complete.
+            for (;;) {
+                const res = await API.get(`/trainers/me/clients?page=${page}`);
+                const items = res.items || [];
+                this.clients.push(...items);
+                if (items.length < 25) break;
+                page++;
+            }
+        } catch {
+            // A failed clients fetch must not break the whole calendar — just leave the picker empty.
         }
         const sel = this.el('client');
+        if (!sel) return;
         sel.innerHTML = `<option value="">${I18n.t('calendar.selectClient', 'Odaberi klijenta')}</option>` +
             this.clients.map(c => `<option value="${c.id}">${this.esc(c.fullName || c.email)}</option>`).join('');
     },
@@ -226,32 +231,41 @@ const Calendar = {
     actions(a) {
         const btn = (act, key, cls = 'secondary') =>
             `<button class="${cls}" data-act="${act}" data-id="${a.id}">${I18n.t('calendar.' + key)}</button>`;
-        // Group session: the owning trainer can cancel it; a member confirms/withdraws attendance.
+        const upcoming = new Date(a.startsAt) > new Date();   // hasn't started yet
+        // Group session: the owning trainer can cancel an upcoming one; a member confirms/withdraws.
         if (a.isGroup) {
             if (this.mode === 'trainer')
-                return a.status === 'Scheduled' ? btn('cancel', 'cancel') : '';
+                return (a.status === 'Scheduled' && upcoming) ? btn('cancel', 'cancel') : '';
             // RSVP is open only for a scheduled session that hasn't started yet.
-            const open = a.status === 'Scheduled' && new Date(a.startsAt) > new Date();
+            const open = a.status === 'Scheduled' && upcoming;
             if (open && a.isAttending === false) return btn('attend', 'attend', '');
             if (open && a.isAttending === true) return btn('unattend', 'unattend');
             return '';
         }
-        // Clients can only cancel their own pending/booked sessions; the rest is trainer-driven.
+        // Clients can only cancel their own pending/upcoming sessions; the rest is trainer-driven.
         if (this.mode === 'client')
-            return (a.status === 'Requested' || a.status === 'Scheduled') ? btn('cancel', 'cancel') : '';
+            return ((a.status === 'Requested' || a.status === 'Scheduled') && upcoming) ? btn('cancel', 'cancel') : '';
         if (a.status === 'Requested') return btn('confirm', 'confirm', '') + btn('cancel', 'cancel');
-        if (a.status === 'Scheduled') return btn('complete', 'complete', '') + btn('no-show', 'noShow') + btn('cancel', 'cancel');
+        // A past scheduled session can still be closed (complete/no-show) but no longer cancelled.
+        if (a.status === 'Scheduled')
+            return btn('complete', 'complete', '') + btn('no-show', 'noShow') + (upcoming ? btn('cancel', 'cancel') : '');
         return '';
     },
 
     async act(action, id) {
-        // Attendance toggle uses POST/DELETE on the same /attend resource; the rest are POST actions.
-        if (action === 'attend') await API.post(`/appointments/${id}/attend`);
-        else if (action === 'unattend') await API.delete(`/appointments/${id}/attend`);
-        else await API.post(`/appointments/${id}/${action}`);
-        await this.loadMonth();
-        this.renderGrid();
-        this.renderDay();
+        // Cancelling deletes the session on the server — make it a deliberate choice.
+        if (action === 'cancel' && !confirm(I18n.t('calendar.cancelConfirm', 'Otkazati termin?'))) return;
+        try {
+            // Attendance toggle uses POST/DELETE on the same /attend resource; the rest are POST actions.
+            if (action === 'attend') await API.post(`/appointments/${id}/attend`);
+            else if (action === 'unattend') await API.delete(`/appointments/${id}/attend`);
+            else await API.post(`/appointments/${id}/${action}`);
+            await this.loadMonth();
+            this.renderGrid();
+            this.renderDay();
+        } catch (e) {
+            alert((e && e.message) || I18n.t('common.error', 'Greška.'));
+        }
     },
 
     toggleForm(show) {
@@ -289,6 +303,8 @@ const Calendar = {
             location: this.el('location').value || null,
             notes: this.el('notes').value || null
         };
+        const saveBtn = this.el('saveBtn');
+        saveBtn.disabled = true;   // guard against a double-click double-booking
         try {
             // All bookings go through /appointments: group (GroupId), trainer individual (ClientId),
             // or client proposal (/request).
@@ -302,6 +318,8 @@ const Calendar = {
             this.renderDay();
         } catch (e) {
             err.textContent = (e && e.message) || I18n.t('common.error', 'Greška.');
+        } finally {
+            saveBtn.disabled = false;
         }
     },
 

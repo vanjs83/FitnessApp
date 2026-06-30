@@ -3,6 +3,7 @@ using FitnessApp.Application.Interfaces;
 using FitnessApp.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FitnessApp.Application.Features.Appointments.Commands;
 
@@ -23,12 +24,16 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
     private readonly IAppDbContext _db;
     private readonly IPushNotificationService _push;
     private readonly IUserDirectory _users;
+    private readonly ILogger<SendDueAppointmentRemindersCommandHandler> _logger;
 
-    public SendDueAppointmentRemindersCommandHandler(IAppDbContext db, IPushNotificationService push, IUserDirectory users)
+    public SendDueAppointmentRemindersCommandHandler(
+        IAppDbContext db, IPushNotificationService push, IUserDirectory users,
+        ILogger<SendDueAppointmentRemindersCommandHandler> logger)
     {
         _db = db;
         _push = push;
         _users = users;
+        _logger = logger;
     }
 
     public async Task<int> Handle(SendDueAppointmentRemindersCommand request, CancellationToken cancellationToken)
@@ -71,7 +76,7 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
     }
 
     // UtcNow converted to the app's wall-clock timezone (StartsAt is stored as naive local time).
-    private static DateTime LocalNow(string? timeZoneId)
+    private DateTime LocalNow(string? timeZoneId)
     {
         if (string.IsNullOrWhiteSpace(timeZoneId)) return DateTime.UtcNow;
         try
@@ -79,8 +84,13 @@ public class SendDueAppointmentRemindersCommandHandler : IRequestHandler<SendDue
             var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
             return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
         }
-        catch
+        catch (Exception ex)
         {
+            // A bad Reminders:TimeZoneId must not silently revert to UTC — that would shift every
+            // reminder by the local offset with no trace. Surface it loudly and fall back.
+            _logger.LogWarning(ex,
+                "Reminders:TimeZoneId '{TimeZoneId}' could not be resolved; falling back to UTC. " +
+                "Reminders may fire at the wrong time until this is fixed.", timeZoneId);
             return DateTime.UtcNow;
         }
     }

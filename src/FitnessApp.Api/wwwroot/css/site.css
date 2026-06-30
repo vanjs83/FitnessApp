@@ -231,15 +231,18 @@ button.danger:hover:not(:disabled) { background: #c92a2a; }
     margin-bottom: 1.5rem;
     border-bottom: 1px solid #2a3340;
 }
-.nav-btn {
+.nav-btn,
+.trainer-nav-btn {
     background: none;
     color: #a0a8b0;
     padding: 0.65rem 1rem;
     border-bottom: 2px solid transparent;
     border-radius: 0;
 }
-.nav-btn:hover { background: none; color: #e6e8eb; }
-.nav-btn.active { color: #4dabf7; border-bottom-color: #4dabf7; }
+.nav-btn:hover,
+.trainer-nav-btn:hover { background: none; color: #e6e8eb; }
+.nav-btn.active,
+.trainer-nav-btn.active { color: #4dabf7; border-bottom-color: #4dabf7; }
 
 .view-header {
     display: flex;

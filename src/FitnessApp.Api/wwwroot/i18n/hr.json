@@ -91,6 +91,7 @@
   "calendar.cancel": "Otkaži",
   "calendar.attend": "Potvrdi dolazak",
   "calendar.unattend": "Otkaži dolazak",
+  "calendar.cancelConfirm": "Otkazati termin?",
   "calendar.propose": "+ Predloži termin",
   "calendar.proposeTitle": "Prijedlog termina",
   "calendar.send": "Pošalji prijedlog",
