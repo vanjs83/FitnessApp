@@ -159,7 +159,7 @@ const Calendar = {
             if (key === this.selected) cls.push('selected');
             // Preview the day's sessions as status-colored dots (up to 3, then "+N").
             const dots = appts.slice(0, 3).map(a =>
-                `<span class="cal-dot cal-${a.status}" title="${a.startsAt.slice(11, 16)} · ${this.esc(a.counterpartName)}"></span>`).join('');
+                `<span class="cal-dot cal-${this.effStatus(a)}" title="${a.startsAt.slice(11, 16)} · ${this.esc(a.counterpartName)}"></span>`).join('');
             const more = n > 3 ? `<span class="cal-more">+${n - 3}</span>` : '';
             html += `<div class="${cls.join(' ')}" data-day="${key}">
                 <span class="cal-num">${d}</span>
@@ -198,12 +198,13 @@ const Calendar = {
 
         list.innerHTML = dayAppts.map(a => {
             const time = a.startsAt.slice(11, 16);
+            const st = this.effStatus(a);
             const typeLabel = I18n.t('calendar.' + (a.type === 'Online' ? 'online' : 'inPerson'));
-            return `<div class="card-inset cal-item cal-edge-${a.status}">
+            return `<div class="card-inset cal-item cal-edge-${st}">
                 <div class="row" style="justify-content:space-between;align-items:center">
                     <div>
                         <strong>${time}</strong> · ${a.isGroup ? '👥 ' : ''}${this.esc(a.counterpartName)}${a.isGroup ? ` (${a.confirmedCount}/${a.memberCount})` : ''}
-                        <span class="cal-status cal-${a.status}">${I18n.t('calendar.status.' + a.status, a.status)}</span>
+                        <span class="cal-status cal-${st}">${I18n.t('calendar.status.' + st, st)}</span>
                     </div>
                     <span class="muted small">${typeLabel}${a.location ? ' · ' + this.esc(a.location) : ''}</span>
                 </div>
@@ -215,6 +216,11 @@ const Calendar = {
         list.querySelectorAll('button[data-act]').forEach(btn => {
             btn.addEventListener('click', () => this.act(btn.dataset.act, Number(btn.dataset.id)));
         });
+    },
+
+    // A scheduled session whose end time has passed reads as finished ("Završeno").
+    effStatus(a) {
+        return (a.status === 'Scheduled' && new Date(a.endsAt) < new Date()) ? 'Completed' : a.status;
     },
 
     actions(a) {

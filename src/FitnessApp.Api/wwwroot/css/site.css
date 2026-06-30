@@ -132,6 +132,12 @@ main {
     margin: 2rem auto;
 }
 .auth-form h2 { margin-bottom: 0.5rem; }
+/* CTA submit buttons match the inputs and the Google button: full width, same height. */
+.auth-form button[type="submit"] {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.95rem;
+}
 
 .auth-or {
     display: flex;

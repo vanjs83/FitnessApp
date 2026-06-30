@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Threading.Channels;
 using FitnessApp.Application.Common;
 using FitnessApp.Application.DTOs.Admin;
 using FitnessApp.Application.DTOs.Email;
@@ -10,7 +9,6 @@ using FitnessApp.Application.Features.Messaging.Commands;
 using FitnessApp.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FitnessApp.Api.Controllers;

@@ -25,7 +25,8 @@ public class ConfirmGroupAttendanceCommandHandler : IRequestHandler<ConfirmGroup
         var userId = _currentUser.UserId;
 
         var appointment = await _db.Appointments
-            .Include(a => a.Group!).ThenInclude(g => g.Members)
+            .Include(a => a.Group!)
+            .ThenInclude(g => g.Members)
             .Include(a => a.Attendances)
             .FirstOrDefaultAsync(a => a.Id == request.AppointmentId, cancellationToken);
 
