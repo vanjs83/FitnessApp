@@ -230,13 +230,20 @@ public class GroupsEndpointsTests : IntegrationTestBase
 
         var response = await trainer.PostAsJsonAsync($"/api/v1/groups/{group!.Id}/message",
             new SendMessageToGroupRequest { Subject = "Session moved", Body = "We start at 8.", Email = true, Push = true });
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Push is a no-op without Firebase credentials but still reports each member as reached;
-        // the per-channel result confirms the member was resolved and targeted.
-        var result = await response.Content.ReadFromJsonAsync<GroupMessageResultDto>(JsonOptions);
-        result!.Push.Should().NotBeNull();
-        result.Push!.Sent.Should().HaveCount(1);
+        // The send is queued into the outbox and accepted (204); with the inline scheduler the due-scan
+        // runs during the request, so the rows are already dispatched by the time we inspect them.
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var messages = db.ScheduledMessages.Where(m => m.GroupId == group.Id).ToList();
+
+        // One row per selected channel, both targeting the group.
+        messages.Should().HaveCount(2);
+        messages.Should().OnlyContain(m => m.Audience == ScheduledMessageAudience.Group);
+        // The email channel delivers via the no-op FakeEmailService, so it lands as Sent.
+        messages.Should().Contain(m => m.Channel == ScheduledMessageChannel.Email && m.Status == ScheduledMessageStatus.Sent);
     }
 
     [Fact]

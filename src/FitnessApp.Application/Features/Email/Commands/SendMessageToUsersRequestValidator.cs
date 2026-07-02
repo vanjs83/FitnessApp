@@ -13,5 +13,9 @@ public class SendMessageToUsersRequestValidator : AbstractValidator<SendMessageT
         RuleForEach(x => x.UserIds).NotEmpty();
         RuleFor(x => x.Subject).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Body).NotEmpty().MaximumLength(10000);
+        RuleFor(x => x.SendAtUtc)
+            .GreaterThan(DateTime.UtcNow)
+            .When(x => x.SendAtUtc.HasValue)
+            .WithMessage("The send time must be in the future.");
     }
 }

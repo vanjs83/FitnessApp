@@ -503,6 +503,8 @@
                     <input type="text" id="adminEmailSubject" placeholder="npr. Odaberi trenera">
                     <label class="muted small">Poruka</label>
                     <textarea id="adminEmailBody" rows="6" placeholder="Pozdrav,&#10;&#10;..."></textarea>
+                    <label class="muted small" for="adminEmailSendAt">Zakaži za kasnije (ostavi prazno za slanje odmah)</label>
+                    <input type="datetime-local" id="adminEmailSendAt">
                     <div class="row">
                         <button id="adminEmailSendBtn">Pošalji email</button>
                         <button id="adminEmailResetBtn" class="secondary" type="button">Očisti</button>
@@ -517,6 +519,8 @@
                     <input type="text" id="adminPushTitle" placeholder="npr. Nemaš trenera">
                     <label class="muted small">Poruka</label>
                     <textarea id="adminPushBody" rows="4" placeholder="Odaberi trenera u aplikaciji."></textarea>
+                    <label class="muted small" for="adminPushSendAt">Zakaži za kasnije (ostavi prazno za slanje odmah)</label>
+                    <input type="datetime-local" id="adminPushSendAt">
                     <div class="row">
                         <button id="adminPushSendBtn">Pošalji push</button>
                         <button id="adminPushResetBtn" class="secondary" type="button">Očisti</button>

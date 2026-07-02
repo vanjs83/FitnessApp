@@ -128,17 +128,17 @@ public class AdminController : ApiControllerBase
     public async Task<ActionResult<EmailSendResultDto>> SendToTrainers(SendEmailToTrainersRequest request)
         => HandleResult(await _sender.Send(new SendEmailToTrainersCommand(request.TrainerIds, request.Subject, request.Body, request.Language)));
 
-    /// <summary>Email any set of users.</summary>
+    /// <summary>Queue an email to a set of users (delivered now, or at SendAtUtc if given).</summary>
     [HttpPost("email/send-to-users")]
-    [ProducesResponseType<MessageSendResultDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<MessageSendResultDto>> SendEmailToUsers(SendMessageToUsersRequest request)
-        => HandleResult(await _sender.Send(new SendEmailToUsersCommand(request.UserIds, request.Subject, request.Body)));
+    public async Task<IActionResult> SendEmailToUsers(SendMessageToUsersRequest request)
+        => HandleResult(await _sender.Send(new SendEmailToUsersCommand(request.UserIds, request.Subject, request.Body, request.SendAtUtc)));
 
-    /// <summary>Push-notify any set of users.</summary>
+    /// <summary>Queue a push notification to a set of users (delivered now, or at SendAtUtc if given).</summary>
     [HttpPost("push/send")]
-    [ProducesResponseType<MessageSendResultDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<MessageSendResultDto>> SendPushToUsers(SendMessageToUsersRequest request)
-        => HandleResult(await _sender.Send(new SendPushToUsersCommand(request.UserIds, request.Subject, request.Body)));
+    public async Task<IActionResult> SendPushToUsers(SendMessageToUsersRequest request)
+        => HandleResult(await _sender.Send(new SendPushToUsersCommand(request.UserIds, request.Subject, request.Body, request.SendAtUtc)));
 }

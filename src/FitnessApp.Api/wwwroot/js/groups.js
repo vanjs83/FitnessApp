@@ -176,11 +176,8 @@ const Groups = {
                 return;
             }
 
-            const res = await API.post(`/groups/${this.msgGroupId}/message`, { subject, body, email, push });
-            const parts = [];
-            if (res.email) parts.push(`Email: ${res.email.sent.length} ✓, ${res.email.failed.length} ✗`);
-            if (res.push) parts.push(`Push: ${res.push.sent.length} ✓, ${res.push.failed.length} ✗`);
-            alert(`${I18n.t('groups.msg.sent', 'Poslano.')} ${parts.join(' · ')}`);
+            await API.post(`/groups/${this.msgGroupId}/message`, { subject, body, email, push });
+            alert(I18n.t('groups.msg.sent', 'Poruka je u redu za slanje.'));
             this.closeMessage();
         } catch (e) {
             result.textContent = (e && e.message) || I18n.t('common.error', 'Greška.');

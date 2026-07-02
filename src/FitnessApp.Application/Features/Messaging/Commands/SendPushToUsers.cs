@@ -1,66 +1,39 @@
 using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
-using FitnessApp.Application.DTOs.Email;
 using FitnessApp.Application.Interfaces;
+using FitnessApp.Domain.Entities;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace FitnessApp.Application.Features.Messaging.Commands;
 
 public record SendPushToUsersCommand(
     IReadOnlyList<string> UserIds,
     string Subject,
-    string Body) : IRequest<Result<MessageSendResultDto>>;
+    string Body,
+    DateTime? SendAtUtc) : IRequest<Result>;
 
-public class SendPushToUsersCommandHandler : IRequestHandler<SendPushToUsersCommand, Result<MessageSendResultDto>>
+public class SendPushToUsersCommandHandler : IRequestHandler<SendPushToUsersCommand, Result>
 {
-    private readonly IIdentityAdminService _identity;
     private readonly IAppDbContext _db;
-    private readonly IPushNotificationService _push;
-    private readonly ILogger<SendPushToUsersCommandHandler> _logger;
+    private readonly ICurrentUserService _currentUser;
+    private readonly IMessageScheduler _scheduler;
 
     public SendPushToUsersCommandHandler(
-        IIdentityAdminService identity,
         IAppDbContext db,
-        IPushNotificationService push,
-        ILogger<SendPushToUsersCommandHandler> logger)
+        ICurrentUserService currentUser,
+        IMessageScheduler scheduler)
     {
-        _identity = identity;
         _db = db;
-        _push = push;
-        _logger = logger;
+        _currentUser = currentUser;
+        _scheduler = scheduler;
     }
 
-    public async Task<Result<MessageSendResultDto>> Handle(SendPushToUsersCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(SendPushToUsersCommand request, CancellationToken cancellationToken)
     {
-        var result = new MessageSendResultDto();
+        await UserMessageEnqueuer.EnqueueAsync(
+            _db, _scheduler, _currentUser.UserId, ScheduledMessageChannel.Push,
+            request.UserIds, request.Subject, request.Body, request.SendAtUtc, cancellationToken);
 
-        foreach (var userId in request.UserIds.Distinct())
-        {
-            var user = await _identity.FindByIdAsync(userId, cancellationToken);
-            if (user == null)
-            {
-                result.Failed.Add(new MessageFailureDto { UserId = userId, Error = "Korisnik nije pronađen." });
-                _logger.LogWarning("User {UserId} not found, skipping push notification.", userId);
-                continue;
-            }
-
-            var recipient = user.FullName ?? user.Email ?? userId;
-            var hasDevice = await _db.Devices.AnyAsync(d => d.UserId == userId && d.IsActive, cancellationToken);
-
-            try
-            {
-                await _push.SendToUserAsync(userId, request.Subject, request.Body, ct: cancellationToken);
-                result.Sent.Add(recipient);
-            }
-            catch (Exception ex)
-            {
-                result.Failed.Add(new MessageFailureDto { UserId = userId, Recipient = recipient, Error = ex.Message });
-                _logger.LogError(ex, "Failed to send push notification to user {UserId} ({Recipient}). Has device: {HasDevice}", userId, recipient, hasDevice);
-            }
-        }
-
-        return Result<MessageSendResultDto>.Success(result);
+        return Result.Success();
     }
 }

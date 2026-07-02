@@ -1,59 +1,71 @@
 using FitnessApp.Application.Common;
 using FitnessApp.Application.Common.Interfaces;
-using FitnessApp.Application.DTOs.Groups;
-using FitnessApp.Application.Features.Messaging.Commands;
+using FitnessApp.Application.Interfaces;
+using FitnessApp.Domain.Entities;
 using MediatR;
 
 namespace FitnessApp.Application.Features.Groups.Commands;
 
 /// <summary>
-/// Broadcasts a message to every member of one of the trainer's groups, over the chosen
-/// channels. Resolves the group to its member ids and reuses the existing per-user
-/// email/push commands so the delivery logic lives in one place.
+/// Broadcasts a message to every member of one of the trainer's groups over the chosen channels.
+/// Queues one <see cref="ScheduledMessage"/> per channel (Audience=Group, delivered now) into the
+/// outbox; the recurring DueScheduledMessagesJob resolves members and delivers, so this returns
+/// without waiting on SMTP/Firebase. A due-scan is kicked immediately so "now" isn't held for the
+/// next cron tick.
 /// </summary>
 public record SendMessageToGroupCommand(
     int GroupId,
     string Subject,
     string Body,
     bool Email,
-    bool Push) : IRequest<Result<GroupMessageResultDto>>;
+    bool Push) : IRequest<Result>;
 
-public class SendMessageToGroupCommandHandler : IRequestHandler<SendMessageToGroupCommand, Result<GroupMessageResultDto>>
+public class SendMessageToGroupCommandHandler : IRequestHandler<SendMessageToGroupCommand, Result>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
-    private readonly ISender _sender;
+    private readonly IMessageScheduler _scheduler;
 
-    public SendMessageToGroupCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ISender sender)
+    public SendMessageToGroupCommandHandler(IAppDbContext db, ICurrentUserService currentUser, IMessageScheduler scheduler)
     {
         _db = db;
         _currentUser = currentUser;
-        _sender = sender;
+        _scheduler = scheduler;
     }
 
-    public async Task<Result<GroupMessageResultDto>> Handle(SendMessageToGroupCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(SendMessageToGroupCommand request, CancellationToken cancellationToken)
     {
+        if (!request.Email && !request.Push)
+            return Result.Fail(ResultError.Validation, "Select at least one channel.");
+
         var (group, error) = await GroupGuard.LoadOwnedAsync(_db, request.GroupId, _currentUser.UserId, cancellationToken);
-        if (error is not null) return Result<GroupMessageResultDto>.Fail(error.Value);
+        if (error is not null) return Result.Fail(error.Value);
 
-        var memberIds = group!.Members.Select(m => m.ClientId).Distinct().ToList();
-        if (memberIds.Count == 0)
-            return Result<GroupMessageResultDto>.Fail(ResultError.Validation, "The group has no members.");
+        if (group!.Members.Count == 0)
+            return Result.Fail(ResultError.Validation, "The group has no members.");
 
-        var result = new GroupMessageResultDto();
+        var now = DateTime.UtcNow;
+        if (request.Email) QueueChannel(ScheduledMessageChannel.Email, request, now);
+        if (request.Push) QueueChannel(ScheduledMessageChannel.Push, request, now);
 
-        if (request.Email)
-        {
-            var email = await _sender.Send(new SendEmailToUsersCommand(memberIds, request.Subject, request.Body), cancellationToken);
-            result.Email = email.Value;
-        }
+        await _db.SaveChangesAsync(cancellationToken);
 
-        if (request.Push)
-        {
-            var push = await _sender.Send(new SendPushToUsersCommand(memberIds, request.Subject, request.Body), cancellationToken);
-            result.Push = push.Value;
-        }
+        _scheduler.DispatchDueMessagesNow();
 
-        return Result<GroupMessageResultDto>.Success(result);
+        return Result.Success();
     }
+
+    private void QueueChannel(ScheduledMessageChannel channel, SendMessageToGroupCommand request, DateTime now) =>
+        _db.ScheduledMessages.Add(new ScheduledMessage
+        {
+            SenderId = _currentUser.UserId,
+            Channel = channel,
+            Audience = ScheduledMessageAudience.Group,
+            GroupId = request.GroupId,
+            Subject = request.Subject,
+            Body = request.Body,
+            SendAtUtc = now,
+            Status = ScheduledMessageStatus.Pending,
+            CreatedAtUtc = now
+        });
 }

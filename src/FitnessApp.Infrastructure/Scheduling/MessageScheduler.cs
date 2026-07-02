@@ -1,5 +1,7 @@
 using Coravel.Queuing.Interfaces;
+using FitnessApp.Application.Features.ScheduledMessages.Commands;
 using FitnessApp.Application.Interfaces;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -39,4 +41,7 @@ public sealed class MessageScheduler : IMessageScheduler
                 _logger.LogError(ex, "Queued job for {Service} failed.", typeof(TService).Name);
             }
         });
+
+    public void DispatchDueMessagesNow()
+        => Schedule<ISender>(sender => sender.Send(new SendDueScheduledMessagesCommand()));
 }

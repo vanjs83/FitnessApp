@@ -49,6 +49,9 @@ public class SendMessageToUsersRequest
     public string Subject { get; set; } = string.Empty; // email subject / push title
     public string Body { get; set; } = string.Empty;
     public string? Language { get; set; }
+
+    /// <summary>When to deliver. Null (or omitted) sends right away; a future value schedules it.</summary>
+    public DateTime? SendAtUtc { get; set; }
 }
 
 public class MessageSendResultDto

@@ -61,11 +61,11 @@ public class GroupsController : ApiControllerBase
 
     /// <summary>Broadcast an email and/or push to every member of the group.</summary>
     [HttpPost("{groupId:int}/message")]
-    [ProducesResponseType<GroupMessageResultDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<GroupMessageResultDto>> SendMessage(int groupId, SendMessageToGroupRequest request)
+    public async Task<IActionResult> SendMessage(int groupId, SendMessageToGroupRequest request)
         => HandleResult(await _sender.Send(new SendMessageToGroupCommand(
             groupId, request.Subject, request.Body, request.Email, request.Push)));
 }

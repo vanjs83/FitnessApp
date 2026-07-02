@@ -1,4 +1,6 @@
+using FitnessApp.Application.Features.ScheduledMessages.Commands;
 using FitnessApp.Application.Interfaces;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FitnessApp.IntegrationTests;
@@ -24,4 +26,7 @@ public sealed class InlineMessageScheduler : IMessageScheduler
         try { work(service).GetAwaiter().GetResult(); }
         catch { /* best-effort, mirror production */ }
     }
+
+    public void DispatchDueMessagesNow()
+        => Schedule<ISender>(sender => sender.Send(new SendDueScheduledMessagesCommand()));
 }

@@ -359,8 +359,10 @@ const Admin = {
         this.renderRecipients();
     },
 
-    // Shared sender for both email and push panels.
-    async _sendMessage({ url, subjectId, bodyId, btnId, msgId, subjectLabel }) {
+    // Shared sender for both email and push panels. Every send is queued into the ScheduledMessage
+    // outbox on the server; an empty date sends now, a future date schedules it. The request just
+    // returns "accepted" (204) — per-recipient outcome lives in the scheduled-messages list.
+    async _sendMessage({ url, subjectId, bodyId, sendAtId, btnId, msgId, subjectLabel }) {
         const msgEl = document.getElementById(msgId);
         msgEl.style.color = '';
         msgEl.style.whiteSpace = 'pre-wrap';
@@ -369,26 +371,28 @@ const Admin = {
         const userIds = Array.from(this.msgSelectedIds);
         const subject = document.getElementById(subjectId).value.trim();
         const body = document.getElementById(bodyId).value.trim();
+        const localDt = document.getElementById(sendAtId).value;
 
         if (userIds.length === 0) { msgEl.textContent = 'Odaberi barem jednog primatelja.'; return; }
         if (!subject) { msgEl.textContent = `Unesi ${subjectLabel}.`; return; }
         if (!body) { msgEl.textContent = 'Unesi poruku.'; return; }
 
+        let sendAtUtc = null;
+        if (localDt) {
+            const when = new Date(localDt);
+            if (when.getTime() <= Date.now()) { msgEl.textContent = 'Vrijeme slanja mora biti u budućnosti.'; return; }
+            sendAtUtc = when.toISOString();
+        }
+
         const btn = document.getElementById(btnId);
         btn.disabled = true;
         try {
             const lang = (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'hr';
-            const result = await API.post(url, { userIds, subject, body, language: lang });
-            const sent = (result.sent || []).length;
-            const failed = result.failed || [];
-            if (failed.length === 0) {
-                msgEl.style.color = '#52c452';
-                msgEl.textContent = `Poslano: ${sent}.`;
-            } else {
-                msgEl.style.color = '#d9534f';
-                const lines = failed.map(f => `${f.recipient || f.userId}: ${f.error}`).join('\n');
-                msgEl.textContent = `Poslano: ${sent}, palo: ${failed.length}.\n${lines}`;
-            }
+            await API.post(url, { userIds, subject, body, language: lang, sendAtUtc });
+            msgEl.style.color = '#52c452';
+            msgEl.textContent = sendAtUtc
+                ? `Zakazano za ${new Date(localDt).toLocaleString('hr-HR')}.`
+                : 'Poruka je u redu za slanje.';
         } catch (err) {
             msgEl.style.color = '#d9534f';
             msgEl.textContent = err.message;
@@ -400,7 +404,7 @@ const Admin = {
     sendEmail() {
         return this._sendMessage({
             url: '/admin/email/send-to-users',
-            subjectId: 'adminEmailSubject', bodyId: 'adminEmailBody',
+            subjectId: 'adminEmailSubject', bodyId: 'adminEmailBody', sendAtId: 'adminEmailSendAt',
             btnId: 'adminEmailSendBtn', msgId: 'adminEmailMsg', subjectLabel: 'predmet'
         });
     },
@@ -408,7 +412,7 @@ const Admin = {
     sendPush() {
         return this._sendMessage({
             url: '/admin/push/send',
-            subjectId: 'adminPushTitle', bodyId: 'adminPushBody',
+            subjectId: 'adminPushTitle', bodyId: 'adminPushBody', sendAtId: 'adminPushSendAt',
             btnId: 'adminPushSendBtn', msgId: 'adminPushMsg', subjectLabel: 'naslov'
         });
     },
@@ -416,12 +420,14 @@ const Admin = {
     resetEmail() {
         document.getElementById('adminEmailSubject').value = '';
         document.getElementById('adminEmailBody').value = '';
+        document.getElementById('adminEmailSendAt').value = '';
         const m = document.getElementById('adminEmailMsg'); m.textContent = ''; m.style.color = '';
     },
 
     resetPush() {
         document.getElementById('adminPushTitle').value = '';
         document.getElementById('adminPushBody').value = '';
+        document.getElementById('adminPushSendAt').value = '';
         const m = document.getElementById('adminPushMsg'); m.textContent = ''; m.style.color = '';
     },
 
