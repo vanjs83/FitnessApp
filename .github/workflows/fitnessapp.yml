@@ -53,12 +53,33 @@ jobs:
             "ftp://${{ secrets.FTP_SERVER }}/fitnessapp/tvanjurek-001-site1.ltempurl.com/app_offline.htm"
 
       - name: Wait for the app to shut down
-        run: sleep 12
+        run: sleep 30
 
       # 🟢 STEP 2: Incremental FTP deploy (NO clean-slate).
       # The DLL is now unlocked (app is offline), so it overwrites fine, while
       # untracked server files (firebase/, wwwroot/uploads/, logs/) are LEFT INTACT.
       - name: Deploy via FTP
+        id: deploy
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: publish/
+          server-dir: /fitnessapp/tvanjurek-001-site1.ltempurl.com/
+          log-level: verbose
+          exclude: |
+            **/app_offline.htm
+
+      # If a file was still locked (app hadn't fully released the DLL), wait a bit more and retry once.
+      # The action resumes from its sync state, so it only re-sends what didn't make it the first time.
+      - name: Wait before retry
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 30
+
+      - name: Deploy via FTP (retry)
+        if: steps.deploy.outcome == 'failure'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
