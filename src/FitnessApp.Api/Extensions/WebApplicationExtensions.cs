@@ -3,6 +3,7 @@ using FitnessApp.Api.Hubs;
 using FitnessApp.Application.Storage;
 using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Persistence;
+using FitnessApp.Infrastructure.Scheduling;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,9 @@ public static class WebApplicationExtensions
         // Liveness probe: no checks, just confirms the process is responding — a DB
         // blip shouldn't make an orchestrator kill an otherwise-healthy container.
         app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+
+        // Wire the recurring Coravel jobs (appointment reminders, …) now that the host is built.
+        app.Services.GetRequiredService<IJobScheduler>().Start();
 
         return app;
     }

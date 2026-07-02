@@ -4,6 +4,7 @@ const Groups = {
     groups: [],
     clients: [],
     wired: false,
+    _addingKeys: new Set(),
 
     async load() {
         this.wire();
@@ -88,11 +89,20 @@ const Groups = {
     },
 
     async addMember(groupId, clientId) {
+        // A slow connection can make the button feel unresponsive; guard against a double-click
+        // re-sending the same add (which would hit the unique member index and 500).
+        const key = `${groupId}:${clientId}`;
+        if (this._addingKeys.has(key)) return;
+        this._addingKeys.add(key);
         try {
             await API.post(`/groups/${groupId}/members`, { clientId });
             await this.loadGroups();
             this.render();
-        } catch (e) { alert((e && e.message) || I18n.t('common.error', 'Greška.')); }
+        } catch (e) {
+            alert((e && e.message) || I18n.t('common.error', 'Greška.'));
+        } finally {
+            this._addingKeys.delete(key);
+        }
     },
 
     async removeMember(groupId, clientId) {
@@ -122,6 +132,7 @@ const Groups = {
         document.getElementById('groupMsgBody').value = '';
         document.getElementById('groupMsgEmail').checked = true;
         document.getElementById('groupMsgPush').checked = true;
+        document.getElementById('groupMsgSendAt').value = '';
         document.getElementById('groupMsgResult').textContent = '';
         document.getElementById('groupMessageModal').classList.remove('hidden');
     },
@@ -145,6 +156,26 @@ const Groups = {
         const btn = document.getElementById('sendGroupMsgBtn');
         btn.disabled = true;
         try {
+            // Scheduled send: if a time is picked, queue it instead of sending now. A group can get
+            // both channels, so create one scheduled row per selected channel.
+            const localDt = document.getElementById('groupMsgSendAt').value;
+            if (localDt) {
+                const sendAt = new Date(localDt);
+                if (sendAt.getTime() <= Date.now()) { result.textContent = 'Vrijeme slanja mora biti u budućnosti.'; return; }
+                const sendAtUtc = sendAt.toISOString();
+                const channels = [];
+                if (push) channels.push('Push');
+                if (email) channels.push('Email');
+                for (const channel of channels) {
+                    await API.post('/scheduledmessages', {
+                        channel, audience: 'Group', userId: null, groupId: this.msgGroupId, subject, body, sendAtUtc
+                    });
+                }
+                alert(`Zakazano za ${sendAt.toLocaleString('hr-HR')}.`);
+                this.closeMessage();
+                return;
+            }
+
             const res = await API.post(`/groups/${this.msgGroupId}/message`, { subject, body, email, push });
             const parts = [];
             if (res.email) parts.push(`Email: ${res.email.sent.length} ✓, ${res.email.failed.length} ✗`);

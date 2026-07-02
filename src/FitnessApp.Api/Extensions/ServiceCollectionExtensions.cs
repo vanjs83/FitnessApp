@@ -2,9 +2,7 @@ using System.Text.Json.Serialization;
 using Asp.Versioning;
 using FitnessApp.Api.Middleware;
 using FitnessApp.Api.Services;
-using FitnessApp.Application;
 using FitnessApp.Application.Common.Interfaces;
-using FitnessApp.Infrastructure;
 using FitnessApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
@@ -14,7 +12,7 @@ namespace FitnessApp.Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddPresentation(this IServiceCollection services)
     {
         services.AddControllers(options =>
             {
@@ -43,9 +41,6 @@ public static class ServiceCollectionExtensions
 
         services.AddFluentValidationAutoValidation();
         services.AddSignalR();
-
-        services.AddApplication();
-        services.AddInfrastructure(configuration);
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

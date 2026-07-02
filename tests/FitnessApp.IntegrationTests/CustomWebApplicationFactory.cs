@@ -57,6 +57,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             // Swap the real SMTP email service for a no-op so tests never hit a mail server.
             services.RemoveAll<IEmailService>();
             services.AddSingleton<IEmailService, FakeEmailService>();
+
+            // Run queued messages inline instead of on Coravel's background queue, so sends are
+            // deterministic and the queue never races the factory's disposal.
+            services.RemoveAll<IMessageScheduler>();
+            services.AddSingleton<IMessageScheduler, InlineMessageScheduler>();
         });
     }
 

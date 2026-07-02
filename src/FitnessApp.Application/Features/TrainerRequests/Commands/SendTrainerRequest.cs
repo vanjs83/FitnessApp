@@ -18,7 +18,7 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
     private readonly IUserRelationshipService _relationship;
-    private readonly IEmailService _email;
+    private readonly IMessageScheduler _scheduler;
     private readonly ILogger<SendTrainerRequestCommandHandler> _logger;
 
     public SendTrainerRequestCommandHandler(
@@ -26,14 +26,14 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
         ICurrentUserService currentUser,
         IUserDirectory users,
         IUserRelationshipService relationship,
-        IEmailService email,
+        IMessageScheduler scheduler,
         ILogger<SendTrainerRequestCommandHandler> logger)
     {
         _db = db;
         _currentUser = currentUser;
         _users = users;
         _relationship = relationship;
-        _email = email;
+        _scheduler = scheduler;
         _logger = logger;
     }
 
@@ -63,7 +63,7 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
         _db.TrainerRequests.Add(entity);
         await _db.SaveChangesAsync(cancellationToken);
 
-        await TryNotifyTrainerAsync(trainer, client, request.Language, request.BaseUrl);
+        QueueTrainerNotification(trainer, client, request.Language, request.BaseUrl);
 
         return Result<MyTrainerRequestDto>.Success(new MyTrainerRequestDto
         {
@@ -77,40 +77,34 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
         });
     }
 
-    // Best-effort email to the trainer. Never blocks: if SMTP is unconfigured or sending fails, log and move on.
-    private async Task TryNotifyTrainerAsync(UserInfo trainer, UserInfo client, string? language, string baseUrl)
+    // Best-effort email to the trainer, queued fire-and-forget: if SMTP is unconfigured or the send
+    // fails it's logged and dropped — it never blocks or fails the request.
+    private void QueueTrainerNotification(UserInfo trainer, UserInfo client, string? language, string baseUrl)
     {
-        if (!_email.IsConfigured || string.IsNullOrWhiteSpace(trainer.Email))
+        if (string.IsNullOrWhiteSpace(trainer.Email))
             return;
 
         var lang = (language ?? "hr").ToLowerInvariant();
         var clientName = client.DisplayName;
+        var trainerEmail = trainer.Email;
+        var replyTo = client.Email;
         var subject = lang == "en"
             ? "New coaching request — FitnessApp"
             : "Novi zahtjev za suradnju — FitnessApp";
-
-        try
+        var placeholders = new Dictionary<string, string>
         {
-            var (ok, error) = await _email.SendTemplatedAsync(
-                toEmail: trainer.Email,
-                subject: subject,
-                templateKey: "trainer-request",
-                language: lang,
-                placeholders: new Dictionary<string, string>
-                {
-                    ["TrainerName"] = trainer.DisplayName,
-                    ["ClientName"] = clientName,
-                    ["LoginUrl"] = baseUrl + "index.html"
-                },
-                replyTo: client.Email,
-                replyToName: clientName);
+            ["TrainerName"] = trainer.DisplayName,
+            ["ClientName"] = clientName,
+            ["LoginUrl"] = baseUrl + "index.html"
+        };
 
+        _scheduler.Schedule<IEmailService>(async m =>
+        {
+            if (!m.IsConfigured) return;
+            var (ok, error) = await m.SendTemplatedAsync(
+                trainerEmail, subject, "trainer-request", lang, placeholders, replyTo, clientName);
             if (!ok)
-                _logger.LogWarning("Trainer-request email to {Email} failed: {Error}", trainer.Email, error);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Trainer-request email to {Email} threw.", trainer.Email);
-        }
+                _logger.LogWarning("Trainer-request email to {Email} failed: {Error}", trainerEmail, error);
+        });
     }
 }

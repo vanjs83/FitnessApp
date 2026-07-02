@@ -46,15 +46,15 @@ public class CancelAppointmentCommandHandler : IRequestHandler<CancelAppointment
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
-    private readonly IPushNotificationService _push;
+    private readonly IMessageScheduler _scheduler;
     private readonly IUserDirectory _users;
 
     public CancelAppointmentCommandHandler(
-        IAppDbContext db, ICurrentUserService currentUser, IPushNotificationService push, IUserDirectory users)
+        IAppDbContext db, ICurrentUserService currentUser, IMessageScheduler scheduler, IUserDirectory users)
     {
         _db = db;
         _currentUser = currentUser;
-        _push = push;
+        _scheduler = scheduler;
         _users = users;
     }
 
@@ -91,7 +91,10 @@ public class CancelAppointmentCommandHandler : IRequestHandler<CancelAppointment
             var memberNames = memberIds.Select(id => names.TryGetValue(id, out var n) ? n : "").ToList();
             var (title, body, data) = AppointmentHelper.GroupCancelled(appointment, groupName, memberNames);
             foreach (var member in members)
-                await _push.SendToUserAsync(member.ClientId, title, body, data, cancellationToken);
+            {
+                var clientId = member.ClientId;
+                _scheduler.Schedule<IPushNotificationService>(p => p.SendToUserAsync(clientId, title, body, data));
+            }
         }
 
         return Result.Success();

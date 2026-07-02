@@ -15,13 +15,13 @@ public class SendEmailToClientCommandHandler : IRequestHandler<SendEmailToClient
 {
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
-    private readonly IEmailService _email;
+    private readonly IMessageScheduler _scheduler;
 
-    public SendEmailToClientCommandHandler(ICurrentUserService currentUser, IUserDirectory users, IEmailService email)
+    public SendEmailToClientCommandHandler(ICurrentUserService currentUser, IUserDirectory users, IMessageScheduler scheduler)
     {
         _currentUser = currentUser;
         _users = users;
-        _email = email;
+        _scheduler = scheduler;
     }
 
     public async Task<Result<EmailSendStatusDto>> Handle(SendEmailToClientCommand request, CancellationToken cancellationToken)
@@ -33,20 +33,15 @@ public class SendEmailToClientCommandHandler : IRequestHandler<SendEmailToClient
         var lang = (request.Language ?? "hr").ToLowerInvariant();
         var trainerName = trainer.FullName ?? trainer.Email!;
 
-        var (ok, error) = await _email.SendTemplatedAsync(
-            toEmail: client.Email!,
-            subject: request.Subject,
-            templateKey: "trainer-to-client",
-            language: lang,
-            placeholders: new Dictionary<string, string>
-            {
-                ["Body"] = request.Body,
-                ["TrainerName"] = trainerName
-            },
-            replyTo: trainer.Email,
-            replyToName: trainerName);
+        var placeholders = new Dictionary<string, string>
+        {
+            ["Body"] = request.Body,
+            ["TrainerName"] = trainerName
+        };
+        _scheduler.Schedule<IEmailService>(m => m.SendTemplatedAsync(
+            client.Email!, request.Subject, "trainer-to-client", lang, placeholders, trainer.Email, trainerName));
 
-        if (!ok) return Result<EmailSendStatusDto>.Fail(ResultError.Validation, $"Sending failed: {error}");
+        // Fire-and-forget: the mail is queued; delivery is no longer awaited.
         return Result<EmailSendStatusDto>.Success(new EmailSendStatusDto(true, client.Email, trainer.Email));
     }
 }

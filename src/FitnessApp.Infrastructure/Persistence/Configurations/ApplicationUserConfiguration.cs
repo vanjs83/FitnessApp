@@ -21,5 +21,7 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         u.HasIndex(x => x.TrainerId);
         u.HasQueryFilter(x => x.IsActive);
         u.Property(x => x.ProfileImagePath).HasConversion(ImageFileNameConverter.For(_storage.ProfileImagesUrl));
+        // Explicit precision so weight isn't silently truncated to the default decimal(18,0).
+        u.Property(x => x.WeightKg).HasPrecision(18, 2);
     }
 }

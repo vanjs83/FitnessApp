@@ -81,7 +81,9 @@ const Auth = {
         // narrow phones). GSI only accepts 200–400px, so clamp to that range. The login
         // form is the visible one at init, so measure it and use the same width for both.
         const refEl = loginEl || regEl;
-        const containerWidth = (refEl && (refEl.clientWidth || (refEl.parentElement && refEl.parentElement.clientWidth))) || 336;
+        // Fallback to 336 (the form's content width) when clientWidth is 0 at init —
+        // parentElement.clientWidth would add the 2rem padding (→400px) and overflow.
+        const containerWidth = (refEl && refEl.clientWidth) || 336;
         const width = Math.round(Math.min(400, Math.max(200, containerWidth)));
         // Rectangular so both buttons match each other and the app's own buttons.
         const common = { theme: 'filled_blue', size: 'large', shape: 'rectangular', width, locale };

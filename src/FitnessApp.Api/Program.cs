@@ -1,10 +1,15 @@
 using FitnessApp.Api.Extensions;
-using System.Drawing.Text;
+using FitnessApp.Application;
+using FitnessApp.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.AddSerilogLogging();
-builder.Services.AddApiServices(builder.Configuration);
+
+builder.Services
+    .AddApplication()
+    .AddPresentation()
+    .AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 

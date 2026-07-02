@@ -27,15 +27,15 @@ public class CreateAppointmentCommandHandler : IRequestHandler<CreateAppointment
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
-    private readonly IPushNotificationService _push;
+    private readonly IMessageScheduler _scheduler;
 
     public CreateAppointmentCommandHandler(
-        IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users, IPushNotificationService push)
+        IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users, IMessageScheduler scheduler)
     {
         _db = db;
         _currentUser = currentUser;
         _users = users;
-        _push = push;
+        _scheduler = scheduler;
     }
 
     public async Task<Result<AppointmentDto>> Handle(CreateAppointmentCommand request, CancellationToken cancellationToken)
@@ -78,9 +78,10 @@ public class CreateAppointmentCommandHandler : IRequestHandler<CreateAppointment
         _db.Appointments.Add(appointment);
         await _db.SaveChangesAsync(cancellationToken);
 
-        // Best-effort push to the client; the service never throws (no tokens / Firebase off → no-op).
+        // Best-effort push to the client, queued fire-and-forget so booking doesn't wait on Firebase.
         var (title, body, data) = AppointmentHelper.Booked(appointment);
-        await _push.SendToUserAsync(appointment.ClientId!, title, body, data, cancellationToken);
+        var clientId = appointment.ClientId!;
+        _scheduler.Schedule<IPushNotificationService>(p => p.SendToUserAsync(clientId, title, body, data));
 
         return Result<AppointmentDto>.Success(
             await AppointmentResolver.ToDtoAsync(appointment, trainerId, _users, cancellationToken));
@@ -114,7 +115,10 @@ public class CreateAppointmentCommandHandler : IRequestHandler<CreateAppointment
         var memberNames = memberIds.Select(id => names.TryGetValue(id, out var n) ? n : "").ToList();
         var (title, body, data) = AppointmentHelper.GroupBooked(appointment, group.Name, memberNames);
         foreach (var member in group.Members)
-            await _push.SendToUserAsync(member.ClientId, title, body, data, cancellationToken);
+        {
+            var clientId = member.ClientId;
+            _scheduler.Schedule<IPushNotificationService>(p => p.SendToUserAsync(clientId, title, body, data));
+        }
 
         return Result<AppointmentDto>.Success(
             await AppointmentResolver.ToDtoAsync(appointment, trainerId, _users, cancellationToken));

@@ -9,6 +9,7 @@ using FitnessApp.Infrastructure.Identity;
 using FitnessApp.Infrastructure.Notifications;
 using FitnessApp.Infrastructure.Pdf;
 using FitnessApp.Infrastructure.Persistence;
+using FitnessApp.Infrastructure.Scheduling;
 using FitnessApp.Infrastructure.Sharing;
 using FitnessApp.Infrastructure.Storage;
 using Google.Apis.Auth.OAuth2;
@@ -138,7 +139,10 @@ public static class DependencyInjection
         services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
 
         services.Configure<RemindersSettings>(configuration.GetSection("Reminders"));
-        services.AddHostedService<AppointmentReminderService>();
+
+        // Background processing (Coravel scheduler + queue, message facade, recurring jobs) —
+        // see FitnessApp.Infrastructure.Scheduling. Replaces the old AppointmentReminderService worker.
+        services.AddScheduling();
 
         services.Configure<StorageSettings>(configuration.GetSection("Storage"));
         services.Configure<DonationSettings>(configuration.GetSection("Donations"));

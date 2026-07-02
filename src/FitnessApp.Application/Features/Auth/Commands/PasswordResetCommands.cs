@@ -13,13 +13,13 @@ public record ForgotPasswordCommand(string Email, string? Language, string BaseU
 public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, Result>
 {
     private readonly IAuthService _auth;
-    private readonly IEmailService _email;
+    private readonly IMessageScheduler _scheduler;
     private readonly ILogger<ForgotPasswordCommandHandler> _logger;
 
-    public ForgotPasswordCommandHandler(IAuthService auth, IEmailService email, ILogger<ForgotPasswordCommandHandler> logger)
+    public ForgotPasswordCommandHandler(IAuthService auth, IMessageScheduler scheduler, ILogger<ForgotPasswordCommandHandler> logger)
     {
         _auth = auth;
-        _email = email;
+        _scheduler = scheduler;
         _logger = logger;
     }
 
@@ -35,19 +35,18 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         // Reset link must target index.html explicitly: "/" serves landing.html (no auth logic).
         var resetUrl = $"{request.BaseUrl}/index.html?reset={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(email)}";
 
-        var (ok, error) = await _email.SendTemplatedAsync(
-            toEmail: email,
-            subject: "FitnessApp – reset lozinke",
-            templateKey: "password-reset",
-            language: request.Language,
-            placeholders: new Dictionary<string, string>
-            {
-                ["Name"] = fullName ?? email,
-                ["ResetUrl"] = resetUrl
-            });
-
-        if (!ok)
-            _logger.LogError("Failed to send password-reset email to {Email}: {Error}", email, error);
+        var placeholders = new Dictionary<string, string>
+        {
+            ["Name"] = fullName ?? email,
+            ["ResetUrl"] = resetUrl
+        };
+        _scheduler.Schedule<IEmailService>(async m =>
+        {
+            var (ok, error) = await m.SendTemplatedAsync(
+                email, "FitnessApp – reset lozinke", "password-reset", request.Language, placeholders);
+            if (!ok)
+                _logger.LogError("Failed to send password-reset email to {Email}: {Error}", email, error);
+        });
 
         return Result.Success();
     }
@@ -60,13 +59,13 @@ public record ResetPasswordCommand(string Email, string Token, string NewPasswor
 public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, Result>
 {
     private readonly IAuthService _auth;
-    private readonly IEmailService _email;
+    private readonly IMessageScheduler _scheduler;
     private readonly ILogger<ResetPasswordCommandHandler> _logger;
 
-    public ResetPasswordCommandHandler(IAuthService auth, IEmailService email, ILogger<ResetPasswordCommandHandler> logger)
+    public ResetPasswordCommandHandler(IAuthService auth, IMessageScheduler scheduler, ILogger<ResetPasswordCommandHandler> logger)
     {
         _auth = auth;
-        _email = email;
+        _scheduler = scheduler;
         _logger = logger;
     }
 
@@ -80,16 +79,16 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
         if (!succeeded)
             return Result.Fail(ResultError.Validation, string.Join(", ", errors));
 
-        // Confirmation mail is best-effort — a delivery failure must not fail the reset.
-        var (ok, error) = await _email.SendTemplatedAsync(
-            toEmail: email!,
-            subject: "FitnessApp – lozinka promijenjena",
-            templateKey: "password-changed",
-            language: request.Language,
-            placeholders: new Dictionary<string, string> { ["Name"] = fullName ?? email! });
-
-        if (!ok)
-            _logger.LogWarning("Password reset succeeded but confirmation email failed for {Email}: {Error}", email, error);
+        // Confirmation mail is best-effort — queued fire-and-forget so it never delays the reset.
+        var toEmail = email!;
+        var placeholders = new Dictionary<string, string> { ["Name"] = fullName ?? email! };
+        _scheduler.Schedule<IEmailService>(async m =>
+        {
+            var (ok, error) = await m.SendTemplatedAsync(
+                toEmail, "FitnessApp – lozinka promijenjena", "password-changed", request.Language, placeholders);
+            if (!ok)
+                _logger.LogWarning("Confirmation email failed for {Email}: {Error}", toEmail, error);
+        });
 
         return Result.Success();
     }

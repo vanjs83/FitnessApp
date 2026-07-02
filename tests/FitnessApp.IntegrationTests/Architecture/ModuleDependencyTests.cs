@@ -20,6 +20,7 @@ public class ModuleDependencyTests : ArchitectureTestBase
         ["Trainers"] = new[] { "Workouts", "Progress" },
         ["Groups"] = new[] { "Trainers", "Messaging" },
         ["Appointments"] = new[] { "Trainers", "Groups" },
+        ["ScheduledMessages"] = new[] { "Trainers", "Groups" },
         ["Admin"] = new[] { "Messaging" },
     };
 

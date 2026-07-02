@@ -36,6 +36,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
     public DbSet<TrainerRequest> TrainerRequests => Set<TrainerRequest>();
     public DbSet<ProgressPhoto> ProgressPhotos => Set<ProgressPhoto>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<ScheduledMessage> ScheduledMessages => Set<ScheduledMessage>();
     public DbSet<TrainingGroup> TrainingGroups => Set<TrainingGroup>();
     public DbSet<TrainingGroupMember> TrainingGroupMembers => Set<TrainingGroupMember>();
     public DbSet<GroupAttendance> GroupAttendances => Set<GroupAttendance>();
@@ -51,7 +52,12 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
         builder.ApplyConfiguration(new ExerciseConfiguration(_storage));
         builder.ApplyConfiguration(new ProgressPhotoConfiguration(_storage));
 
-        // Everything else: one IEntityTypeConfiguration<T> per entity in this assembly.
-        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        // Everything else: one IEntityTypeConfiguration<T> per entity in this assembly. Skip the three
+        // above — they need StorageSettings and are already applied explicitly, so the scan would only
+        // warn that it can't instantiate them (no parameterless ctor).
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly,
+            t => t != typeof(ApplicationUserConfiguration)
+              && t != typeof(ExerciseConfiguration)
+              && t != typeof(ProgressPhotoConfiguration));
     }
 }

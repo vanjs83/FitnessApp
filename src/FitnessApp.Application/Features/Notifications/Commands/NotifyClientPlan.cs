@@ -16,15 +16,15 @@ public class NotifyClientPlanCommandHandler : IRequestHandler<NotifyClientPlanCo
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
-    private readonly IPushNotificationService _push;
+    private readonly IMessageScheduler _scheduler;
 
     public NotifyClientPlanCommandHandler(
-        IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users, IPushNotificationService push)
+        IAppDbContext db, ICurrentUserService currentUser, IUserDirectory users, IMessageScheduler scheduler)
     {
         _db = db;
         _currentUser = currentUser;
         _users = users;
-        _push = push;
+        _scheduler = scheduler;
     }
 
     public async Task<Result<NotifyResultDto>> Handle(NotifyClientPlanCommand request, CancellationToken cancellationToken)
@@ -45,11 +45,13 @@ public class NotifyClientPlanCommandHandler : IRequestHandler<NotifyClientPlanCo
             _ => ("Plan treninga spreman", $"Tvoj novi plan treninga '{request.PlanName}' je spreman.")
         };
 
-        await _push.SendToUserAsync(client.Id, title, body, new Dictionary<string, string>
+        var data = new Dictionary<string, string>
         {
             ["planType"] = request.PlanType,
             ["planName"] = request.PlanName
-        }, cancellationToken);
+        };
+        var clientId = client.Id;
+        _scheduler.Schedule<IPushNotificationService>(p => p.SendToUserAsync(clientId, title, body, data));
 
         var activeTokens = await _db.Devices.CountAsync(t => t.UserId == client.Id && t.IsActive, cancellationToken);
         return Result<NotifyResultDto>.Success(new NotifyResultDto(true, activeTokens));

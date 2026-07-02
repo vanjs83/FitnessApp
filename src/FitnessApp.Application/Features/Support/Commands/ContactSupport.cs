@@ -12,15 +12,15 @@ public class ContactSupportCommandHandler : IRequestHandler<ContactSupportComman
 {
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
-    private readonly IEmailService _email;
+    private readonly IMessageScheduler _scheduler;
     private readonly IConfiguration _config;
 
     public ContactSupportCommandHandler(
-        ICurrentUserService currentUser, IUserDirectory users, IEmailService email, IConfiguration config)
+        ICurrentUserService currentUser, IUserDirectory users, IMessageScheduler scheduler, IConfiguration config)
     {
         _currentUser = currentUser;
         _users = users;
-        _email = email;
+        _scheduler = scheduler;
         _config = config;
     }
 
@@ -39,25 +39,19 @@ public class ContactSupportCommandHandler : IRequestHandler<ContactSupportComman
         var lang = (request.Language ?? "hr").ToLowerInvariant();
         var subjectPrefix = lang == "en" ? "[FitnessApp support]" : "[FitnessApp podrška]";
 
-        var (ok, error) = await _email.SendTemplatedAsync(
-            toEmail: supportEmail,
-            subject: $"{subjectPrefix} {request.Subject}",
-            templateKey: "support-message",
-            language: lang,
-            placeholders: new Dictionary<string, string>
-            {
-                ["UserName"] = userName,
-                ["UserEmail"] = user.Email!,
-                ["UserRole"] = role,
-                ["Subject"] = request.Subject,
-                ["Body"] = request.Body
-            },
-            replyTo: user.Email,
-            replyToName: userName);
+        var placeholders = new Dictionary<string, string>
+        {
+            ["UserName"] = userName,
+            ["UserEmail"] = user.Email!,
+            ["UserRole"] = role,
+            ["Subject"] = request.Subject,
+            ["Body"] = request.Body
+        };
+        var subjectLine = $"{subjectPrefix} {request.Subject}";
+        _scheduler.Schedule<IEmailService>(m => m.SendTemplatedAsync(
+            supportEmail!, subjectLine, "support-message", lang, placeholders, user.Email, userName));
 
-        if (!ok)
-            return Result.Fail(ResultError.Validation, error ?? "Sending the message failed. Try again later.");
-
+        // Fire-and-forget: the support message is queued; delivery is no longer awaited.
         return Result.Success();
     }
 }

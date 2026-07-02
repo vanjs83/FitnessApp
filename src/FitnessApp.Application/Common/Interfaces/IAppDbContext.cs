@@ -28,6 +28,7 @@ public interface IAppDbContext
     DbSet<ChatMessage> ChatMessages { get; }
     DbSet<TrainerRequest> TrainerRequests { get; }
     DbSet<Appointment> Appointments { get; }
+    DbSet<ScheduledMessage> ScheduledMessages { get; }
     DbSet<TrainingGroup> TrainingGroups { get; }
     DbSet<TrainingGroupMember> TrainingGroupMembers { get; }
     DbSet<GroupAttendance> GroupAttendances { get; }

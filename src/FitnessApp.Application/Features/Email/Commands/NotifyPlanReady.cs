@@ -16,13 +16,13 @@ public class NotifyPlanReadyCommandHandler : IRequestHandler<NotifyPlanReadyComm
 {
     private readonly ICurrentUserService _currentUser;
     private readonly IUserDirectory _users;
-    private readonly IEmailService _email;
+    private readonly IMessageScheduler _scheduler;
 
-    public NotifyPlanReadyCommandHandler(ICurrentUserService currentUser, IUserDirectory users, IEmailService email)
+    public NotifyPlanReadyCommandHandler(ICurrentUserService currentUser, IUserDirectory users, IMessageScheduler scheduler)
     {
         _currentUser = currentUser;
         _users = users;
-        _email = email;
+        _scheduler = scheduler;
     }
 
     public async Task<Result<EmailSendStatusDto>> Handle(NotifyPlanReadyCommand request, CancellationToken cancellationToken)
@@ -44,23 +44,18 @@ public class NotifyPlanReadyCommandHandler : IRequestHandler<NotifyPlanReadyComm
             ? $"Your new {planLabel} is ready — {request.PlanName}"
             : $"Tvoj novi {planLabel} je spreman — {request.PlanName}";
 
-        var (ok, error) = await _email.SendTemplatedAsync(
-            toEmail: client.Email!,
-            subject: subject,
-            templateKey: "plan-ready",
-            language: lang,
-            placeholders: new Dictionary<string, string>
-            {
-                ["ClientName"] = client.FullName ?? (lang == "en" ? "athlete" : "klijente"),
-                ["TrainerName"] = trainerName,
-                ["PlanLabel"] = planLabel,
-                ["PlanName"] = request.PlanName,
-                ["LoginUrl"] = request.BaseUrl
-            },
-            replyTo: trainer.Email,
-            replyToName: trainerName);
+        var placeholders = new Dictionary<string, string>
+        {
+            ["ClientName"] = client.FullName ?? (lang == "en" ? "athlete" : "klijente"),
+            ["TrainerName"] = trainerName,
+            ["PlanLabel"] = planLabel,
+            ["PlanName"] = request.PlanName,
+            ["LoginUrl"] = request.BaseUrl
+        };
+        _scheduler.Schedule<IEmailService>(m => m.SendTemplatedAsync(
+            client.Email!, subject, "plan-ready", lang, placeholders, trainer.Email, trainerName));
 
-        if (!ok) return Result<EmailSendStatusDto>.Fail(ResultError.Validation, $"Sending failed: {error}");
+        // Fire-and-forget: the mail is queued; delivery is no longer awaited.
         return Result<EmailSendStatusDto>.Success(new EmailSendStatusDto(true, client.Email, null));
     }
 }
