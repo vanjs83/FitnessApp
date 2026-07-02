@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Application.Features.ScheduledMessages.Commands;
 
-/// <summary>Body a trainer/admin posts to schedule a push or email for a future time.</summary>
 public record ScheduleMessageRequest(
     ScheduledMessageChannel Channel,
     ScheduledMessageAudience Audience,
