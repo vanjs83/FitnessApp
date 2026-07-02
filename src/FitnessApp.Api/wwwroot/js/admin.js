@@ -273,6 +273,15 @@ const Admin = {
 
         await this.buildRecipients();
         this.renderRecipients();
+        this.setSendAtMin();
+    },
+
+    // Anchor both "schedule for later" pickers at the current time so past times can't be chosen.
+    // Left empty the field still means "send now"; this only constrains a picked value.
+    setSendAtMin() {
+        const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.getElementById('adminEmailSendAt').min = now;
+        document.getElementById('adminPushSendAt').min = now;
     },
 
     // All trainers + clients in one selectable list. Fetched unpaginated from a
