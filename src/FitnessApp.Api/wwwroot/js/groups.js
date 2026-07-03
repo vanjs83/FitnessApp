@@ -157,7 +157,7 @@ const Groups = {
         btn.disabled = true;
         try {
             // Scheduled send: if a time is picked, queue it instead of sending now. A group can get
-            // both channels, so create one scheduled row per selected channel.
+            // both channels; the server creates one scheduled row per channel from a single request.
             const localDt = document.getElementById('groupMsgSendAt').value;
             if (localDt) {
                 const sendAt = new Date(localDt);
@@ -166,11 +166,9 @@ const Groups = {
                 const channels = [];
                 if (push) channels.push('Push');
                 if (email) channels.push('Email');
-                for (const channel of channels) {
-                    await API.post('/scheduledmessages', {
-                        channel, audience: 'Group', userId: null, groupId: this.msgGroupId, subject, body, sendAtUtc
-                    });
-                }
+                await API.post('/scheduledmessages', {
+                    channels, audience: 'Group', userId: null, groupId: this.msgGroupId, subject, body, sendAtUtc
+                });
                 alert(`Zakazano za ${sendAt.toLocaleString('hr-HR')}.`);
                 this.closeMessage();
                 return;

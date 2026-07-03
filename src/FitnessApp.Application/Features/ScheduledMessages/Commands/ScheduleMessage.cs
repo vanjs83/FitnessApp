@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FitnessApp.Application.Features.ScheduledMessages.Commands;
 
 public record ScheduleMessageRequest(
-    ScheduledMessageChannel Channel,
+    IReadOnlyList<ScheduledMessageChannel> Channels,
     ScheduledMessageAudience Audience,
     string? UserId,
     int? GroupId,
@@ -24,6 +24,7 @@ public class ScheduleMessageRequestValidator : AbstractValidator<ScheduleMessage
 {
     public ScheduleMessageRequestValidator()
     {
+        RuleFor(x => x.Channels).NotEmpty().WithMessage("At least one channel is required.");
         RuleFor(x => x.Subject).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Body).NotEmpty().MaximumLength(4000);
         RuleFor(x => x.SendAtUtc)
@@ -38,15 +39,15 @@ public class ScheduleMessageRequestValidator : AbstractValidator<ScheduleMessage
 }
 
 public record ScheduleMessageCommand(
-    ScheduledMessageChannel Channel,
+    IReadOnlyList<ScheduledMessageChannel> Channels,
     ScheduledMessageAudience Audience,
     string? UserId,
     int? GroupId,
     string Subject,
     string Body,
-    DateTime SendAtUtc) : IRequest<Result<ScheduledMessageDto>>;
+    DateTime SendAtUtc) : IRequest<Result<IReadOnlyList<ScheduledMessageDto>>>;
 
-public class ScheduleMessageCommandHandler : IRequestHandler<ScheduleMessageCommand, Result<ScheduledMessageDto>>
+public class ScheduleMessageCommandHandler : IRequestHandler<ScheduleMessageCommand, Result<IReadOnlyList<ScheduledMessageDto>>>
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
@@ -59,10 +60,13 @@ public class ScheduleMessageCommandHandler : IRequestHandler<ScheduleMessageComm
         _users = users;
     }
 
-    public async Task<Result<ScheduledMessageDto>> Handle(ScheduleMessageCommand request, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<ScheduledMessageDto>>> Handle(ScheduleMessageCommand request, CancellationToken cancellationToken)
     {
+        if (request.Channels is not { Count: > 0 })
+            return Result<IReadOnlyList<ScheduledMessageDto>>.Fail(ResultError.Validation, "At least one channel is required.");
+
         if (request.SendAtUtc <= DateTime.UtcNow)
-            return Result<ScheduledMessageDto>.Fail(ResultError.Validation, "The send time must be in the future.");
+            return Result<IReadOnlyList<ScheduledMessageDto>>.Fail(ResultError.Validation, "The send time must be in the future.");
 
         var senderId = _currentUser.UserId;
         var isAdmin = _currentUser.IsInRole(Roles.SuperAdmin);
@@ -71,40 +75,42 @@ public class ScheduleMessageCommandHandler : IRequestHandler<ScheduleMessageComm
         if (request.Audience == ScheduledMessageAudience.Single)
         {
             if (string.IsNullOrWhiteSpace(request.UserId))
-                return Result<ScheduledMessageDto>.Fail(ResultError.Validation, "A recipient user is required.");
+                return Result<IReadOnlyList<ScheduledMessageDto>>.Fail(ResultError.Validation, "A recipient user is required.");
 
             if (isAdmin)
             {
                 if (await _users.FindAsync(request.UserId, cancellationToken) is null)
-                    return Result<ScheduledMessageDto>.NotFound("Client not found.");
+                    return Result<IReadOnlyList<ScheduledMessageDto>>.NotFound("Client not found.");
             }
             else
             {
                 var error = await TrainerGuard.CheckOwnClientAsync(_users, request.UserId, senderId, cancellationToken);
-                if (error is not null) return Result<ScheduledMessageDto>.Fail(error.Value);
+                if (error is not null) return Result<IReadOnlyList<ScheduledMessageDto>>.Fail(error.Value);
             }
         }
         else
         {
             if (request.GroupId is not int groupId)
-                return Result<ScheduledMessageDto>.Fail(ResultError.Validation, "A group is required.");
+                return Result<IReadOnlyList<ScheduledMessageDto>>.Fail(ResultError.Validation, "A group is required.");
 
             if (isAdmin)
             {
                 if (!await _db.TrainingGroups.AnyAsync(g => g.Id == groupId, cancellationToken))
-                    return Result<ScheduledMessageDto>.NotFound("Group not found.");
+                    return Result<IReadOnlyList<ScheduledMessageDto>>.NotFound("Group not found.");
             }
             else
             {
                 var (_, error) = await GroupGuard.LoadOwnedAsync(_db, groupId, senderId, cancellationToken);
-                if (error is not null) return Result<ScheduledMessageDto>.Fail(error.Value);
+                if (error is not null) return Result<IReadOnlyList<ScheduledMessageDto>>.Fail(error.Value);
             }
         }
 
-        var entity = new ScheduledMessage
+        // One row per selected channel so the due-job can dispatch each channel independently.
+        var now = DateTime.UtcNow;
+        var entities = request.Channels.Distinct().Select(channel => new ScheduledMessage
         {
             SenderId = senderId,
-            Channel = request.Channel,
+            Channel = channel,
             Audience = request.Audience,
             UserId = request.Audience == ScheduledMessageAudience.Single ? request.UserId : null,
             GroupId = request.Audience == ScheduledMessageAudience.Group ? request.GroupId : null,
@@ -112,12 +118,12 @@ public class ScheduleMessageCommandHandler : IRequestHandler<ScheduleMessageComm
             Body = request.Body,
             SendAtUtc = request.SendAtUtc,
             Status = ScheduledMessageStatus.Pending,
-            CreatedAtUtc = DateTime.UtcNow
-        };
+            CreatedAtUtc = now
+        }).ToList();
 
-        _db.ScheduledMessages.Add(entity);
+        _db.ScheduledMessages.AddRange(entities);
         await _db.SaveChangesAsync(cancellationToken);
 
-        return Result<ScheduledMessageDto>.Success(entity.ToDto());
+        return Result<IReadOnlyList<ScheduledMessageDto>>.Success(entities.Select(e => e.ToDto()).ToList());
     }
 }

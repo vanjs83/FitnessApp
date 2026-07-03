@@ -25,13 +25,13 @@ public class ScheduledMessagesController(ISender sender) : ApiControllerBase
 
     /// <summary>Schedule a push or email for a client or a whole group at a future time.</summary>
     [HttpPost]
-    [ProducesResponseType<ScheduledMessageDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<IReadOnlyList<ScheduledMessageDto>>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ScheduledMessageDto>> Schedule(ScheduleMessageRequest request)
+    public async Task<ActionResult<IReadOnlyList<ScheduledMessageDto>>> Schedule(ScheduleMessageRequest request)
         => HandleCreated(await _sender.Send(new ScheduleMessageCommand(
-            request.Channel, request.Audience, request.UserId, request.GroupId,
+            request.Channels, request.Audience, request.UserId, request.GroupId,
             request.Subject, request.Body, request.SendAtUtc)));
 
     /// <summary>Cancel a still-pending scheduled message.</summary>
