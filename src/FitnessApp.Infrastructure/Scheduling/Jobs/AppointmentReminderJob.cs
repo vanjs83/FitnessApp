@@ -27,10 +27,8 @@ public sealed class AppointmentReminderJob : IScheduledJob
         _logger = logger;
     }
 
-    // PollMinutes drives the scan cadence; a */N step resets each hour, which is fine for a reminder scan.
-    public string Cron => $"*/{Math.Clamp(_settings.PollMinutes, 1, 59)} * * * *";
-
-    public bool Enabled => _settings.Enabled;
+    // Default scan cadence; overridable per job from the "JobScheduling" config section.
+    public string Cron => "*/5 * * * *";
 
     public async Task Invoke()
     {

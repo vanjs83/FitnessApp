@@ -30,8 +30,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         // Program.cs skips the SQL Server migrate/seed when the environment is "Testing".
         builder.UseEnvironment("Testing");
 
-        // Keep the reminder background worker idle during tests so it never polls/sends.
-        builder.UseSetting("Reminders:Enabled", "false");
+        // Keep the recurring jobs idle during tests so they never poll/send.
+        builder.UseSetting("JobScheduling:Jobs:AppointmentReminderJob:Enabled", "false");
+        builder.UseSetting("JobScheduling:Jobs:DueScheduledMessagesJob:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
         {

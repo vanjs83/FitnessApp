@@ -142,7 +142,7 @@ public static class DependencyInjection
 
         // Background processing (Coravel scheduler + queue, message facade, recurring jobs) —
         // see FitnessApp.Infrastructure.Scheduling. Replaces the old AppointmentReminderService worker.
-        services.AddScheduling();
+        services.AddScheduling(configuration);
 
         services.Configure<StorageSettings>(configuration.GetSection("Storage"));
         services.Configure<DonationSettings>(configuration.GetSection("Donations"));

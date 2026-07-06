@@ -1,8 +1,6 @@
 using FitnessApp.Application.Features.ScheduledMessages.Commands;
-using FitnessApp.Infrastructure.Notifications;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Infrastructure.Scheduling.Jobs;
 
@@ -14,22 +12,16 @@ namespace FitnessApp.Infrastructure.Scheduling.Jobs;
 public sealed class DueScheduledMessagesJob : IScheduledJob
 {
     private readonly ISender _sender;
-    private readonly RemindersSettings _settings;
     private readonly ILogger<DueScheduledMessagesJob> _logger;
 
-    public DueScheduledMessagesJob(
-        ISender sender,
-        IOptions<RemindersSettings> settings,
-        ILogger<DueScheduledMessagesJob> logger)
+    public DueScheduledMessagesJob(ISender sender, ILogger<DueScheduledMessagesJob> logger)
     {
         _sender = sender;
-        _settings = settings.Value;
         _logger = logger;
     }
 
+    // Default cadence; overridable per job from the "JobScheduling" config section.
     public string Cron => "* * * * *";
-
-    public bool Enabled => _settings.Enabled;
 
     public async Task Invoke()
     {

@@ -1,6 +1,7 @@
 using Coravel;
 using FitnessApp.Application.Interfaces;
 using FitnessApp.Infrastructure.Scheduling.Jobs;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FitnessApp.Infrastructure.Scheduling;
@@ -11,11 +12,15 @@ namespace FitnessApp.Infrastructure.Scheduling;
 /// </summary>
 public static class SchedulingServiceCollectionExtensions
 {
-    public static IServiceCollection AddScheduling(this IServiceCollection services)
+    public static IServiceCollection AddScheduling(this IServiceCollection services, IConfiguration configuration)
     {
         // Coravel primitives: Scheduler for recurring jobs, Queue for fire-and-forget dispatch.
         services.AddScheduler();
         services.AddQueue();
+
+        // Per-job cron overrides from appsettings ("JobScheduling") — any job's schedule can be
+        // changed there by its class name, no code change. Missing/empty falls back to the coded cron.
+        services.Configure<JobScheduleOptions>(configuration.GetSection("JobScheduling"));
 
         // Injectable services.
         services.AddSingleton<IJobScheduler, CoravelJobScheduler>();
