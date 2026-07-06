@@ -34,6 +34,7 @@
   "auth.register": "Registracija",
   "auth.loginBtn": "Prijavi se",
   "auth.or": "ili",
+  "auth.googleBtn": "Nastavi s Googleom",
   "auth.registerBtn": "Registriraj se",
   "auth.passwordMin": "Lozinka (min 6)",
   "auth.role.client": "👤 Klijent",

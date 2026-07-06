@@ -34,6 +34,7 @@
   "auth.register": "Sign up",
   "auth.loginBtn": "Log in",
   "auth.or": "or",
+  "auth.googleBtn": "Continue with Google",
   "auth.registerBtn": "Sign up",
   "auth.passwordMin": "Password (min 6)",
   "auth.role.client": "👤 Client",

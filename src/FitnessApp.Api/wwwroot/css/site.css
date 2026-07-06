@@ -157,12 +157,43 @@ main {
     height: 1px;
     background: #2a3340;
 }
-.google-btn-wrap { display: flex; justify-content: center; min-height: 40px; width: 100%; }
-/* GSI renderira gumb kao iframe fiksne širine — ne daj da prelije usku formu. */
-.google-btn-wrap > div, .google-btn-wrap iframe { max-width: 100% !important; }
-/* When Google is not configured the button never renders — hide the divider too. */
-.google-btn-wrap:empty { display: none; }
-.auth-or:has(+ .google-btn-wrap:empty) { display: none; }
+/* Themed Google button: our own styled button with an invisible real GSI button
+   layered on top to capture the click — keeps the ID-token flow, no backend change. */
+.google-signin { position: relative; width: 100%; }
+.google-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: #0f1419;
+    border: 1px solid #2a3340;
+    color: #e6e8eb;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.google-btn:hover { background: #161d26; border-color: #353f4d; }
+.google-btn .google-logo { width: 18px; height: 18px; flex-shrink: 0; }
+/* The real Google button sits on top, transparent, and receives the actual click. */
+.gsi-overlay {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    overflow: hidden;
+    z-index: 2;
+}
+.gsi-overlay > div, .gsi-overlay iframe {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+}
+/* Not configured → GSI never renders → overlay stays empty → hide button + divider. */
+.google-signin:has(.gsi-overlay:empty) { display: none; }
+.auth-or:has(+ .google-signin .gsi-overlay:empty) { display: none; }
 
 .auth-link {
     align-self: flex-start;
